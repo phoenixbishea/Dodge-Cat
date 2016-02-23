@@ -23,6 +23,7 @@ OgreApp-TutorialApplication.o
 ogre.cfg
 Ogre.log
 stamp-h1
+.deps
 
 
 # Emacs temp files
