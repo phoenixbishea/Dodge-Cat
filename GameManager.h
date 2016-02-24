@@ -11,7 +11,9 @@
  
 class GameManager
   : public Ogre::WindowEventListener,
-    public Ogre::FrameListener
+    public Ogre::FrameListener,
+    public OIS::KeyListener, 
+    public OIS::MouseListener
 {
 public:
   GameManager();
@@ -50,7 +52,8 @@ private:
   Ogre::RenderWindow* mWindow;
   Ogre::SceneManager* mSceneMgr;
   Ogre::Camera* mCamera;
- 
+  
+  bool mShutDown;
   OIS::InputManager* mInputMgr;
   OIS::Keyboard* mKeyboard;
   OIS::Mouse* mMouse;

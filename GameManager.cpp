@@ -1,5 +1,6 @@
 #include "GameManager.h"
- 
+
+#include <iostream>
 #include <OgreEntity.h>
 #include <OgreCamera.h>
 #include <OgreViewport.h>
@@ -16,6 +17,7 @@ GameManager::GameManager()
     mWindow(0),
     mSceneMgr(0),
     mCamera(0),
+    mShutDown(false),
     mInputMgr(0),
     mMouse(0),
     mKeyboard(0),
@@ -147,9 +149,9 @@ void GameManager::createFrameListener()
   // We pass false because we want the keyboard input unbuffered
   // TODO: Change to buffered inputs
   mKeyboard = static_cast<OIS::Keyboard*>(
-    mInputMgr->createInputObject(OIS::OISKeyboard, false));
+    mInputMgr->createInputObject(OIS::OISKeyboard, true));
   mMouse = static_cast<OIS::Mouse*>(
-    mInputMgr->createInputObject(OIS::OISMouse, false));
+    mInputMgr->createInputObject(OIS::OISMouse, true));
 
   // Register GameManager as source of callback methods
   mMouse->setEventCallback(this);
@@ -245,12 +247,15 @@ void GameManager::loadResources()
 bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
 {
   if (mWindow->isClosed()) return false;
+
+  if (mShutDown) return false;
   
   // Capture/Update each input device
   mKeyboard->capture();
   mMouse->capture();
  
-  if (mKeyboard->isKeyDown(OIS::KC_ESCAPE)) return false;
+  mCamNode->translate(mDirection * fe.timeSinceLastFrame, Ogre::Node::TS_LOCAL);
+  // if (mKeyboard->isKeyDown(OIS::KC_ESCAPE)) return false;
  
   return true;
 }
@@ -290,13 +295,56 @@ void GameManager::windowClosed(Ogre::RenderWindow* rw)
 //---------------------------------------------------------------------------
 bool GameManager::keyPressed(const OIS::KeyEvent& ke) 
 { 
+
   switch (ke.key)
   {
   case OIS::KC_ESCAPE: 
-      mShutDown = true;
-      break;
+    mShutDown = true;
+    break;
+
+  case OIS::KC_1:
+    mCamera->getParentSceneNode()->detachObject(mCamera);
+    mCamNode = mSceneMgr->getSceneNode("CamNode1");
+    mCamNode->attachObject(mCamera);
+    break;
+
+  case OIS::KC_2:
+    mCamera->getParentSceneNode()->detachObject(mCamera);
+    mCamNode = mSceneMgr->getSceneNode("CamNode2");
+    mCamNode->attachObject(mCamera);
+    break;
+  
+  case OIS::KC_UP:
+  case OIS::KC_W:
+    mDirection.z = -mMove;
+    break;
+
+  case OIS::KC_DOWN:
+  case OIS::KC_S:
+    mDirection.z = mMove;
+    break;
+
+  case OIS::KC_LEFT:
+  case OIS::KC_A:
+    mDirection.x = -mMove;
+    break;
+
+  case OIS::KC_RIGHT:
+  case OIS::KC_D:
+    mDirection.x = mMove;
+    break;
+
+  case OIS::KC_PGDOWN:
+  case OIS::KC_E:
+    mDirection.y = -mMove;
+    break;
+
+  case OIS::KC_PGUP:
+  case OIS::KC_Q:
+    mDirection.y = mMove;
+    break;
   default:
-      break;
+    break;
   }
   return true; 
 }
@@ -304,7 +352,42 @@ bool GameManager::keyPressed(const OIS::KeyEvent& ke)
 //---------------------------------------------------------------------------
 bool GameManager::keyReleased(const OIS::KeyEvent& ke) 
 { 
-  return true; 
+  switch (ke.key)
+  {
+  case OIS::KC_UP:
+  case OIS::KC_W:
+      mDirection.z = 0;
+      break;
+   
+  case OIS::KC_DOWN:
+  case OIS::KC_S:
+      mDirection.z = 0;
+      break;
+   
+  case OIS::KC_LEFT:
+  case OIS::KC_A:
+      mDirection.x = 0;
+      break;
+   
+  case OIS::KC_RIGHT:
+  case OIS::KC_D:
+      mDirection.x = 0;
+      break;
+   
+  case OIS::KC_PGDOWN:
+  case OIS::KC_E:
+      mDirection.y = 0;
+      break;
+   
+  case OIS::KC_PGUP:
+  case OIS::KC_Q:
+      mDirection.y = 0;
+      break;
+   
+  default:
+      break;
+  }
+  return true;
 }
 
 //---------------------------------------------------------------------------
