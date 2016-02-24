@@ -1,12 +1,12 @@
 ACLOCAL_AMFLAGS= -I m4
-noinst_HEADERS= BaseApplication.h TutorialApplication.h
+noinst_HEADERS= GameManager.h
 
-bin_PROGRAMS= OgreApp
-OgreApp_CPPFLAGS= -I$(top_srcdir) -std=c++11
-OgreApp_SOURCES= BaseApplication.cpp TutorialApplication.cpp
-OgreApp_CXXFLAGS= $(OGRE_CFLAGS) $(OIS_CFLAGS)
-OgreApp_LDADD= $(OGRE_LIBS) $(OIS_LIBS)
-OgreApp_LDFLAGS= -I/usr/include/SDL -lOgreOverlay -lboost_system -lSDL -lSDL_mixer
+bin_PROGRAMS= PussyWetter
+PussyWetter_CPPFLAGS= -I$(top_srcdir) -std=c++11
+PussyWetter_SOURCES= GameManager.cpp
+PussyWetter_CXXFLAGS= $(OGRE_CFLAGS) $(OIS_CFLAGS)
+PussyWetter_LDADD= $(OGRE_LIBS) $(OIS_LIBS)
+PussyWetter_LDFLAGS= -I/usr/include/SDL -lOgreOverlay -lboost_system -lSDL -lSDL_mixer
 
 EXTRA_DIST= buildit makeit
 AUTOMAKE_OPTIONS= foreign
