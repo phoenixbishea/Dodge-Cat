@@ -23,6 +23,7 @@ GameManager::GameManager()
  
 GameManager::~GameManager()
 {
+  // Remove ourself as a Window listener
   Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
  
   windowClosed(mWindow);
@@ -32,6 +33,7 @@ GameManager::~GameManager()
  
 bool GameManager::go()
 {
+/* Setting up resources */
 #ifdef _DEBUG
   mResourcesCfg = "resources_d.cfg";
   mPluginsCfg = "plugins_d.cfg";
@@ -61,22 +63,30 @@ bool GameManager::go()
       Ogre::ResourceGroupManager::getSingleton().addResourceLocation(name, locType);
     }
   }
- 
+  
+  /* Configure the RenderSystem */
+  // Only show configuration dialogue if ogre.cfg is not present
+  // OPTIONAL: Set up own render system or add a settings menu
   if (!(mRoot->restoreConfig() || mRoot->showConfigDialog()))
     return false;
- 
+  
+  // Bool determines whether Ogre create a RenderWindow for us
   mWindow = mRoot->initialise(true, "GameManager Render Window");
- 
+  
+  /* Initialize Resources */
   Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
   Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
- 
+
+  /* Create a SceneManager */
   mSceneMgr = mRoot->createSceneManager(Ogre::ST_GENERIC);
  
+  /* Create the Camera */
   mCamera = mSceneMgr->createCamera("MainCam");
   mCamera->setPosition(0, 0, 80);
   mCamera->lookAt(0, 0, -300);
   mCamera->setNearClipDistance(5);
- 
+  
+  /* Create the Viewport */
   Ogre::Viewport* vp = mWindow->addViewport(mCamera);
   vp->setBackgroundColour(Ogre::ColourValue(0, 0, 0));
  
@@ -84,7 +94,7 @@ bool GameManager::go()
     Ogre::Real(vp->getActualWidth()) /
     Ogre::Real(vp->getActualHeight()));
  
-  // Create Scene
+  /* Setup the Scene */
   Ogre::Entity* ogreEntity = mSceneMgr->createEntity("ogrehead.mesh");
  
   Ogre::SceneNode* ogreNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
@@ -95,7 +105,7 @@ bool GameManager::go()
   Ogre::Light* light = mSceneMgr->createLight("MainLight");
   light->setPosition(20, 80, 50);
  
-  // OIS
+  /* Setup Object-Oriented Input System (OIS) */
   Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
  
   OIS::ParamList pl;
@@ -107,17 +117,27 @@ bool GameManager::go()
   pl.insert(std::make_pair(std::string("WINDOW"), windowHandleStr.str()));
  
   mInputMgr = OIS::InputManager::createInputSystem(pl);
- 
+  
+  // Create Keyboard and Mouse to be used
+  // OPTIONAL: Joystick
+  // We pass false because we want the keyboard input unbuffered
+  // TODO: Change to buffered inputs
   mKeyboard = static_cast<OIS::Keyboard*>(
     mInputMgr->createInputObject(OIS::OISKeyboard, false));
   mMouse = static_cast<OIS::Mouse*>(
     mInputMgr->createInputObject(OIS::OISMouse, false));
- 
+  
+  // Set initial mouse clipping size
   windowResized(mWindow);
+  // Register as a Window listener
   Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
- 
+  
+  // Register root as a frame listnener so that it will receive frame events
   mRoot->addFrameListener(this);
- 
+
+  // This starts the rendering loop
+  // We don't need any special handling of the loop since we can 
+  // perform our per-frame tasks in the frameRenderingQueued() function
   mRoot->startRendering();
  
   return true;
@@ -126,7 +146,8 @@ bool GameManager::go()
 bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
 {
   if (mWindow->isClosed()) return false;
- 
+  
+  // Capture/Update each input device
   mKeyboard->capture();
   mMouse->capture();
  
@@ -134,7 +155,8 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
  
   return true;
 }
- 
+
+// Adjust mouse clipping area
 void GameManager::windowResized(Ogre::RenderWindow* rw)
 {
   int left, top;
@@ -146,9 +168,11 @@ void GameManager::windowResized(Ogre::RenderWindow* rw)
   ms.width = width;
   ms.height = height;
 }
- 
+
+// Unattach OIS before window shutdown
 void GameManager::windowClosed(Ogre::RenderWindow* rw)
 {
+  // Only close for window that created OIS
   if(rw == mWindow)
   {
     if(mInputMgr)
