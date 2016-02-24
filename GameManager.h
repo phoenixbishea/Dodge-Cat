@@ -3,12 +3,17 @@
  
 #include <OgreRoot.h>
 #include <OgreWindowEventUtilities.h>
- 
+
+//OIS Libraries
 #include <OISEvents.h>
 #include <OISInputManager.h>
 #include <OISKeyboard.h>
 #include <OISMouse.h>
- 
+
+//CEGUI Libraries
+//#include <CEGUI/CEGUI.h>
+//#include <CEGUI/RendererModules/Ogre/CEGUIOgreRenderer.h>
+
 class GameManager
   : public Ogre::WindowEventListener,
     public Ogre::FrameListener

@@ -148,6 +148,10 @@ void GameManager::createFrameListener()
 
 void GameManager::createScene()
 {
+
+  mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
+
+
   Ogre::Entity* ogreEntity = mSceneMgr->createEntity("ogrehead.mesh");
  
   Ogre::SceneNode* ogreNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
