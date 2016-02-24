@@ -7,7 +7,8 @@
 #include <OgreRenderWindow.h>
 #include <OgreConfigFile.h>
 #include <OgreException.h>
- 
+
+//---------------------------------------------------------------------------
 GameManager::GameManager()
   : mRoot(0),
     mResourcesCfg(Ogre::StringUtil::BLANK),
@@ -17,10 +18,16 @@ GameManager::GameManager()
     mCamera(0),
     mInputMgr(0),
     mMouse(0),
-    mKeyboard(0)
+    mKeyboard(0),
+    // For buffered input tutorial
+    mRotate(.13),
+    mMove(250),
+    mCamNode(0),
+    mDirection(Ogre::Vector3::ZERO)
 {
 }
- 
+
+//---------------------------------------------------------------------------
 GameManager::~GameManager()
 {
   // Remove ourself as a Window listener
@@ -30,7 +37,8 @@ GameManager::~GameManager()
  
   delete mRoot;
 }
- 
+
+//---------------------------------------------------------------------------
 bool GameManager::go()
 {
 #ifdef _DEBUG
@@ -54,6 +62,7 @@ bool GameManager::go()
   return true;
 }
 
+//---------------------------------------------------------------------------
 bool GameManager::setup()
 {
   mRoot = new Ogre::Root(mPluginsCfg);
@@ -81,6 +90,7 @@ bool GameManager::setup()
   return true;
 }
 
+//---------------------------------------------------------------------------
 bool GameManager::configure()
 {
   // Show the configuration dialog and initialise the system.
@@ -99,12 +109,14 @@ bool GameManager::configure()
   }
 }
 
+//---------------------------------------------------------------------------
 void GameManager::chooseSceneManager()
 {
   // Get the SceneManager, in this case a generic one
   mSceneMgr = mRoot->createSceneManager(Ogre::ST_GENERIC);
 }
 
+//---------------------------------------------------------------------------
 void GameManager::createCamera()
 {
   // Create the camera
@@ -115,6 +127,7 @@ void GameManager::createCamera()
   mCamera->setNearClipDistance(5);
 }
 
+//---------------------------------------------------------------------------
 void GameManager::createFrameListener()
 {
   Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
@@ -137,6 +150,10 @@ void GameManager::createFrameListener()
     mInputMgr->createInputObject(OIS::OISKeyboard, false));
   mMouse = static_cast<OIS::Mouse*>(
     mInputMgr->createInputObject(OIS::OISMouse, false));
+
+  // Register GameManager as source of callback methods
+  mMouse->setEventCallback(this);
+  mKeyboard->setEventCallback(this);
   
   // Set initial mouse clipping size
   windowResized(mWindow);
@@ -146,23 +163,40 @@ void GameManager::createFrameListener()
   mRoot->addFrameListener(this);
 }
 
+//---------------------------------------------------------------------------
 void GameManager::createScene()
 {
-  Ogre::Entity* ogreEntity = mSceneMgr->createEntity("ogrehead.mesh");
+  mSceneMgr->setAmbientLight(Ogre::ColourValue(.2, .2, .2));
  
-  Ogre::SceneNode* ogreNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-  ogreNode->attachObject(ogreEntity);
+  Ogre::Entity* tudorEntity = mSceneMgr->createEntity("tudorhouse.mesh");
+  Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
+    "Node");
+  node->attachObject(tudorEntity);
  
-  mSceneMgr->setAmbientLight(Ogre::ColourValue(.5, .5, .5));
+  Ogre::Light* light = mSceneMgr->createLight("Light1");
+  light->setType(Ogre::Light::LT_POINT);
+  light->setPosition(Ogre::Vector3(250, 150, 250));
+  light->setDiffuseColour(Ogre::ColourValue::White);
+  light->setSpecularColour(Ogre::ColourValue::White);
  
-  Ogre::Light* light = mSceneMgr->createLight("MainLight");
-  light->setPosition(20, 80, 50);
+  node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
+  "CamNode1", Ogre::Vector3(1200, -370, 0));
+  node->yaw(Ogre::Degree(90));
+
+  mCamNode = node;
+  node->attachObject(mCamera);
+
+  node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
+  "CamNode2", Ogre::Vector3(-500, -370, 1000));
+  node->yaw(Ogre::Degree(-30));
 }
 
+//---------------------------------------------------------------------------
 void GameManager::destroyScene()
 {
 }
 
+//---------------------------------------------------------------------------
 void GameManager::createViewports()
 {
   // Create one viewport, entire window
@@ -175,6 +209,7 @@ void GameManager::createViewports()
     Ogre::Real(vp->getActualHeight()));
 }
 
+//---------------------------------------------------------------------------
 void GameManager::setupResources()
 {
   // Load resource paths from config file
@@ -200,11 +235,13 @@ void GameManager::setupResources()
   }
 }
 
+//---------------------------------------------------------------------------
 void GameManager::loadResources()
 {
   Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 }
- 
+
+//---------------------------------------------------------------------------
 bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
 {
   if (mWindow->isClosed()) return false;
@@ -218,6 +255,7 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
   return true;
 }
 
+//---------------------------------------------------------------------------
 // Adjust mouse clipping area
 void GameManager::windowResized(Ogre::RenderWindow* rw)
 {
@@ -231,6 +269,7 @@ void GameManager::windowResized(Ogre::RenderWindow* rw)
   ms.height = height;
 }
 
+//---------------------------------------------------------------------------
 // Unattach OIS before window shutdown
 void GameManager::windowClosed(Ogre::RenderWindow* rw)
 {
@@ -247,7 +286,48 @@ void GameManager::windowClosed(Ogre::RenderWindow* rw)
     }
   }
 }
- 
+
+//---------------------------------------------------------------------------
+bool GameManager::keyPressed(const OIS::KeyEvent& ke) 
+{ 
+  switch (ke.key)
+  {
+  case OIS::KC_ESCAPE: 
+      mShutDown = true;
+      break;
+  default:
+      break;
+  }
+  return true; 
+}
+
+//---------------------------------------------------------------------------
+bool GameManager::keyReleased(const OIS::KeyEvent& ke) 
+{ 
+  return true; 
+}
+
+//---------------------------------------------------------------------------
+bool GameManager::mouseMoved(const OIS::MouseEvent& me) 
+{ 
+  return true; 
+}
+
+//---------------------------------------------------------------------------
+bool GameManager::mousePressed(
+  const OIS::MouseEvent& me, OIS::MouseButtonID id) 
+{ 
+  return true; 
+}
+
+//---------------------------------------------------------------------------
+bool GameManager::mouseReleased(
+  const OIS::MouseEvent& me, OIS::MouseButtonID id) 
+{ 
+  return true; 
+}
+
+//---------------------------------------------------------------------------
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"

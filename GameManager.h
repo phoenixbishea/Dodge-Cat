@@ -34,6 +34,15 @@ private:
  
   virtual void windowResized(Ogre::RenderWindow* rw);
   virtual void windowClosed(Ogre::RenderWindow* rw);
+
+  // For buffered input tutorial
+  // Key listener callbacks
+  virtual bool keyPressed(const OIS::KeyEvent& ke);
+  virtual bool keyReleased(const OIS::KeyEvent& ke);
+  // Mouse listener callbacks
+  virtual bool mouseMoved(const OIS::MouseEvent& me);
+  virtual bool mousePressed(const OIS::MouseEvent& me, OIS::MouseButtonID id);
+  virtual bool mouseReleased(const OIS::MouseEvent& me, OIS::MouseButtonID id);
  
   Ogre::Root* mRoot;
   Ogre::String mResourcesCfg;
@@ -45,6 +54,12 @@ private:
   OIS::InputManager* mInputMgr;
   OIS::Keyboard* mKeyboard;
   OIS::Mouse* mMouse;
+
+  // For buffered input tutorial
+  Ogre::Real mRotate;
+  Ogre::Real mMove;
+  Ogre::SceneNode* mCamNode;
+  Ogre::Vector3 mDirection;
  
 };
  
