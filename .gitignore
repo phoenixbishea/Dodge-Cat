@@ -17,14 +17,16 @@ m4
 Makefile
 Makefile.in
 missing
-OgreApp
-OgreApp-BaseApplication.o
-OgreApp-TutorialApplication.o
 ogre.cfg
 Ogre.log
 stamp-h1
 .deps
 
+# Object files
+*.o
+
+# Executable
+PussyWetter
 
 # Emacs temp files
 \#*\#
