@@ -9,6 +9,9 @@
 #include <OgreException.h>
 #include <OgreMeshManager.h>
 
+#include <string>
+#include <iostream>
+
 GameManager::GameManager()
   : mRoot(0),
     mResourcesCfg(Ogre::StringUtil::BLANK),
@@ -18,9 +21,9 @@ GameManager::GameManager()
     mCamera(0),
     mInputMgr(0),
     mMouse(0),
-    mKeyboard(0)
+    mKeyboard(0),
+    physicsEngine(0)
 {
-  physicsEngine.initObjects();
 }
 
 GameManager::~GameManager()
@@ -58,6 +61,9 @@ bool GameManager::go()
 
 bool GameManager::setup()
 {
+  physicsEngine = new BulletPhysics();
+  physicsEngine->initObjects();
+
   mRoot = new Ogre::Root(mPluginsCfg);
 
   setupResources();
@@ -111,9 +117,8 @@ void GameManager::createCamera()
 {
   // Create the camera
   mCamera = mSceneMgr->createCamera("MainCam");
-  mCamera->setPosition(0, 0, 80);
-  // Look back along -Z
-  mCamera->lookAt(0, 0, -300);
+  mCamera->setPosition(1000, 1000, 1000);
+  mCamera->lookAt(0, 0, 0);
   mCamera->setNearClipDistance(5);
 }
 
@@ -150,9 +155,20 @@ void GameManager::createFrameListener()
 
 void GameManager::createScene()
 {
+  // Add ambient light
+  mSceneMgr->setAmbientLight(Ogre::ColourValue(0.25, 0.25, 0.25));
+  mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
+
+  // Add a point light
+  Ogre::Light* light = mSceneMgr->createLight("MainLight");
+  light->setDiffuseColour(1.0, 1.0, 1.0);
+  light->setSpecularColour(1.0, 1.0, 1.0);
+  light->setDirection(Ogre::Vector3(0.0, -1.0, 0.0));
+  light->setType(Ogre::Light::LT_DIRECTIONAL);
+
   //create the actual plane in Ogre3D
   Ogre::Plane plane(Ogre::Vector3::UNIT_Y, 0);
-  Ogre::MeshPtr planePtr = Ogre::MeshManager::getSingleton()
+  Ogre::MeshManager::getSingleton()
     .createPlane("ground",
                  Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                  plane,
@@ -163,23 +179,21 @@ void GameManager::createScene()
                  Ogre::Vector3::UNIT_Z);
 
   Ogre::Entity *entGround = mSceneMgr->createEntity("GroundEntity", "ground");
-  Ogre::SceneNode *groundNode =
-    mSceneMgr
-    ->getRootSceneNode()
-    ->createChildSceneNode("groundNode");
-
+  entGround->setCastShadows(false);
+  entGround->setMaterialName("Examples/Rockwall");
+  Ogre::SceneNode *groundNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("groundNode");
   groundNode->attachObject(entGround);
+  groundNode->setPosition(Ogre::Vector3(0.0, 0.0, 0.0));
 
-  //create the plane entity to the physics engine, and attach it to the node
-
+  // create the plane entity to the physics engine, and attach it to the node
   btTransform groundTransform;
   groundTransform.setIdentity();
-  groundTransform.setOrigin(btVector3(0, -50, 0));
+  groundTransform.setOrigin(btVector3(0, 0, 0));
 
-  btScalar groundMass(0.); //the mass is 0, because the ground is immovable (static)
+  btScalar groundMass(0.0); // the mass is 0, because the ground is immovable (static)
   btVector3 localGroundInertia(0, 0, 0);
 
-  btCollisionShape *groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
+  btCollisionShape *groundShape = new btStaticPlaneShape(btVector3(0.0, 1.0, 0.0), 0.0);
   btDefaultMotionState *groundMotionState = new btDefaultMotionState(groundTransform);
 
   groundShape->calculateLocalInertia(groundMass, localGroundInertia);
@@ -188,9 +202,45 @@ void GameManager::createScene()
   btRigidBody *groundBody = new btRigidBody(groundRBInfo);
 
   //add the body to the dynamics world
-  this->physicsEngine.getDynamicsWorld()->addRigidBody(groundBody);
+  this->physicsEngine->getDynamicsWorld()->addRigidBody(groundBody);
 
 
+  std::string physicsCubeName = "PhysicsCube";
+  btVector3 initialPosition(0.0, 1000.0, 0.0);
+
+  Ogre::Entity *entity = this->mSceneMgr->createEntity("models/cube.mesh");
+
+  Ogre::SceneNode *newNode = this->mSceneMgr->getRootSceneNode()->createChildSceneNode(physicsCubeName);
+  newNode->attachObject(entity);
+  newNode->setPosition(Ogre::Vector3(initialPosition.getX(), initialPosition.getY(), initialPosition.getZ()));
+  newNode->setOrientation(Ogre::Quaternion(1.0, 1.0, 1.0, 0.0));
+
+  //create the new shape, and tell the physics that is a Box
+  btCollisionShape *newRigidShape = new btBoxShape(btVector3(50.0f, 50.0f, 50.0f));
+  this->physicsEngine->getCollisionShapes().push_back(newRigidShape);
+
+  //set the initial position and transform. For this demo, we set the tranform to be none
+  btTransform startTransform;
+  startTransform.setIdentity();
+  startTransform.setRotation(btQuaternion(1.0f, 1.0f, 1.0f, 0));
+
+  //set the mass of the object. a mass of "0" means that it is an immovable object
+  btScalar mass = 0.1f;
+  btVector3 localInertia(0,0,0);
+
+  startTransform.setOrigin(initialPosition);
+  newRigidShape->calculateLocalInertia(mass, localInertia);
+
+  //actually contruvc the body and add it to the dynamics world
+  btDefaultMotionState *myMotionState = new btDefaultMotionState(startTransform);
+
+  btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, newRigidShape, localInertia);
+  btRigidBody *body = new btRigidBody(rbInfo);
+  body->setRestitution(1);
+  body->setUserPointer(newNode);
+
+  physicsEngine->getDynamicsWorld()->addRigidBody(body);
+  physicsEngine->trackRigidBodyWithName(body, physicsCubeName);
 }
 
 void GameManager::destroyScene()
@@ -247,9 +297,42 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
   mKeyboard->capture();
   mMouse->capture();
 
-  if (mKeyboard->isKeyDown(OIS::KC_ESCAPE)) return false;
+  if (mKeyboard->isKeyDown(OIS::KC_ESCAPE))
+    return false;
 
   return true;
+}
+
+bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
+{
+  if (this->physicsEngine != NULL){
+		physicsEngine->getDynamicsWorld()->stepSimulation(1.0f / 120.0f); //suppose you have 60 frames per second
+
+		for (int i = 0; i < this->physicsEngine->getCollisionObjectCount(); i++) {
+			btCollisionObject* obj = this->physicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
+			btRigidBody* body = btRigidBody::upcast(obj);
+
+			if (body && body->getMotionState()) {
+				btTransform trans;
+				body->getMotionState()->getWorldTransform(trans);
+
+				void *userPointer = body->getUserPointer();
+				if (userPointer) {
+					btQuaternion orientation = trans.getRotation();
+					Ogre::SceneNode *sceneNode = static_cast<Ogre::SceneNode *>(userPointer);
+					sceneNode->setPosition(Ogre::Vector3(trans.getOrigin().getX(),
+                                               trans.getOrigin().getY(),
+                                               trans.getOrigin().getZ()));
+					sceneNode->setOrientation(Ogre::Quaternion(orientation.getW(),
+                                                     orientation.getX(),
+                                                     orientation.getY(),
+                                                     orientation.getZ()));
+          std::cout << sceneNode->getPosition() << std::endl;
+				}
+			}
+		}
+	}
+	return true;
 }
 
 // Adjust mouse clipping area

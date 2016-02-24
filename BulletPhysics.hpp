@@ -20,6 +20,9 @@ public:
   BulletPhysics();
   void initObjects();
   btDiscreteDynamicsWorld* getDynamicsWorld();
+  std::vector<btCollisionShape *>& getCollisionShapes();
+  void trackRigidBodyWithName(btRigidBody* body, std::string& name);
+  size_t getCollisionObjectCount();
 };
 
 #endif // __PHYSICS_H__

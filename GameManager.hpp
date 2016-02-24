@@ -32,6 +32,7 @@ private:
   virtual void setupResources();
   virtual void loadResources();
   virtual bool frameRenderingQueued(const Ogre::FrameEvent& fe);
+  virtual bool frameStarted(const Ogre::FrameEvent& fe);
 
   virtual void windowResized(Ogre::RenderWindow* rw);
   virtual void windowClosed(Ogre::RenderWindow* rw);
@@ -47,7 +48,7 @@ private:
   OIS::Keyboard* mKeyboard;
   OIS::Mouse* mMouse;
 
-  BulletPhysics physicsEngine;
+  BulletPhysics* physicsEngine;
 };
 
 #endif
