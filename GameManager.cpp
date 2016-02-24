@@ -1,5 +1,5 @@
 #include "GameManager.h"
- 
+
 #include <OgreEntity.h>
 #include <OgreCamera.h>
 #include <OgreViewport.h>
@@ -7,7 +7,8 @@
 #include <OgreRenderWindow.h>
 #include <OgreConfigFile.h>
 #include <OgreException.h>
- 
+#include <OgreMeshManager.h>
+
 GameManager::GameManager()
   : mRoot(0),
     mResourcesCfg(Ogre::StringUtil::BLANK),
@@ -19,18 +20,19 @@ GameManager::GameManager()
     mMouse(0),
     mKeyboard(0)
 {
+  physicsEngine.initObjects();
 }
- 
+
 GameManager::~GameManager()
 {
   // Remove ourself as a Window listener
   Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
- 
+
   windowClosed(mWindow);
- 
+
   delete mRoot;
 }
- 
+
 bool GameManager::go()
 {
 #ifdef _DEBUG
@@ -40,14 +42,14 @@ bool GameManager::go()
   mResourcesCfg = "resources.cfg";
   mPluginsCfg = "plugins.cfg";
 #endif
-  
+
   if (!setup()) return false;
 
   // This starts the rendering loop
-  // We don't need any special handling of the loop since we can 
+  // We don't need any special handling of the loop since we can
   // perform our per-frame tasks in the frameRenderingQueued() function
   mRoot->startRendering();
-  
+
   // Clean up
   destroyScene();
 
@@ -118,17 +120,17 @@ void GameManager::createCamera()
 void GameManager::createFrameListener()
 {
   Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
- 
+
   OIS::ParamList pl;
   size_t windowHandle = 0;
   std::ostringstream windowHandleStr;
- 
+
   mWindow->getCustomAttribute("WINDOW", &windowHandle);
   windowHandleStr << windowHandle;
   pl.insert(std::make_pair(std::string("WINDOW"), windowHandleStr.str()));
- 
+
   mInputMgr = OIS::InputManager::createInputSystem(pl);
-  
+
   // Create Keyboard and Mouse to be used
   // OPTIONAL: Joystick
   // We pass false because we want the keyboard input unbuffered
@@ -137,7 +139,7 @@ void GameManager::createFrameListener()
     mInputMgr->createInputObject(OIS::OISKeyboard, false));
   mMouse = static_cast<OIS::Mouse*>(
     mInputMgr->createInputObject(OIS::OISMouse, false));
-  
+
   // Set initial mouse clipping size
   windowResized(mWindow);
   // Register as a Window listener
@@ -148,15 +150,47 @@ void GameManager::createFrameListener()
 
 void GameManager::createScene()
 {
-  Ogre::Entity* ogreEntity = mSceneMgr->createEntity("ogrehead.mesh");
- 
-  Ogre::SceneNode* ogreNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-  ogreNode->attachObject(ogreEntity);
- 
-  mSceneMgr->setAmbientLight(Ogre::ColourValue(.5, .5, .5));
- 
-  Ogre::Light* light = mSceneMgr->createLight("MainLight");
-  light->setPosition(20, 80, 50);
+  //create the actual plane in Ogre3D
+  Ogre::Plane plane(Ogre::Vector3::UNIT_Y, 0);
+  Ogre::MeshPtr planePtr = Ogre::MeshManager::getSingleton()
+    .createPlane("ground",
+                 Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                 plane,
+                 1500, 1500,
+                 20, 20,
+                 true,
+                 1, 5, 5,
+                 Ogre::Vector3::UNIT_Z);
+
+  Ogre::Entity *entGround = mSceneMgr->createEntity("GroundEntity", "ground");
+  Ogre::SceneNode *groundNode =
+    mSceneMgr
+    ->getRootSceneNode()
+    ->createChildSceneNode("groundNode");
+
+  groundNode->attachObject(entGround);
+
+  //create the plane entity to the physics engine, and attach it to the node
+
+  btTransform groundTransform;
+  groundTransform.setIdentity();
+  groundTransform.setOrigin(btVector3(0, -50, 0));
+
+  btScalar groundMass(0.); //the mass is 0, because the ground is immovable (static)
+  btVector3 localGroundInertia(0, 0, 0);
+
+  btCollisionShape *groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
+  btDefaultMotionState *groundMotionState = new btDefaultMotionState(groundTransform);
+
+  groundShape->calculateLocalInertia(groundMass, localGroundInertia);
+
+  btRigidBody::btRigidBodyConstructionInfo groundRBInfo(groundMass, groundMotionState, groundShape, localGroundInertia);
+  btRigidBody *groundBody = new btRigidBody(groundRBInfo);
+
+  //add the body to the dynamics world
+  this->physicsEngine.getDynamicsWorld()->addRigidBody(groundBody);
+
+
 }
 
 void GameManager::destroyScene()
@@ -168,7 +202,7 @@ void GameManager::createViewports()
   // Create one viewport, entire window
   Ogre::Viewport* vp = mWindow->addViewport(mCamera);
   vp->setBackgroundColour(Ogre::ColourValue(0, 0, 0));
-  
+
   // Alter the camera aspect ratio to match the viewport
   mCamera->setAspectRatio(
     Ogre::Real(vp->getActualWidth()) /
@@ -204,17 +238,17 @@ void GameManager::loadResources()
 {
   Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 }
- 
+
 bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
 {
   if (mWindow->isClosed()) return false;
-  
+
   // Capture/Update each input device
   mKeyboard->capture();
   mMouse->capture();
- 
+
   if (mKeyboard->isKeyDown(OIS::KC_ESCAPE)) return false;
- 
+
   return true;
 }
 
@@ -223,9 +257,9 @@ void GameManager::windowResized(Ogre::RenderWindow* rw)
 {
   int left, top;
   unsigned int width, height, depth;
- 
+
   rw->getMetrics(width, height, depth, left, top);
- 
+
   const OIS::MouseState& ms = mMouse->getMouseState();
   ms.width = width;
   ms.height = height;
@@ -241,23 +275,23 @@ void GameManager::windowClosed(Ogre::RenderWindow* rw)
     {
       mInputMgr->destroyInputObject(mMouse);
       mInputMgr->destroyInputObject(mKeyboard);
- 
+
       OIS::InputManager::destroyInputSystem(mInputMgr);
       mInputMgr = 0;
     }
   }
 }
- 
+
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
 #endif
- 
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
- 
+
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
   INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT )
 #else
@@ -265,7 +299,7 @@ extern "C"
 #endif
   {
     GameManager app;
- 
+
     try
     {
       app.go();
@@ -283,7 +317,7 @@ extern "C"
 	e.getFullDescription().c_str() << std::endl;
 #endif
     }
- 
+
     return 0;
   }
 #ifdef __cplusplus

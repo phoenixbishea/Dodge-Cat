@@ -1,6 +1,6 @@
 #include "BulletPhysics.hpp"
 
-void BulletPhysics::Physics() {}
+BulletPhysics::BulletPhysics() {}
 
 void BulletPhysics::initObjects()
 {
@@ -12,4 +12,10 @@ void BulletPhysics::initObjects()
                                               overlappingPairCache,
                                               solver,
                                               collisionConfiguration);
+}
+
+btDiscreteDynamicsWorld*
+BulletPhysics::getDynamicsWorld()
+{
+  return this->dynamicsWorld;
 }

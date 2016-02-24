@@ -2,8 +2,11 @@
 #define __PHYSICS_H__
 
 #include <btBulletDynamicsCommon.h>
+#include <vector>
+#include <string>
+#include <map>
 
-class Physics
+class BulletPhysics
 {
 private:
   btDefaultCollisionConfiguration* collisionConfiguration;
@@ -14,8 +17,9 @@ private:
   std::vector<btCollisionShape *> collisionShape;
   std::map<std::string, btRigidBody *> physicsAccessors;
 public:
-  void Physics();
+  BulletPhysics();
   void initObjects();
-}
+  btDiscreteDynamicsWorld* getDynamicsWorld();
+};
 
 #endif // __PHYSICS_H__

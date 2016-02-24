@@ -3,6 +3,11 @@
 
 #include <btBulletDynamicsCommon.h>
 
+/**
+ * Wrapper for Bullet physics engine that needs to be included in the
+ * main game application as a member variable, and subsequently initialized
+ * by calling `initObjects()`.
+ */
 class BulletPhysics
 {
 private:
@@ -16,6 +21,7 @@ private:
 public:
   void BulletPhysics();
   void initObjects();
+  btDiscreteDynamicsWorld* getDynamicsWorld();
 }
 
 #endif // __PHYSICS_H__
