@@ -1,6 +1,8 @@
 /*
 	https://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer.html
 	http://osdl.sourceforge.net/main/documentation/rendering/SDL-audio.html#mixer
+
+	GUI: ? http://www.ogre3d.org/forums/viewtopic.php?t=44426
 */
 int main(int agrc, char** agrv)
 {
