@@ -1,5 +1,6 @@
 /*
 	https://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer.html
+	http://osdl.sourceforge.net/main/documentation/rendering/SDL-audio.html#mixer
 */
 int main(int agrc, char** agrv)
 {
@@ -8,7 +9,7 @@ int main(int agrc, char** agrv)
 	Mix_Music* music; // Mix_Music is used for music
 	Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096); //MIX_DEFAULT_FREQUENCY (22050 (HZ)), MIX_DEFAULT_FORMAT (Always use), 2 (1 mono 2 stereo), Chunk size?
 	music = Mix_LoadMUS("MetalShit.wav"); //Mix_LoadMUS loads music given a file name
-	effect1 = Mix_LoadWAV("meow.wav"); //Mix_LoadWav acts like Mix_LoadMUS 
+	effect1 = Mix_LoadWAV("meow.wav"); //Mix_LoadWav acts like Mix_LoadMUS. Supports WAVE, VOC, AIFF, and OGG
 	effect2 = Mix_LoadWAV_RW(SDL_RWFromFile(file, "rb"), 1); // Can load WAVE, AIFF, RIFF, OGG, and VOC files. Second Arg allows for auto close/freeing
 
 	Mix_VolumeChunck(effect1, MIX_MAX_VOLUME/2); //Changes the volume level of the SFX(first arg), 0 - 128 (Volume Range) 
@@ -33,3 +34,10 @@ int main(int agrc, char** agrv)
 
 	return 0;
  }     
+
+ /*
+	Doesn't Support 3d sounds
+	Tons of cats hitting the walls may cause lag?
+	ball hitting something, the paddle whiffing, and sound when the score changes. 
+	The player can turn the sounds on and off, either through a GUI, keyboard commands or both
+ */
