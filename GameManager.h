@@ -20,6 +20,16 @@ public:
   bool go();
  
 private:
+  virtual bool setup();
+  virtual bool configure();
+  virtual void chooseSceneManager();
+  virtual void createCamera();
+  virtual void createFrameListener();
+  virtual void createScene();
+  virtual void destroyScene();
+  virtual void createViewports();
+  virtual void setupResources();
+  virtual void loadResources();
   virtual bool frameRenderingQueued(const Ogre::FrameEvent& fe);
  
   virtual void windowResized(Ogre::RenderWindow* rw);

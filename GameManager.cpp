@@ -33,7 +33,6 @@ GameManager::~GameManager()
  
 bool GameManager::go()
 {
-/* Setting up resources */
 #ifdef _DEBUG
   mResourcesCfg = "resources_d.cfg";
   mPluginsCfg = "plugins_d.cfg";
@@ -41,71 +40,83 @@ bool GameManager::go()
   mResourcesCfg = "resources.cfg";
   mPluginsCfg = "plugins.cfg";
 #endif
- 
-  mRoot = new Ogre::Root(mPluginsCfg);
- 
-  Ogre::ConfigFile cf;
-  cf.load(mResourcesCfg);
- 
-  Ogre::String name, locType;
-  Ogre::ConfigFile::SectionIterator secIt = cf.getSectionIterator();
- 
-  while (secIt.hasMoreElements())
-  {
-    Ogre::ConfigFile::SettingsMultiMap* settings = secIt.getNext();
-    Ogre::ConfigFile::SettingsMultiMap::iterator it;
- 
-    for (it = settings->begin(); it != settings->end(); ++it)
-    {
-      locType = it->first;
-      name = it->second;
- 
-      Ogre::ResourceGroupManager::getSingleton().addResourceLocation(name, locType);
-    }
-  }
   
-  /* Configure the RenderSystem */
-  // Only show configuration dialogue if ogre.cfg is not present
-  // OPTIONAL: Set up own render system or add a settings menu
-  if (!(mRoot->restoreConfig() || mRoot->showConfigDialog()))
-    return false;
-  
-  // Bool determines whether Ogre create a RenderWindow for us
-  mWindow = mRoot->initialise(true, "GameManager Render Window");
-  
-  /* Initialize Resources */
-  Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
-  Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+  if (!setup()) return false;
 
-  /* Create a SceneManager */
+  // This starts the rendering loop
+  // We don't need any special handling of the loop since we can 
+  // perform our per-frame tasks in the frameRenderingQueued() function
+  mRoot->startRendering();
+  
+  // Clean up
+  destroyScene();
+
+  return true;
+}
+
+bool GameManager::setup()
+{
+  mRoot = new Ogre::Root(mPluginsCfg);
+
+  setupResources();
+
+  // Attempt to configure render system
+  bool carryOn = configure();
+  if (!carryOn) return false;
+
+  // Load resources
+  loadResources();
+  // Set default mipmap level (NB some APIs ignore this)
+  Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
+
+  chooseSceneManager();
+  createCamera();
+  createViewports();
+
+  // Create the scene
+  createScene();
+
+  createFrameListener();
+
+  return true;
+}
+
+bool GameManager::configure()
+{
+  // Show the configuration dialog and initialise the system.
+  // You can skip this and use root.restoreConfig() to load configuration
+  // settings if you were sure there are valid ones saved in ogre.cfg.
+  if (mRoot->restoreConfig() || mRoot->showConfigDialog())
+  {
+    // If returned true, user clicked OK so initialise.
+    // Here we choose to let the system create a default rendering window by passing 'true'.
+    mWindow = mRoot->initialise(true, "GameManager Render Window");
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+void GameManager::chooseSceneManager()
+{
+  // Get the SceneManager, in this case a generic one
   mSceneMgr = mRoot->createSceneManager(Ogre::ST_GENERIC);
- 
-  /* Create the Camera */
+}
+
+void GameManager::createCamera()
+{
+  // Create the camera
   mCamera = mSceneMgr->createCamera("MainCam");
   mCamera->setPosition(0, 0, 80);
+  // Look back along -Z
   mCamera->lookAt(0, 0, -300);
   mCamera->setNearClipDistance(5);
-  
-  /* Create the Viewport */
-  Ogre::Viewport* vp = mWindow->addViewport(mCamera);
-  vp->setBackgroundColour(Ogre::ColourValue(0, 0, 0));
- 
-  mCamera->setAspectRatio(
-    Ogre::Real(vp->getActualWidth()) /
-    Ogre::Real(vp->getActualHeight()));
- 
-  /* Setup the Scene */
-  Ogre::Entity* ogreEntity = mSceneMgr->createEntity("ogrehead.mesh");
- 
-  Ogre::SceneNode* ogreNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-  ogreNode->attachObject(ogreEntity);
- 
-  mSceneMgr->setAmbientLight(Ogre::ColourValue(.5, .5, .5));
- 
-  Ogre::Light* light = mSceneMgr->createLight("MainLight");
-  light->setPosition(20, 80, 50);
- 
-  /* Setup Object-Oriented Input System (OIS) */
+}
+
+void GameManager::createFrameListener()
+{
   Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
  
   OIS::ParamList pl;
@@ -131,16 +142,67 @@ bool GameManager::go()
   windowResized(mWindow);
   // Register as a Window listener
   Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
-  
   // Register root as a frame listnener so that it will receive frame events
   mRoot->addFrameListener(this);
+}
 
-  // This starts the rendering loop
-  // We don't need any special handling of the loop since we can 
-  // perform our per-frame tasks in the frameRenderingQueued() function
-  mRoot->startRendering();
+void GameManager::createScene()
+{
+  Ogre::Entity* ogreEntity = mSceneMgr->createEntity("ogrehead.mesh");
  
-  return true;
+  Ogre::SceneNode* ogreNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+  ogreNode->attachObject(ogreEntity);
+ 
+  mSceneMgr->setAmbientLight(Ogre::ColourValue(.5, .5, .5));
+ 
+  Ogre::Light* light = mSceneMgr->createLight("MainLight");
+  light->setPosition(20, 80, 50);
+}
+
+void GameManager::destroyScene()
+{
+}
+
+void GameManager::createViewports()
+{
+  // Create one viewport, entire window
+  Ogre::Viewport* vp = mWindow->addViewport(mCamera);
+  vp->setBackgroundColour(Ogre::ColourValue(0, 0, 0));
+  
+  // Alter the camera aspect ratio to match the viewport
+  mCamera->setAspectRatio(
+    Ogre::Real(vp->getActualWidth()) /
+    Ogre::Real(vp->getActualHeight()));
+}
+
+void GameManager::setupResources()
+{
+  // Load resource paths from config file
+  Ogre::ConfigFile cf;
+  cf.load(mResourcesCfg);
+
+  // Go through all sections & settings in the file
+  Ogre::String name, locType;
+  Ogre::ConfigFile::SectionIterator secIt = cf.getSectionIterator();
+
+  while (secIt.hasMoreElements())
+  {
+    Ogre::ConfigFile::SettingsMultiMap* settings = secIt.getNext();
+    Ogre::ConfigFile::SettingsMultiMap::iterator it;
+
+    for (it = settings->begin(); it != settings->end(); ++it)
+    {
+      locType = it->first;
+      name = it->second;
+
+      Ogre::ResourceGroupManager::getSingleton().addResourceLocation(name, locType);
+    }
+  }
+}
+
+void GameManager::loadResources()
+{
+  Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 }
  
 bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
