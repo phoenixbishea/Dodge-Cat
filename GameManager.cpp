@@ -393,6 +393,11 @@ bool GameManager::keyReleased(const OIS::KeyEvent& ke)
 //---------------------------------------------------------------------------
 bool GameManager::mouseMoved(const OIS::MouseEvent& me) 
 { 
+  if (me.state.buttonDown(OIS::MB_Right))
+  {
+    mCamNode->yaw(Ogre::Degree(-mRotate * me.state.X.rel), Ogre::Node::TS_WORLD);
+    mCamNode->pitch(Ogre::Degree(-mRotate * me.state.Y.rel), Ogre::Node::TS_LOCAL);
+  }
   return true; 
 }
 
@@ -400,6 +405,11 @@ bool GameManager::mouseMoved(const OIS::MouseEvent& me)
 bool GameManager::mousePressed(
   const OIS::MouseEvent& me, OIS::MouseButtonID id) 
 { 
+  if (id == OIS::MB_Left)
+  {
+    Ogre::Light* light2 = mSceneMgr->getLight("Light1");
+    light2->setVisible(!light2->isVisible());
+  }
   return true; 
 }
 
