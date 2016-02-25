@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS= -I m4
-noinst_HEADERS= GameManager.h BulletPhysics.hpp
+noinst_HEADERS= GameManager.hpp BulletPhysics.hpp
 
 bin_PROGRAMS= PussyWetter
 PussyWetter_CPPFLAGS= -I$(top_srcdir) -std=c++11

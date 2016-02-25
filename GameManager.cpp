@@ -204,7 +204,6 @@ void GameManager::createScene()
   //add the body to the dynamics world
   this->physicsEngine->getDynamicsWorld()->addRigidBody(groundBody);
 
-
   std::string physicsCubeName = "PhysicsCube";
   btVector3 initialPosition(0.0, 1000.0, 0.0);
 
