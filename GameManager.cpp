@@ -1,4 +1,4 @@
-#include "GameManager.h"
+#include "GameManager.hpp"
 
 #include <iostream>
 #include <OgreEntity.h>
