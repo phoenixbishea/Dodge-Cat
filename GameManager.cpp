@@ -171,12 +171,41 @@ void GameManager::createFrameListener()
   mRoot->addFrameListener(this);
 }
 
+/* Setups up the basic resources needed for CEGUI */
+void GameManager::setupCEGUI()
+{
+  mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
+
+  CEGUI::DefaultResourceProvider* rp = static_cast<CEGUI::DefaultResourceProvider*>
+    (CEGUI::System::getSingleton().getResourceProvider());
+
+  rp->setResourceGroupDirectory("schemes", "/lusr/opt/cegui-0.8.4/share/cegui-0/schemes");
+  rp->setResourceGroupDirectory("imagesets", "/lusr/opt/cegui-0.8.4/share/cegui-0/imagesets");
+  rp->setResourceGroupDirectory("fonts", "/lusr/opt/cegui-0.8.4/share/cegui-0/fonts");
+  rp->setResourceGroupDirectory("layouts", "/lusr/opt/cegui-0.8.4/share/cegui-0/layouts");
+  rp->setResourceGroupDirectory("looknfeels", "/lusr/opt/cegui-0.8.4/share/cegui-0/looknfeel");
+
+  //Sets up the default resource groups
+  CEGUI::ImageManager::setImagesetDefaultResourceGroup("Imagesets");
+  CEGUI::Font::setDefaultResourceGroup("Fonts");
+  CEGUI::Scheme::setDefaultResourceGroup("Schemes");
+  CEGUI::WidgetLookManager::setDefaultResourceGroup("LookNFeel");
+  CEGUI::WindowManager::setDefaultResourceGroup("Layouts");
+
+
+  //Creates a scheme file and sets the mouse arrow to a default image
+ //CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
+ //CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage("TaharezLook/MouseArrow");
+  
+}
+
 //---------------------------------------------------------------------------
 void GameManager::createScene()
 {
 
-  mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
-  
+  setupCEGUI();
+
+
   mSceneMgr->setAmbientLight(Ogre::ColourValue(0, 0, 0));
   mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
  
@@ -234,6 +263,18 @@ void GameManager::createScene()
   "CamNode1", Ogre::Vector3(0, 300, 500));
   mCamNode = node;
   node->attachObject(mCamera);
+
+  CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
+  CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+
+  CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+  quit->setText("Quit");
+  //quit->setSize(CEGUI::UVector2(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+
+  // sheet->addChildWindow(quit);
+  // CEGUI::System::getSingleton().setGUISheet(sheet);
+
+
 
   /* Tutorial 5 */
   // mSceneMgr->setAmbientLight(Ogre::ColourValue(.2, .2, .2));
@@ -323,6 +364,10 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
   mMouse->capture();
  
   mCamNode->translate(mDirection * fe.timeSinceLastFrame, Ogre::Node::TS_LOCAL);
+
+  //Need to inject timestaps to CEGUI System
+  
+  //CEGUI::System::getSingleton().injectTimePulse(fe.timeSinceLastFrame);
   // if (mKeyboard->isKeyDown(OIS::KC_ESCAPE)) return false;
  
   return true;
@@ -363,6 +408,11 @@ void GameManager::windowClosed(Ogre::RenderWindow* rw)
 //---------------------------------------------------------------------------
 bool GameManager::keyPressed(const OIS::KeyEvent& ke) 
 { 
+  //Injects the current key pressed to CEGUI
+  CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+  context.injectKeyDown((CEGUI::Key::Scan)ke.key);
+  context.injectChar((CEGUI::Key::Scan)ke.text);
+
 
   switch (ke.key)
   {
@@ -420,6 +470,9 @@ bool GameManager::keyPressed(const OIS::KeyEvent& ke)
 //---------------------------------------------------------------------------
 bool GameManager::keyReleased(const OIS::KeyEvent& ke) 
 { 
+
+ CEGUI::System::getSingleton().getDefaultGUIContext().injectKeyUp((CEGUI::Key::Scan)ke.key);
+
   switch (ke.key)
   {
   case OIS::KC_UP:
@@ -458,9 +511,34 @@ bool GameManager::keyReleased(const OIS::KeyEvent& ke)
   return true;
 }
 
+/* Used to covert OIS Mouse Into CEGUI Mouse Buttons */
+CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID)
+{
+  switch (buttonID)
+  {
+    case OIS::MB_Left:
+      return CEGUI::LeftButton;
+    case OIS::MB_Right:
+      return CEGUI::RightButton;
+    case OIS::MB_Middle:
+      return CEGUI::MiddleButton;
+
+    default:
+      return CEGUI::LeftButton;
+  }
+}
+
+
 //---------------------------------------------------------------------------
 bool GameManager::mouseMoved(const OIS::MouseEvent& me) 
 { 
+
+  CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+  context.injectMouseMove(me.state.X.rel, me.state.Y.rel);
+  // Scroll wheel.
+  if (me.state.Z.rel)
+    context.injectMouseWheelChange(me.state.Z.rel / 120.0f);
+
   if (me.state.buttonDown(OIS::MB_Right))
   {
     mCamNode->yaw(Ogre::Degree(-mRotate * me.state.X.rel), Ogre::Node::TS_WORLD);
@@ -473,11 +551,13 @@ bool GameManager::mouseMoved(const OIS::MouseEvent& me)
 bool GameManager::mousePressed(
   const OIS::MouseEvent& me, OIS::MouseButtonID id) 
 { 
-  if (id == OIS::MB_Left)
-  {
-    Ogre::Light* light2 = mSceneMgr->getLight("Light1");
-    light2->setVisible(!light2->isVisible());
-  }
+
+  CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseButtonDown(convertButton(id));
+  // if (id == OIS::MB_Left)
+  // {
+  //   Ogre::Light* light2 = mSceneMgr->getLight("Light1");
+  //   light2->setVisible(!light2->isVisible());
+  // }
   return true; 
 }
 
@@ -485,6 +565,7 @@ bool GameManager::mousePressed(
 bool GameManager::mouseReleased(
   const OIS::MouseEvent& me, OIS::MouseButtonID id) 
 { 
+  CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseButtonUp(convertButton(id));
   return true; 
 }
 
