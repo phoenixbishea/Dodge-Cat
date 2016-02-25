@@ -174,6 +174,9 @@ void GameManager::createFrameListener()
 //---------------------------------------------------------------------------
 void GameManager::createScene()
 {
+
+  mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
+  
   mSceneMgr->setAmbientLight(Ogre::ColourValue(0, 0, 0));
   mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
  

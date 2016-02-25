@@ -3,11 +3,15 @@
  
 #include <OgreRoot.h>
 #include <OgreWindowEventUtilities.h>
+#include <OgreMeshManager.h>
  
 #include <OISEvents.h>
 #include <OISInputManager.h>
 #include <OISKeyboard.h>
 #include <OISMouse.h>
+
+#include <CEGUI/CEGUI.h>
+#include <CEGUI/RendererModules/Ogre/Renderer.h>
  
 class GameManager
   : public Ogre::WindowEventListener,
@@ -57,6 +61,8 @@ private:
   OIS::InputManager* mInputMgr;
   OIS::Keyboard* mKeyboard;
   OIS::Mouse* mMouse;
+
+  CEGUI::OgreRenderer* mRenderer;
 
   // For buffered input tutorial
   Ogre::Real mRotate;
