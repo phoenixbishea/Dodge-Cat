@@ -17,7 +17,8 @@ GameManager::GameManager()
     mCamera(0),
     mInputMgr(0),
     mMouse(0),
-    mKeyboard(0)
+    mKeyboard(0),
+    mRenderer(0)
 {
 }
  
@@ -152,6 +153,8 @@ void GameManager::createScene()
   mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
 
 
+  CEGUI::SchemeManager::getSingleton().create("TaharezLook.scheme");
+
   Ogre::Entity* ogreEntity = mSceneMgr->createEntity("ogrehead.mesh");
  
   Ogre::SceneNode* ogreNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
@@ -165,6 +168,7 @@ void GameManager::createScene()
 
 void GameManager::destroyScene()
 {
+
 }
 
 void GameManager::createViewports()

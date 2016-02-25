@@ -11,8 +11,8 @@
 #include <OISMouse.h>
 
 //CEGUI Libraries
-//#include <CEGUI/CEGUI.h>
-//#include <CEGUI/RendererModules/Ogre/CEGUIOgreRenderer.h>
+#include <CEGUI/CEGUI.h>
+#include <CEGUI/RendererModules/Ogre/Renderer.h>
 
 class GameManager
   : public Ogre::WindowEventListener,
@@ -25,6 +25,7 @@ public:
   bool go();
  
 private:
+  CEGUI::OgreRenderer* mRenderer;
   virtual bool setup();
   virtual bool configure();
   virtual void chooseSceneManager();
