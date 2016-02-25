@@ -123,10 +123,16 @@ void GameManager::createCamera()
 {
   // Create the camera
   mCamera = mSceneMgr->createCamera("MainCam");
-  mCamera->setPosition(0, 0, 80);
-  // Look back along -Z
-  mCamera->lookAt(0, 0, -300);
+
+  mCamera->setPosition(Ogre::Vector3(0, 300, 500));
+  mCamera->lookAt(Ogre::Vector3(0, 0, 0));
   mCamera->setNearClipDistance(5);
+
+  /* Tutorial 5 */
+  // mCamera->setPosition(0, 0, 80);
+  // // Look back along -Z
+  // mCamera->lookAt(0, 0, -300);
+  // mCamera->setNearClipDistance(5);
 }
 
 //---------------------------------------------------------------------------
@@ -168,29 +174,88 @@ void GameManager::createFrameListener()
 //---------------------------------------------------------------------------
 void GameManager::createScene()
 {
-  mSceneMgr->setAmbientLight(Ogre::ColourValue(.2, .2, .2));
+  mSceneMgr->setAmbientLight(Ogre::ColourValue(0, 0, 0));
+  mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
  
-  Ogre::Entity* tudorEntity = mSceneMgr->createEntity("tudorhouse.mesh");
-  Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
-    "Node");
-  node->attachObject(tudorEntity);
+  // Create ninja
+  Ogre::Entity* ninjaEntity = mSceneMgr->createEntity("ninja.mesh");
+  ninjaEntity->setCastShadows(true);
  
-  Ogre::Light* light = mSceneMgr->createLight("Light1");
-  light->setType(Ogre::Light::LT_POINT);
-  light->setPosition(Ogre::Vector3(250, 150, 250));
-  light->setDiffuseColour(Ogre::ColourValue::White);
-  light->setSpecularColour(Ogre::ColourValue::White);
+  mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ninjaEntity);
  
-  node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
-  "CamNode1", Ogre::Vector3(1200, -370, 0));
-  node->yaw(Ogre::Degree(90));
+  // Create ground
+  Ogre::Plane plane(Ogre::Vector3::UNIT_Y, 0);
+ 
+  Ogre::MeshManager::getSingleton().createPlane(
+    "ground",
+    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+    plane, 1500, 1500, 20, 20, true, 1, 5, 5, Ogre::Vector3::UNIT_Z);
+ 
+  Ogre::Entity* groundEntity = mSceneMgr->createEntity("ground");
+  mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(groundEntity);
+ 
+  groundEntity->setMaterialName("Examples/Rockwall");
+  groundEntity->setCastShadows(false);
+ 
+  // Spotlight
+  Ogre::Light* spotLight = mSceneMgr->createLight("Spotlight");
+  spotLight->setType(Ogre::Light::LT_SPOTLIGHT);
+ 
+  spotLight->setDiffuseColour(Ogre::ColourValue(0, 0, 1));
+  spotLight->setSpecularColour(Ogre::ColourValue(0, 0, 1));
+ 
+  spotLight->setDirection(-1, -1, 0);
+  spotLight->setPosition(Ogre::Vector3(200, 200, 0));
+ 
+  spotLight->setSpotlightRange(Ogre::Degree(35), Ogre::Degree(50));
+ 
+  // Directional light
+  Ogre::Light* directionalLight = mSceneMgr->createLight("DirectionalLight");
+  directionalLight->setType(Ogre::Light::LT_DIRECTIONAL);
+ 
+  directionalLight->setDiffuseColour(Ogre::ColourValue(.4, 0, 0));
+  directionalLight->setSpecularColour(Ogre::ColourValue(.4, 0, 0));
+ 
+  directionalLight->setDirection(Ogre::Vector3(0, -1, 1));
+ 
+  // Point light
+  Ogre::Light* pointLight = mSceneMgr->createLight("PointLight");
+  pointLight->setType(Ogre::Light::LT_POINT);
+ 
+  pointLight->setDiffuseColour(.3, .3, .3);
+  pointLight->setSpecularColour(.3, .3, .3);
+ 
+  pointLight->setPosition(Ogre::Vector3(0, 150, 250));
 
+  Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
+  "CamNode1", Ogre::Vector3(0, 300, 500));
   mCamNode = node;
   node->attachObject(mCamera);
 
-  node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
-  "CamNode2", Ogre::Vector3(-500, -370, 1000));
-  node->yaw(Ogre::Degree(-30));
+  /* Tutorial 5 */
+  // mSceneMgr->setAmbientLight(Ogre::ColourValue(.2, .2, .2));
+ 
+  // Ogre::Entity* tudorEntity = mSceneMgr->createEntity("tudorhouse.mesh");
+  // Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
+  //   "Node");
+  // node->attachObject(tudorEntity);
+ 
+  // Ogre::Light* light = mSceneMgr->createLight("Light1");
+  // light->setType(Ogre::Light::LT_POINT);
+  // light->setPosition(Ogre::Vector3(250, 150, 250));
+  // light->setDiffuseColour(Ogre::ColourValue::White);
+  // light->setSpecularColour(Ogre::ColourValue::White);
+ 
+  // node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
+  // "CamNode1", Ogre::Vector3(1200, -370, 0));
+  // node->yaw(Ogre::Degree(90));
+
+  // mCamNode = node;
+  // node->attachObject(mCamera);
+
+  // node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
+  // "CamNode2", Ogre::Vector3(-500, -370, 1000));
+  // node->yaw(Ogre::Degree(-30));
 }
 
 //---------------------------------------------------------------------------
@@ -303,15 +368,15 @@ bool GameManager::keyPressed(const OIS::KeyEvent& ke)
     break;
 
   case OIS::KC_1:
-    mCamera->getParentSceneNode()->detachObject(mCamera);
-    mCamNode = mSceneMgr->getSceneNode("CamNode1");
-    mCamNode->attachObject(mCamera);
+    // mCamera->getParentSceneNode()->detachObject(mCamera);
+    // mCamNode = mSceneMgr->getSceneNode("CamNode1");
+    // mCamNode->attachObject(mCamera);
     break;
 
   case OIS::KC_2:
-    mCamera->getParentSceneNode()->detachObject(mCamera);
-    mCamNode = mSceneMgr->getSceneNode("CamNode2");
-    mCamNode->attachObject(mCamera);
+    // mCamera->getParentSceneNode()->detachObject(mCamera);
+    // mCamNode = mSceneMgr->getSceneNode("CamNode2");
+    // mCamNode->attachObject(mCamera);
     break;
   
   case OIS::KC_UP:
