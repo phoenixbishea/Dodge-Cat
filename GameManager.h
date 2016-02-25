@@ -41,6 +41,15 @@ private:
   virtual void windowResized(Ogre::RenderWindow* rw);
   virtual void windowClosed(Ogre::RenderWindow* rw);
  
+  // // OIS::KeyListener
+  // virtual bool keyPressed( const OIS::KeyEvent &arg );
+  // virtual bool keyReleased( const OIS::KeyEvent &arg );
+  // // OIS::MouseListener
+  // virtual bool mouseMoved( const OIS::MouseEvent &arg );
+  // virtual bool mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
+  // virtual bool mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
+  // bool quit(const CEGUI::EventArgs &e);
+
   Ogre::Root* mRoot;
   Ogre::String mResourcesCfg;
   Ogre::String mPluginsCfg;

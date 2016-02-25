@@ -116,35 +116,64 @@ void GameManager::createCamera()
   mCamera->setNearClipDistance(5);
 }
 
-void GameManager::createFrameListener()
+void GameManager::createFrameListener(void)
 {
-  Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
+  // Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
  
-  OIS::ParamList pl;
-  size_t windowHandle = 0;
-  std::ostringstream windowHandleStr;
+  // OIS::ParamList pl;
+  // size_t windowHandle = 0;
+  // std::ostringstream windowHandleStr;
  
-  mWindow->getCustomAttribute("WINDOW", &windowHandle);
-  windowHandleStr << windowHandle;
-  pl.insert(std::make_pair(std::string("WINDOW"), windowHandleStr.str()));
+  // mWindow->getCustomAttribute("WINDOW", &windowHandle);
+  // windowHandleStr << windowHandle;
+  // pl.insert(std::make_pair(std::string("WINDOW"), windowHandleStr.str()));
  
-  mInputMgr = OIS::InputManager::createInputSystem(pl);
+  // mInputMgr = OIS::InputManager::createInputSystem(pl);
   
-  // Create Keyboard and Mouse to be used
-  // OPTIONAL: Joystick
-  // We pass false because we want the keyboard input unbuffered
-  // TODO: Change to buffered inputs
-  mKeyboard = static_cast<OIS::Keyboard*>(
-    mInputMgr->createInputObject(OIS::OISKeyboard, false));
-  mMouse = static_cast<OIS::Mouse*>(
-    mInputMgr->createInputObject(OIS::OISMouse, false));
+  // // Create Keyboard and Mouse to be used
+  // // OPTIONAL: Joystick
+  // // We pass false because we want the keyboard input unbuffered
+  // // TODO: Change to buffered inputs
+  // mKeyboard = static_cast<OIS::Keyboard*>(
+  //   mInputMgr->createInputObject(OIS::OISKeyboard, true));
+  // mMouse = static_cast<OIS::Mouse*>(
+  //   mInputMgr->createInputObject(OIS::OISMouse, true));
+
+  // //CEGUI Related?
+  // mMouse->setEventCallback(this);
+  // mKeyboard->setEventCallback(this);
   
-  // Set initial mouse clipping size
-  windowResized(mWindow);
-  // Register as a Window listener
-  Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
-  // Register root as a frame listnener so that it will receive frame events
-  mRoot->addFrameListener(this);
+  // // Set initial mouse clipping size
+  // windowResized(mWindow);
+  // // Register as a Window listener
+  // Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
+  // // Register root as a frame listnener so that it will receive frame events
+  // mRoot->addFrameListener(this);
+
+      Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
+    OIS::ParamList pl;
+    size_t windowHnd = 0;
+    std::ostringstream windowHndStr;
+ 
+    mWindow->getCustomAttribute("WINDOW", &windowHnd);
+    windowHndStr << windowHnd;
+    pl.insert(std::make_pair(std::string("WINDOW"), windowHndStr.str()));
+ 
+    mInputManager = OIS::InputManager::createInputSystem( pl );
+ 
+    mKeyboard = static_cast<OIS::Keyboard*>(mInputManager->createInputObject( OIS::OISKeyboard, false ));
+    mMouse = static_cast<OIS::Mouse*>(mInputManager->createInputObject( OIS::OISMouse, false ));
+ 
+    mMouse->setEventCallback(this);
+    mKeyboard->setEventCallback(this);
+ 
+    //Set initial mouse clipping size
+    windowResized(mWindow);
+ 
+    //Register as a Window listener
+    Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
+ 
+    mRoot->addFrameListener(this);
 }
 
 void GameManager::createScene()
@@ -152,8 +181,17 @@ void GameManager::createScene()
 
   mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
 
+  //Setups up all the default resource groups
+  CEGUI::ImageManager::setImagesetDefaultResourceGroup("Imagesets");
+  CEGUI::Font::setDefaultResourceGroup("Fonts");
+  CEGUI::Scheme::setDefaultResourceGroup("Schemes");
+  CEGUI::WidgetLookManager::setDefaultResourceGroup("LookNFeel");
+  CEGUI::WindowManager::setDefaultResourceGroup("Layouts");
 
-  CEGUI::SchemeManager::getSingleton().create("TaharezLook.scheme");
+  //Sets the scheme to be Taharez and then sets the mouse cursor to that image
+  CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
+  CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage("TaharezLook/MouseArrow");
+
 
   Ogre::Entity* ogreEntity = mSceneMgr->createEntity("ogrehead.mesh");
  
@@ -216,6 +254,9 @@ void GameManager::loadResources()
 bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
 {
   if (mWindow->isClosed()) return false;
+
+  if(mShutDown)
+    return false;
   
   // Capture/Update each input device
   mKeyboard->capture();
