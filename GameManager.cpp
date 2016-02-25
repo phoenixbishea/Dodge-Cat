@@ -12,6 +12,7 @@
 #include <string>
 #include <iostream>
 
+//---------------------------------------------------------------------------
 GameManager::GameManager()
   : mRoot(0),
     mResourcesCfg(Ogre::StringUtil::BLANK),
@@ -19,12 +20,17 @@ GameManager::GameManager()
     mWindow(0),
     mSceneMgr(0),
     mCamera(0),
+    mShutDown(false),
     mInputMgr(0),
     mMouse(0),
     mKeyboard(0),
-    physicsEngine(0)
+    physicsEngine(0),
+    mChar(0),
+    mExCamera(0)
 {
 }
+
+//---------------------------------------------------------------------------
 
 GameManager::~GameManager()
 {
@@ -35,6 +41,20 @@ GameManager::~GameManager()
 
   delete mRoot;
 }
+
+//---------------------------------------------------------------------------
+void GameManager::setCharacter (Player* character) 
+{
+  mChar = character;
+}
+
+//---------------------------------------------------------------------------
+void GameManager::setExtendedCamera (ExtendedCamera* cam) 
+{
+  mExCamera = cam;
+}
+
+//---------------------------------------------------------------------------
 
 bool GameManager::go()
 {
@@ -59,6 +79,7 @@ bool GameManager::go()
   return true;
 }
 
+//---------------------------------------------------------------------------
 bool GameManager::setup()
 {
   physicsEngine = new BulletPhysics();
@@ -89,6 +110,7 @@ bool GameManager::setup()
   return true;
 }
 
+//---------------------------------------------------------------------------
 bool GameManager::configure()
 {
   // Show the configuration dialog and initialise the system.
@@ -107,21 +129,26 @@ bool GameManager::configure()
   }
 }
 
+//---------------------------------------------------------------------------
 void GameManager::chooseSceneManager()
 {
   // Get the SceneManager, in this case a generic one
   mSceneMgr = mRoot->createSceneManager(Ogre::ST_GENERIC);
 }
 
+//---------------------------------------------------------------------------
 void GameManager::createCamera()
 {
   // Create the camera
   mCamera = mSceneMgr->createCamera("MainCam");
-  mCamera->setPosition(1000, 1000, 1000);
-  mCamera->lookAt(0, 0, 0);
+
+  // mCamera->setPosition(Ogre::Vector3(0, 300, 500));
+  mCamera->setPosition (0, 0, 0);    // Required or else the camera will have an offset
+  mCamera->lookAt(Ogre::Vector3(0, 0, 0));
   mCamera->setNearClipDistance(5);
 }
 
+//---------------------------------------------------------------------------
 void GameManager::createFrameListener()
 {
   Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
@@ -138,13 +165,15 @@ void GameManager::createFrameListener()
 
   // Create Keyboard and Mouse to be used
   // OPTIONAL: Joystick
-  // We pass false because we want the keyboard input unbuffered
-  // TODO: Change to buffered inputs
   mKeyboard = static_cast<OIS::Keyboard*>(
-    mInputMgr->createInputObject(OIS::OISKeyboard, false));
+    mInputMgr->createInputObject(OIS::OISKeyboard, true));
   mMouse = static_cast<OIS::Mouse*>(
-    mInputMgr->createInputObject(OIS::OISMouse, false));
+    mInputMgr->createInputObject(OIS::OISMouse, true));
 
+  // Register GameManager as source of callback methods
+  mMouse->setEventCallback(this);
+  mKeyboard->setEventCallback(this);
+  
   // Set initial mouse clipping size
   windowResized(mWindow);
   // Register as a Window listener
@@ -153,11 +182,18 @@ void GameManager::createFrameListener()
   mRoot->addFrameListener(this);
 }
 
+//---------------------------------------------------------------------------
 void GameManager::createScene()
 {
   // Add ambient light
   mSceneMgr->setAmbientLight(Ogre::ColourValue(0.25, 0.25, 0.25));
   mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
+
+  Player* player = new Player("Player 1", mSceneMgr);
+  ExtendedCamera* exCamera = new ExtendedCamera("ExtendedCamera", mSceneMgr, mCamera);
+
+  setCharacter(player);
+  setExtendedCamera(exCamera);
 
   // Add a point light
   Ogre::Light* light = mSceneMgr->createLight("MainLight");
@@ -242,10 +278,12 @@ void GameManager::createScene()
   physicsEngine->trackRigidBodyWithName(body, physicsCubeName);
 }
 
+//---------------------------------------------------------------------------
 void GameManager::destroyScene()
 {
 }
 
+//---------------------------------------------------------------------------
 void GameManager::createViewports()
 {
   // Create one viewport, entire window
@@ -258,6 +296,7 @@ void GameManager::createViewports()
     Ogre::Real(vp->getActualHeight()));
 }
 
+//---------------------------------------------------------------------------
 void GameManager::setupResources()
 {
   // Load resource paths from config file
@@ -283,21 +322,36 @@ void GameManager::setupResources()
   }
 }
 
+//---------------------------------------------------------------------------
 void GameManager::loadResources()
 {
   Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 }
 
+//---------------------------------------------------------------------------
+
 bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
 {
   if (mWindow->isClosed()) return false;
+
+  if (mShutDown) return false;
 
   // Capture/Update each input device
   mKeyboard->capture();
   mMouse->capture();
 
-  if (mKeyboard->isKeyDown(OIS::KC_ESCAPE))
-    return false;
+  // mPlayerNode->translate(mDirection * fe.timeSinceLastFrame, Ogre::Node::TS_LOCAL);
+  if (mChar) 
+  {
+    mChar->update (fe.timeSinceLastFrame, mKeyboard);
+
+    if (mExCamera) 
+    {
+      mExCamera->update (fe.timeSinceLastFrame,
+                         mChar->getCameraNode ()->_getDerivedPosition(),
+                         mChar->getSightNode ()->_getDerivedPosition());
+    }
+  }
 
   return true;
 }
@@ -334,6 +388,8 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
 	return true;
 }
 
+//---------------------------------------------------------------------------
+
 // Adjust mouse clipping area
 void GameManager::windowResized(Ogre::RenderWindow* rw)
 {
@@ -347,6 +403,7 @@ void GameManager::windowResized(Ogre::RenderWindow* rw)
   ms.height = height;
 }
 
+//---------------------------------------------------------------------------
 // Unattach OIS before window shutdown
 void GameManager::windowClosed(Ogre::RenderWindow* rw)
 {
@@ -363,6 +420,132 @@ void GameManager::windowClosed(Ogre::RenderWindow* rw)
     }
   }
 }
+
+//---------------------------------------------------------------------------
+bool GameManager::keyPressed(const OIS::KeyEvent& ke) 
+{
+  // 3rd Person - Chase Camera
+  if (ke.key == OIS::KC_F1)
+  {
+    if (mExCamera)
+    {
+      if (mChar)
+         mExCamera->instantUpdate (mChar->getCameraNode ()->_getDerivedPosition(), mChar->getSightNode ()->_getDerivedPosition());
+      mExCamera->setTightness (0.01f);
+    }
+  }
+
+  switch (ke.key)
+  {
+  case OIS::KC_ESCAPE: 
+    mShutDown = true;
+    break;
+  
+  // case OIS::KC_UP:
+  // case OIS::KC_W:
+  //   mDirection.z = -mMove;
+  //   break;
+
+  // case OIS::KC_DOWN:
+  // case OIS::KC_S:
+  //   mDirection.z = mMove;
+  //   break;
+
+  // // case OIS::KC_LEFT:
+  // // case OIS::KC_A:
+  // //   mDirection.x = -mMove;
+  // //   break;
+
+  // // case OIS::KC_RIGHT:
+  // // case OIS::KC_D:
+  // //   mDirection.x = mMove;
+  //   // break;
+
+  // case OIS::KC_PGDOWN:
+  // case OIS::KC_E:
+  //   mDirection.y = -mMove;
+  //   break;
+
+  // case OIS::KC_PGUP:
+  // case OIS::KC_Q:
+  //   mDirection.y = mMove;
+  //   break;
+  default:
+    break;
+  }
+  return true; 
+}
+
+//---------------------------------------------------------------------------
+bool GameManager::keyReleased(const OIS::KeyEvent& ke) 
+{ 
+  switch (ke.key)
+  {
+  // case OIS::KC_UP:
+  // case OIS::KC_W:
+  //     mDirection.z = 0;
+  //     break;
+   
+  // case OIS::KC_DOWN:
+  // case OIS::KC_S:
+  //     mDirection.z = 0;
+  //     break;
+   
+  // // case OIS::KC_LEFT:
+  // // case OIS::KC_A:
+  // //     mDirection.x = 0;
+  // //     break;
+   
+  // // case OIS::KC_RIGHT:
+  // // case OIS::KC_D:
+  // //     mDirection.x = 0;
+  // //     break;
+   
+  // case OIS::KC_PGDOWN:
+  // case OIS::KC_E:
+  //     mDirection.y = 0;
+  //     break;
+   
+  // case OIS::KC_PGUP:
+  // case OIS::KC_Q:
+  //     mDirection.y = 0;
+  //     break;
+   
+  default:
+      break;
+  }
+  return true;
+}
+
+//---------------------------------------------------------------------------
+bool GameManager::mouseMoved(const OIS::MouseEvent& me) 
+{ 
+  if (me.state.buttonDown(OIS::MB_Right))
+  {
+    // mPlayerNode->yaw(Ogre::Degree(-mRotate * me.state.X.rel), Ogre::Node::TS_WORLD);
+    // mPlayerNode->pitch(Ogre::Degree(-mRotate * me.state.Y.rel), Ogre::Node::TS_LOCAL);
+  }
+  return true; 
+}
+
+//---------------------------------------------------------------------------
+bool GameManager::mousePressed(
+  const OIS::MouseEvent& me, OIS::MouseButtonID id) 
+{ 
+  if (id == OIS::MB_Left)
+  {
+  }
+  return true; 
+}
+
+//---------------------------------------------------------------------------
+bool GameManager::mouseReleased(
+  const OIS::MouseEvent& me, OIS::MouseButtonID id) 
+{ 
+  return true; 
+}
+
+//---------------------------------------------------------------------------
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #define WIN32_LEAN_AND_MEAN
