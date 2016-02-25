@@ -8,6 +8,7 @@
 #include <OgreRenderWindow.h>
 #include <OgreConfigFile.h>
 #include <OgreException.h>
+#include <OgreMeshManager.h>
 
 //---------------------------------------------------------------------------
 GameManager::GameManager()
@@ -21,11 +22,9 @@ GameManager::GameManager()
     mInputMgr(0),
     mMouse(0),
     mKeyboard(0),
-    // For buffered input tutorial
-    mRotate(.13),
-    mMove(250),
-    mCamNode(0),
-    mDirection(Ogre::Vector3::ZERO)
+    mChar(0),
+    mExCamera(0),
+    mMode(0)
 {
 }
 
@@ -38,6 +37,18 @@ GameManager::~GameManager()
   windowClosed(mWindow);
  
   delete mRoot;
+}
+
+//---------------------------------------------------------------------------
+void GameManager::setCharacter (Player* character) 
+{
+  mChar = character;
+}
+
+//---------------------------------------------------------------------------
+void GameManager::setExtendedCamera (ExtendedCamera* cam) 
+{
+  mExCamera = cam;
 }
 
 //---------------------------------------------------------------------------
@@ -124,15 +135,10 @@ void GameManager::createCamera()
   // Create the camera
   mCamera = mSceneMgr->createCamera("MainCam");
 
-  mCamera->setPosition(Ogre::Vector3(0, 300, 500));
+  // mCamera->setPosition(Ogre::Vector3(0, 300, 500));
+  mCamera->setPosition (0, 0, 0);    // Required or else the camera will have an offset
   mCamera->lookAt(Ogre::Vector3(0, 0, 0));
   mCamera->setNearClipDistance(5);
-
-  /* Tutorial 5 */
-  // mCamera->setPosition(0, 0, 80);
-  // // Look back along -Z
-  // mCamera->lookAt(0, 0, -300);
-  // mCamera->setNearClipDistance(5);
 }
 
 //---------------------------------------------------------------------------
@@ -152,8 +158,6 @@ void GameManager::createFrameListener()
   
   // Create Keyboard and Mouse to be used
   // OPTIONAL: Joystick
-  // We pass false because we want the keyboard input unbuffered
-  // TODO: Change to buffered inputs
   mKeyboard = static_cast<OIS::Keyboard*>(
     mInputMgr->createInputObject(OIS::OISKeyboard, true));
   mMouse = static_cast<OIS::Mouse*>(
@@ -176,12 +180,12 @@ void GameManager::createScene()
 {
   mSceneMgr->setAmbientLight(Ogre::ColourValue(0, 0, 0));
   mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
- 
-  // Create ninja
-  Ogre::Entity* ninjaEntity = mSceneMgr->createEntity("ninja.mesh");
-  ninjaEntity->setCastShadows(true);
- 
-  mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ninjaEntity);
+
+  Player* player = new Player("Player 1", mSceneMgr);
+  ExtendedCamera* exCamera = new ExtendedCamera("ExtendedCamera", mSceneMgr, mCamera);
+
+  setCharacter(player);
+  setExtendedCamera(exCamera);
  
   // Create ground
   Ogre::Plane plane(Ogre::Vector3::UNIT_Y, 0);
@@ -226,36 +230,6 @@ void GameManager::createScene()
   pointLight->setSpecularColour(.3, .3, .3);
  
   pointLight->setPosition(Ogre::Vector3(0, 150, 250));
-
-  Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
-  "CamNode1", Ogre::Vector3(0, 300, 500));
-  mCamNode = node;
-  node->attachObject(mCamera);
-
-  /* Tutorial 5 */
-  // mSceneMgr->setAmbientLight(Ogre::ColourValue(.2, .2, .2));
- 
-  // Ogre::Entity* tudorEntity = mSceneMgr->createEntity("tudorhouse.mesh");
-  // Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
-  //   "Node");
-  // node->attachObject(tudorEntity);
- 
-  // Ogre::Light* light = mSceneMgr->createLight("Light1");
-  // light->setType(Ogre::Light::LT_POINT);
-  // light->setPosition(Ogre::Vector3(250, 150, 250));
-  // light->setDiffuseColour(Ogre::ColourValue::White);
-  // light->setSpecularColour(Ogre::ColourValue::White);
- 
-  // node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
-  // "CamNode1", Ogre::Vector3(1200, -370, 0));
-  // node->yaw(Ogre::Degree(90));
-
-  // mCamNode = node;
-  // node->attachObject(mCamera);
-
-  // node = mSceneMgr->getRootSceneNode()->createChildSceneNode(
-  // "CamNode2", Ogre::Vector3(-500, -370, 1000));
-  // node->yaw(Ogre::Degree(-30));
 }
 
 //---------------------------------------------------------------------------
@@ -319,8 +293,23 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
   mKeyboard->capture();
   mMouse->capture();
  
-  mCamNode->translate(mDirection * fe.timeSinceLastFrame, Ogre::Node::TS_LOCAL);
-  // if (mKeyboard->isKeyDown(OIS::KC_ESCAPE)) return false;
+  // mPlayerNode->translate(mDirection * fe.timeSinceLastFrame, Ogre::Node::TS_LOCAL);
+  if (mChar) 
+  {
+    mChar->update (fe.timeSinceLastFrame, mKeyboard);
+
+    if (mExCamera) 
+    {
+      switch (mMode) 
+      {
+        case 0: // 3rd person chase
+          mExCamera->update (fe.timeSinceLastFrame, 
+          mChar->getCameraNode ()->_getDerivedPosition(), 
+          mChar->getSightNode ()->_getDerivedPosition());
+          break;
+      }
+    }
+  }
  
   return true;
 }
@@ -361,53 +350,52 @@ void GameManager::windowClosed(Ogre::RenderWindow* rw)
 bool GameManager::keyPressed(const OIS::KeyEvent& ke) 
 { 
 
+  // 3rd Person - Chase Camera
+  if (ke.key == OIS::KC_F1) 
+  {
+    if (mExCamera) 
+    {
+      if (mChar)
+         mExCamera->instantUpdate (mChar->getCameraNode ()->_getDerivedPosition(), mChar->getSightNode ()->_getDerivedPosition());
+      mExCamera->setTightness (0.01f);
+    }
+  } 
+
   switch (ke.key)
   {
   case OIS::KC_ESCAPE: 
     mShutDown = true;
     break;
-
-  case OIS::KC_1:
-    // mCamera->getParentSceneNode()->detachObject(mCamera);
-    // mCamNode = mSceneMgr->getSceneNode("CamNode1");
-    // mCamNode->attachObject(mCamera);
-    break;
-
-  case OIS::KC_2:
-    // mCamera->getParentSceneNode()->detachObject(mCamera);
-    // mCamNode = mSceneMgr->getSceneNode("CamNode2");
-    // mCamNode->attachObject(mCamera);
-    break;
   
-  case OIS::KC_UP:
-  case OIS::KC_W:
-    mDirection.z = -mMove;
-    break;
+  // case OIS::KC_UP:
+  // case OIS::KC_W:
+  //   mDirection.z = -mMove;
+  //   break;
 
-  case OIS::KC_DOWN:
-  case OIS::KC_S:
-    mDirection.z = mMove;
-    break;
+  // case OIS::KC_DOWN:
+  // case OIS::KC_S:
+  //   mDirection.z = mMove;
+  //   break;
 
-  case OIS::KC_LEFT:
-  case OIS::KC_A:
-    mDirection.x = -mMove;
-    break;
+  // // case OIS::KC_LEFT:
+  // // case OIS::KC_A:
+  // //   mDirection.x = -mMove;
+  // //   break;
 
-  case OIS::KC_RIGHT:
-  case OIS::KC_D:
-    mDirection.x = mMove;
-    break;
+  // // case OIS::KC_RIGHT:
+  // // case OIS::KC_D:
+  // //   mDirection.x = mMove;
+  //   // break;
 
-  case OIS::KC_PGDOWN:
-  case OIS::KC_E:
-    mDirection.y = -mMove;
-    break;
+  // case OIS::KC_PGDOWN:
+  // case OIS::KC_E:
+  //   mDirection.y = -mMove;
+  //   break;
 
-  case OIS::KC_PGUP:
-  case OIS::KC_Q:
-    mDirection.y = mMove;
-    break;
+  // case OIS::KC_PGUP:
+  // case OIS::KC_Q:
+  //   mDirection.y = mMove;
+  //   break;
   default:
     break;
   }
@@ -419,35 +407,35 @@ bool GameManager::keyReleased(const OIS::KeyEvent& ke)
 { 
   switch (ke.key)
   {
-  case OIS::KC_UP:
-  case OIS::KC_W:
-      mDirection.z = 0;
-      break;
+  // case OIS::KC_UP:
+  // case OIS::KC_W:
+  //     mDirection.z = 0;
+  //     break;
    
-  case OIS::KC_DOWN:
-  case OIS::KC_S:
-      mDirection.z = 0;
-      break;
+  // case OIS::KC_DOWN:
+  // case OIS::KC_S:
+  //     mDirection.z = 0;
+  //     break;
    
-  case OIS::KC_LEFT:
-  case OIS::KC_A:
-      mDirection.x = 0;
-      break;
+  // // case OIS::KC_LEFT:
+  // // case OIS::KC_A:
+  // //     mDirection.x = 0;
+  // //     break;
    
-  case OIS::KC_RIGHT:
-  case OIS::KC_D:
-      mDirection.x = 0;
-      break;
+  // // case OIS::KC_RIGHT:
+  // // case OIS::KC_D:
+  // //     mDirection.x = 0;
+  // //     break;
    
-  case OIS::KC_PGDOWN:
-  case OIS::KC_E:
-      mDirection.y = 0;
-      break;
+  // case OIS::KC_PGDOWN:
+  // case OIS::KC_E:
+  //     mDirection.y = 0;
+  //     break;
    
-  case OIS::KC_PGUP:
-  case OIS::KC_Q:
-      mDirection.y = 0;
-      break;
+  // case OIS::KC_PGUP:
+  // case OIS::KC_Q:
+  //     mDirection.y = 0;
+  //     break;
    
   default:
       break;
@@ -460,8 +448,8 @@ bool GameManager::mouseMoved(const OIS::MouseEvent& me)
 { 
   if (me.state.buttonDown(OIS::MB_Right))
   {
-    mCamNode->yaw(Ogre::Degree(-mRotate * me.state.X.rel), Ogre::Node::TS_WORLD);
-    mCamNode->pitch(Ogre::Degree(-mRotate * me.state.Y.rel), Ogre::Node::TS_LOCAL);
+    // mPlayerNode->yaw(Ogre::Degree(-mRotate * me.state.X.rel), Ogre::Node::TS_WORLD);
+    // mPlayerNode->pitch(Ogre::Degree(-mRotate * me.state.Y.rel), Ogre::Node::TS_LOCAL);
   }
   return true; 
 }
@@ -472,8 +460,6 @@ bool GameManager::mousePressed(
 { 
   if (id == OIS::MB_Left)
   {
-    Ogre::Light* light2 = mSceneMgr->getLight("Light1");
-    light2->setVisible(!light2->isVisible());
   }
   return true; 
 }

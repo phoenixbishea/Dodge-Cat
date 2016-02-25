@@ -1,6 +1,9 @@
 #ifndef GameManager_h
 #define GameManager_h
  
+#include "Player.hpp"
+#include "ExtendedCamera.hpp"
+
 #include <OgreRoot.h>
 #include <OgreWindowEventUtilities.h>
  
@@ -21,6 +24,10 @@ public:
  
   bool go();
  
+  void setCharacter (Player* character);
+
+  void setExtendedCamera (ExtendedCamera *cam);
+
 private:
   virtual bool setup();
   virtual bool configure();
@@ -58,12 +65,11 @@ private:
   OIS::Keyboard* mKeyboard;
   OIS::Mouse* mMouse;
 
-  // For buffered input tutorial
-  Ogre::Real mRotate;
-  Ogre::Real mMove;
-  Ogre::SceneNode* mCamNode;
-  Ogre::Vector3 mDirection;
+  Player* mChar;
+  ExtendedCamera* mExCamera;
  
+  // Camera mode - Now supports 1st person, 3rd person (chasing) and 3rd person (fixed)
+  unsigned int mMode;
 };
  
 #endif
