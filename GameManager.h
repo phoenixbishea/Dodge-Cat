@@ -12,6 +12,9 @@
 
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/Ogre/Renderer.h>
+
+#include <SDL.h>
+#include <SDL_mixer.h>
  
 class GameManager
   : public Ogre::WindowEventListener,
@@ -65,6 +68,7 @@ private:
   OIS::Mouse* mMouse;
 
   CEGUI::OgreRenderer* mRenderer;
+  Mix_Music* music;
 
   // For buffered input tutorial
   Ogre::Real mRotate;

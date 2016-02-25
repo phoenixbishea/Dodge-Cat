@@ -176,14 +176,6 @@ void GameManager::setupCEGUI()
 {
   mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
 
-  CEGUI::DefaultResourceProvider* rp = static_cast<CEGUI::DefaultResourceProvider*>
-    (CEGUI::System::getSingleton().getResourceProvider());
-
-  rp->setResourceGroupDirectory("schemes", "/lusr/opt/cegui-0.8.4/share/cegui-0/schemes");
-  rp->setResourceGroupDirectory("imagesets", "/lusr/opt/cegui-0.8.4/share/cegui-0/imagesets");
-  rp->setResourceGroupDirectory("fonts", "/lusr/opt/cegui-0.8.4/share/cegui-0/fonts");
-  rp->setResourceGroupDirectory("layouts", "/lusr/opt/cegui-0.8.4/share/cegui-0/layouts");
-  rp->setResourceGroupDirectory("looknfeels", "/lusr/opt/cegui-0.8.4/share/cegui-0/looknfeel");
 
   //Sets up the default resource groups
   CEGUI::ImageManager::setImagesetDefaultResourceGroup("Imagesets");
@@ -202,6 +194,12 @@ void GameManager::setupCEGUI()
 //---------------------------------------------------------------------------
 void GameManager::createScene()
 {
+
+  
+
+  Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
+  music = Mix_LoadMUS("rules.mp3");
+  Mix_PlayMusic(music, -1);
 
   setupCEGUI();
 
@@ -267,8 +265,8 @@ void GameManager::createScene()
   CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
   CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
 
-  CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
-  quit->setText("Quit");
+  // CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+  // quit->setText("Quit");
   //quit->setSize(CEGUI::UVector2(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
 
   // sheet->addChildWindow(quit);
@@ -305,6 +303,8 @@ void GameManager::createScene()
 //---------------------------------------------------------------------------
 void GameManager::destroyScene()
 {
+  Mix_FreeMusic(music);
+  Mix_CloseAudio();
 }
 
 //---------------------------------------------------------------------------
