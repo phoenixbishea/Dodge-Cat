@@ -44,13 +44,13 @@ GameManager::~GameManager()
 }
 
 //---------------------------------------------------------------------------
-void GameManager::setCharacter (Player* character) 
+void GameManager::setCharacter (Player* character)
 {
   mChar = character;
 }
 
 //---------------------------------------------------------------------------
-void GameManager::setExtendedCamera (ExtendedCamera* cam) 
+void GameManager::setExtendedCamera (ExtendedCamera* cam)
 {
   mExCamera = cam;
 }
@@ -172,7 +172,7 @@ void GameManager::createFrameListener()
   // Register GameManager as source of callback methods
   mMouse->setEventCallback(this);
   mKeyboard->setEventCallback(this);
-  
+
   // Set initial mouse clipping size
   windowResized(mWindow);
   // Register as a Window listener
@@ -237,7 +237,212 @@ void GameManager::createScene()
   //add the body to the dynamics world
   this->physicsEngine->getDynamicsWorld()->addRigidBody(groundBody);
 
-  //createWalls();
+  createWalls();
+}
+
+//---------------------------------------------------------------------------
+
+void GameManager::createWalls()
+{
+    /*************
+     * Left Wall *
+     *************/
+    Ogre::Plane leftWallPlane(Ogre::Vector3::UNIT_X, 0);
+    Ogre::MeshManager::getSingleton()
+        .createPlane("leftWall",
+                     Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                     leftWallPlane,
+                     6000, 1500,
+                     20, 20,
+                     true,
+                     1, 5, 5,
+                     Ogre::Vector3::UNIT_Z);
+
+    Ogre::Entity *entLeftWall = mSceneMgr->createEntity("LeftWallEntity", "leftWall");
+    entLeftWall->setCastShadows(false);
+    entLeftWall->setMaterialName("Examples/Rockwall");
+    Ogre::SceneNode *LeftWallNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("LeftWallNode");
+    LeftWallNode->attachObject(entLeftWall);
+    LeftWallNode->setPosition(Ogre::Vector3(-750.0, 3000.0, 0.0));
+
+    // create the plane entity to the physics engine, and attach it to the node
+    btTransform LeftWallTransform;
+    LeftWallTransform.setIdentity();
+    LeftWallTransform.setOrigin(btVector3(-750, 3000, 0));
+
+    btScalar LeftWallMass(0.0); // the mass is 0, because the LeftWall is immovable (static)
+    btVector3 localLeftWallInertia(0, 0, 0);
+
+    btCollisionShape *LeftWallShape = new btBoxShape(btVector3(0.1, 6000.0, 1500.0));
+    btDefaultMotionState *LeftWallMotionState = new btDefaultMotionState(LeftWallTransform);
+
+    LeftWallShape->calculateLocalInertia(LeftWallMass, localLeftWallInertia);
+
+    btRigidBody::btRigidBodyConstructionInfo LeftWallRBInfo(LeftWallMass, LeftWallMotionState, LeftWallShape, localLeftWallInertia);
+    btRigidBody *LeftWallBody = new btRigidBody(LeftWallRBInfo);
+
+    //add the body to the dynamics world
+    this->physicsEngine->getDynamicsWorld()->addRigidBody(LeftWallBody);
+
+    /**************
+     * Right Wall *
+     **************/
+    Ogre::Plane rightWallPlane(Ogre::Vector3::NEGATIVE_UNIT_X, 0);
+    Ogre::MeshManager::getSingleton()
+        .createPlane("rightWall",
+                     Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                     rightWallPlane,
+                     6000, 1500,
+                     20, 20,
+                     true,
+                     1, 5, 5,
+                     Ogre::Vector3::UNIT_Z);
+
+    Ogre::Entity *entRightWall = mSceneMgr->createEntity("RightWallEntity", "rightWall");
+    entRightWall->setCastShadows(false);
+    entRightWall->setMaterialName("Examples/Rockwall");
+    Ogre::SceneNode *RightWallNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("RightWallNode");
+    RightWallNode->attachObject(entRightWall);
+    RightWallNode->setPosition(Ogre::Vector3(750.0, 3000.0, 0.0));
+
+    // create the plane entity to the physics engine, and attach it to the node
+    btTransform RightWallTransform;
+    RightWallTransform.setIdentity();
+    RightWallTransform.setOrigin(btVector3(750, 3000, 0));
+
+    btScalar RightWallMass(0.0); // the mass is 0, because the RightWall is immovable (static)
+    btVector3 localRightWallInertia(0, 0, 0);
+
+    btCollisionShape *RightWallShape = new btBoxShape(btVector3(0.1, 6000.0, 1500.0));
+    btDefaultMotionState *RightWallMotionState = new btDefaultMotionState(RightWallTransform);
+
+    RightWallShape->calculateLocalInertia(RightWallMass, localRightWallInertia);
+
+    btRigidBody::btRigidBodyConstructionInfo RightWallRBInfo(RightWallMass, RightWallMotionState, RightWallShape, localRightWallInertia);
+    btRigidBody *RightWallBody = new btRigidBody(RightWallRBInfo);
+
+    //add the body to the dynamics world
+    this->physicsEngine->getDynamicsWorld()->addRigidBody(RightWallBody);
+
+    /**************
+     * Front Wall *
+     **************/
+    Ogre::Plane frontWallPlane(Ogre::Vector3::UNIT_Z, 0);
+    Ogre::MeshManager::getSingleton()
+        .createPlane("frontWall",
+                     Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                     frontWallPlane,
+                     6000, 1500,
+                     20, 20,
+                     true,
+                     1, 5, 5,
+                     Ogre::Vector3::UNIT_X);
+
+    Ogre::Entity *entFrontWall = mSceneMgr->createEntity("FrontWallEntity", "frontWall");
+    entFrontWall->setCastShadows(false);
+    entFrontWall->setMaterialName("Examples/Rockwall");
+    Ogre::SceneNode *FrontWallNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("FrontWallNode");
+    FrontWallNode->attachObject(entFrontWall);
+    FrontWallNode->setPosition(Ogre::Vector3(0.0, 3000.0, -750.0));
+
+    // create the plane entity to the physics engine, and attach it to the node
+    btTransform FrontWallTransform;
+    FrontWallTransform.setIdentity();
+    FrontWallTransform.setOrigin(btVector3(0, 3000, -750));
+
+    btScalar FrontWallMass(0.0); // the mass is 0, because the FrontWall is immovable (static)
+    btVector3 localFrontWallInertia(0, 0, 0);
+
+    btCollisionShape *FrontWallShape = new btBoxShape(btVector3(1500.0, 6000.0, 0.1));
+    btDefaultMotionState *FrontWallMotionState = new btDefaultMotionState(FrontWallTransform);
+
+    FrontWallShape->calculateLocalInertia(FrontWallMass, localFrontWallInertia);
+
+    btRigidBody::btRigidBodyConstructionInfo FrontWallRBInfo(FrontWallMass, FrontWallMotionState, FrontWallShape, localFrontWallInertia);
+    btRigidBody *FrontWallBody = new btRigidBody(FrontWallRBInfo);
+
+    //add the body to the dynamics world
+    this->physicsEngine->getDynamicsWorld()->addRigidBody(FrontWallBody);
+
+    /*************
+     * Back Wall *
+     *************/
+    Ogre::Plane backWallPlane(Ogre::Vector3::NEGATIVE_UNIT_Z, 0);
+    Ogre::MeshManager::getSingleton()
+        .createPlane("backWall",
+                     Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                     backWallPlane,
+                     6000, 1500,
+                     20, 20,
+                     true,
+                     1, 5, 5,
+                     Ogre::Vector3::UNIT_X);
+
+    Ogre::Entity *entBackWall = mSceneMgr->createEntity("BackWallEntity", "backWall");
+    entBackWall->setCastShadows(false);
+    entBackWall->setMaterialName("Examples/Rockwall");
+    Ogre::SceneNode *BackWallNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("BackWallNode");
+    BackWallNode->attachObject(entBackWall);
+    BackWallNode->setPosition(Ogre::Vector3(0.0, 3000.0, 750.0));
+
+    // create the plane entity to the physics engine, and attach it to the node
+    btTransform BackWallTransform;
+    BackWallTransform.setIdentity();
+    BackWallTransform.setOrigin(btVector3(0, 3000, 750));
+
+    btScalar BackWallMass(0.0); // the mass is 0, because the BackWall is immovable (static)
+    btVector3 localBackWallInertia(0, 0, 0);
+
+    btCollisionShape *BackWallShape = new btBoxShape(btVector3(1500.0, 6000.0, 0.1));
+    btDefaultMotionState *BackWallMotionState = new btDefaultMotionState(BackWallTransform);
+
+    BackWallShape->calculateLocalInertia(BackWallMass, localBackWallInertia);
+
+    btRigidBody::btRigidBodyConstructionInfo BackWallRBInfo(BackWallMass, BackWallMotionState, BackWallShape, localBackWallInertia);
+    btRigidBody *BackWallBody = new btRigidBody(BackWallRBInfo);
+
+    //add the body to the dynamics world
+    this->physicsEngine->getDynamicsWorld()->addRigidBody(BackWallBody);
+
+    /***********
+     * Ceiling *
+     ***********/
+    Ogre::Plane ceilingPlane(Ogre::Vector3::NEGATIVE_UNIT_Y, 0);
+    Ogre::MeshManager::getSingleton()
+        .createPlane("ceiling",
+                     Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                     ceilingPlane,
+                     1500, 1500,
+                     20, 20,
+                     true,
+                     1, 5, 5,
+                     Ogre::Vector3::UNIT_Z);
+
+    Ogre::Entity *entCeiling = mSceneMgr->createEntity("CeilingEntity", "ceiling");
+    entCeiling->setCastShadows(false);
+    entCeiling->setMaterialName("Examples/Rockwall");
+    Ogre::SceneNode *CeilingNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("CeilingNode");
+    CeilingNode->attachObject(entCeiling);
+    CeilingNode->setPosition(Ogre::Vector3(0.0, 6000.0, 0.0));
+
+    // create the plane entity to the physics engine, and attach it to the node
+    btTransform CeilingTransform;
+    CeilingTransform.setIdentity();
+    CeilingTransform.setOrigin(btVector3(0, 6000, 0));
+
+    btScalar CeilingMass(0.0); // the mass is 0, because the Ceiling is immovable (static)
+    btVector3 localCeilingInertia(0, 0, 0);
+
+    btCollisionShape *CeilingShape = new btBoxShape(btVector3(1500.0, 0.1, 1500.0));
+    btDefaultMotionState *CeilingMotionState = new btDefaultMotionState(CeilingTransform);
+
+    CeilingShape->calculateLocalInertia(CeilingMass, localCeilingInertia);
+
+    btRigidBody::btRigidBodyConstructionInfo CeilingRBInfo(CeilingMass, CeilingMotionState, CeilingShape, localCeilingInertia);
+    btRigidBody *CeilingBody = new btRigidBody(CeilingRBInfo);
+
+    //add the body to the dynamics world
+    this->physicsEngine->getDynamicsWorld()->addRigidBody(CeilingBody);
 }
 
 //---------------------------------------------------------------------------
@@ -318,7 +523,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
     {
         mChar->update (fe.timeSinceLastFrame, mKeyboard);
 
-        if (mExCamera) 
+        if (mExCamera)
         {
             mExCamera->update (fe.timeSinceLastFrame,
                                mChar->getCameraNode ()->_getDerivedPosition(),
@@ -326,7 +531,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         }
     }
 
-   if (this->physicsEngine != nullptr) 
+   if (this->physicsEngine != nullptr)
    {
         physicsEngine->getDynamicsWorld()->stepSimulation(1.0f / 60.0f);
 
@@ -347,18 +552,18 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
             std::cout << "player position: " << t2.x() << " " << t2.y() << " " << t2.z() << std::endl;
         }
 
-        for (int i = 0; i < this->physicsEngine->getCollisionObjectCount(); i++) 
+        for (int i = 0; i < this->physicsEngine->getCollisionObjectCount(); i++)
         {
             btCollisionObject* obj = this->physicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
             btRigidBody* body = btRigidBody::upcast(obj);
 
-            if (body && body->getMotionState() && obj->getCollisionFlags() != btCollisionObject::CF_CHARACTER_OBJECT) 
+            if (body && body->getMotionState() && obj->getCollisionFlags() != btCollisionObject::CF_CHARACTER_OBJECT)
             {
                 btTransform trans;
                 body->getMotionState()->getWorldTransform(trans);
 
                 void *userPointer = body->getUserPointer();
-                if (userPointer) 
+                if (userPointer)
                 {
                     btQuaternion orientation = trans.getRotation();
                     Ogre::SceneNode *sceneNode = static_cast<Ogre::SceneNode *>(userPointer);
@@ -411,7 +616,7 @@ void GameManager::windowClosed(Ogre::RenderWindow* rw)
 }
 
 //---------------------------------------------------------------------------
-bool GameManager::keyPressed(const OIS::KeyEvent& ke) 
+bool GameManager::keyPressed(const OIS::KeyEvent& ke)
 {
   // 3rd Person - Chase Camera
   if (ke.key == OIS::KC_F1)
@@ -426,10 +631,10 @@ bool GameManager::keyPressed(const OIS::KeyEvent& ke)
 
   switch (ke.key)
   {
-  case OIS::KC_ESCAPE: 
+  case OIS::KC_ESCAPE:
     mShutDown = true;
     break;
-  
+
   // case OIS::KC_UP:
   // case OIS::KC_W:
   //   mDirection.z = -mMove;
@@ -462,41 +667,41 @@ bool GameManager::keyPressed(const OIS::KeyEvent& ke)
   default:
     break;
   }
-  return true; 
-}
-
-//---------------------------------------------------------------------------
-bool GameManager::keyReleased(const OIS::KeyEvent& ke) 
-{ 
   return true;
 }
 
 //---------------------------------------------------------------------------
-bool GameManager::mouseMoved(const OIS::MouseEvent& me) 
-{ 
+bool GameManager::keyReleased(const OIS::KeyEvent& ke)
+{
+  return true;
+}
+
+//---------------------------------------------------------------------------
+bool GameManager::mouseMoved(const OIS::MouseEvent& me)
+{
   if (me.state.buttonDown(OIS::MB_Right))
   {
     // mPlayerNode->yaw(Ogre::Degree(-mRotate * me.state.X.rel), Ogre::Node::TS_WORLD);
     // mPlayerNode->pitch(Ogre::Degree(-mRotate * me.state.Y.rel), Ogre::Node::TS_LOCAL);
   }
-  return true; 
+  return true;
 }
 
 //---------------------------------------------------------------------------
 bool GameManager::mousePressed(
-  const OIS::MouseEvent& me, OIS::MouseButtonID id) 
-{ 
+  const OIS::MouseEvent& me, OIS::MouseButtonID id)
+{
   if (id == OIS::MB_Left)
   {
   }
-  return true; 
+  return true;
 }
 
 //---------------------------------------------------------------------------
 bool GameManager::mouseReleased(
-  const OIS::MouseEvent& me, OIS::MouseButtonID id) 
-{ 
-  return true; 
+  const OIS::MouseEvent& me, OIS::MouseButtonID id)
+{
+  return true;
 }
 
 //---------------------------------------------------------------------------

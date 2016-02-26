@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#define WALK_SPEED 500
-#define ROTATION_SPEED 10
+float WALK_SPEED = 800.0f;
+float ROTATION_SPEED = 10.0f;
 
 Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* physicsEngine) 
 {
@@ -98,6 +98,10 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard *input)
         t.setRotation(orientation);
         player->getGhostObject()->setWorldTransform(t);
     }
+    if (input->isKeyDown(OIS::KC_SPACE))
+        WALK_SPEED = 3000.0f;
+    else
+        WALK_SPEED = 800.0f;
 }
 
 // The three methods below returns the two camera-related nodes, 

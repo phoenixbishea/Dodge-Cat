@@ -35,7 +35,7 @@ private:
   virtual void chooseSceneManager();
   virtual void createCamera();
   virtual void createFrameListener();
-  virtual void createScene();
+    virtual void createScene();
   virtual void destroyScene();
   virtual void createViewports();
   virtual void setupResources();
@@ -53,7 +53,9 @@ private:
   // Mouse listener callbacks
   virtual bool mouseMoved(const OIS::MouseEvent& me);
   virtual bool mousePressed(const OIS::MouseEvent& me, OIS::MouseButtonID id);
-  virtual bool mouseReleased(const OIS::MouseEvent& me, OIS::MouseButtonID id);
+    virtual bool mouseReleased(const OIS::MouseEvent& me, OIS::MouseButtonID id);
+
+    void createWalls();
 
   Ogre::Root* mRoot;
   Ogre::String mResourcesCfg;
