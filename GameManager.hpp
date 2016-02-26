@@ -70,7 +70,9 @@ private:
   BulletPhysics* physicsEngine;
 
   Player* mChar;
-  ExtendedCamera* mExCamera;
+    ExtendedCamera* mExCamera;
+
+    double timeSinceLastPhysicsStep;
 };
 
 #endif

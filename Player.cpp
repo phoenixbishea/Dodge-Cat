@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#define WALK_SPEED 500
+#define ROTATION_SPEED 10
+
 Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* physicsEngine) 
 {
     // Setup basic member references
@@ -21,7 +24,7 @@ Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* 
     ghost = new btPairCachingGhostObject();
 
     btTransform t = ghost->getWorldTransform();
-    t.setOrigin(btVector3(0.0, 0.0, 0.0));
+    t.setOrigin(btVector3(0.0, 10.0, 0.0));
     ghost->setWorldTransform(t);
 
     // physicsEngine->getDynamicsWorld()->getPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
@@ -32,29 +35,11 @@ Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* 
                                                           btBroadphaseProxy::CharacterFilter,
                                                           btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
     physicsEngine->getDynamicsWorld()->addAction(player);
-    
 
-    // btTransform t;
-    // t.setIdentity();
-    // t.setOrigin(btVector3(0, 200, 0));
 
-    // btScalar mass(100.0);
-    // btVector3 inertia(1, 1, 1);
+    btVector3 trans = ghost->getWorldTransform().getOrigin();
+    std::cout << trans.x() << ", " << trans.y() << ", " << trans.z() << std::endl; 
 
-    // btCollisionShape* shape = new btBoxShape(btVector3(100.0, 10.0, 100.0));
-    // btDefaultMotionState* ms = new btDefaultMotionState(t);
-
-    // shape->calculateLocalInertia(mass, inertia);
-
-    // btRigidBody::btRigidBodyConstructionInfo RBInfo(mass, ms, shape, inertia);
-    // this->body = new btRigidBody(RBInfo);
-    // this->body->setUserPointer(mMainNode);
-    //this->body->setAngularFactor(btVector3(0, 1, 0));
-    //this->body->setLinearFactor(btVector3(1, 0, 1));
-
-    //add the body to the dynamics world
-    // physicsEngine->getDynamicsWorld()->addRigidBody(body);
-    // physicsEngine->trackRigidBodyWithName(body, std::string("Player"));
 }
 
 Player::~Player () 
@@ -73,7 +58,7 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard *input)
     if (input->isKeyDown (OIS::KC_W) || input->isKeyDown(OIS::KC_COMMA))
     {
         Ogre::Quaternion orientation = mMainNode->getOrientation();
-        Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, -100 * elapsedTime);
+        Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, -WALK_SPEED * elapsedTime);
         btVector3 move(direction.x, direction.y, direction.z);
 
         player->setWalkDirection (move);
@@ -83,7 +68,7 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard *input)
     if (input->isKeyDown (OIS::KC_S) || input->isKeyDown(OIS::KC_O))
     {
         Ogre::Quaternion orientation = mMainNode->getOrientation();
-        Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, 100 * elapsedTime);
+        Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, WALK_SPEED * elapsedTime);
         btVector3 move(direction.x, direction.y, direction.z);
         player->setWalkDirection (move);
     }
@@ -94,7 +79,7 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard *input)
         btQuaternion rotation;
         rotation = rotation.getIdentity();
         rotation.setX(0);
-        rotation.setY(elapsedTime);
+        rotation.setY(ROTATION_SPEED * elapsedTime);
         rotation.setZ(0);
         orientation = rotation * orientation;
         t.setRotation(orientation);
@@ -107,7 +92,7 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard *input)
         btQuaternion rotation;
         rotation = rotation.getIdentity();
         rotation.setX(0);
-        rotation.setY(-elapsedTime);
+        rotation.setY(-ROTATION_SPEED * elapsedTime);
         rotation.setZ(0);
         orientation = rotation * orientation;
         t.setRotation(orientation);
@@ -142,11 +127,14 @@ btTransform& Player::getWorldTransform()
     return this->player->getGhostObject()->getWorldTransform();
 }
 
-void Player::setPosition(Ogre::Vector3 vec) {
-    this->mMainNode->setPosition(vec);
+void Player::setOgrePosition(Ogre::Vector3 vec) {
+    this->mMainNode->translate(vec - mMainNode->getPosition());
 }
 
-void Player::setOrientation(Ogre::Quaternion q) {
+void Player::setOgreOrientation(Ogre::Quaternion q) {
     this->mMainNode->setOrientation(q);
 }
 
+float Player::getCollisionObjectHalfHeight() {
+    return 50.0;
+}

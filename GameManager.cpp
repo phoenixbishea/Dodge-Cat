@@ -26,7 +26,8 @@ GameManager::GameManager()
     mKeyboard(0),
     physicsEngine(0),
     mChar(0),
-    mExCamera(0)
+    mExCamera(0),
+    timeSinceLastPhysicsStep(0)
 {
 }
 
@@ -82,9 +83,6 @@ bool GameManager::go()
 //---------------------------------------------------------------------------
 bool GameManager::setup()
 {
-  physicsEngine = new BulletPhysics();
-  physicsEngine->initObjects();
-
   mRoot = new Ogre::Root(mPluginsCfg);
 
   setupResources();
@@ -99,7 +97,11 @@ bool GameManager::setup()
   Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
   chooseSceneManager();
-  
+
+  // Setup Bullet physics
+  physicsEngine = new BulletPhysics();
+  physicsEngine->initObjects();
+
   // Create the scene
   createScene();
   createCamera();
@@ -305,10 +307,14 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
 
 bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
 {
-
+    timeSinceLastPhysicsStep += fe.timeSinceLastFrame;
+    if (timeSinceLastPhysicsStep > 1.0 / 60.0)
+        timeSinceLastPhysicsStep -= 1.0 / 60.0;
+    else
+        return true;
     // mPlayerNode->translate(mDirection * fe.timeSinceLastFrame, Ogre::Node::TS_LOCAL);
 
-  if (mChar != NULL)
+    if (mChar != NULL)
     {
         mChar->update (fe.timeSinceLastFrame, mKeyboard);
 
@@ -320,22 +326,22 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         }
     }
 
-   if (this->physicsEngine != NULL) 
+   if (this->physicsEngine != nullptr) 
    {
-        physicsEngine->getDynamicsWorld()->stepSimulation(1.0f / 120.0f); //suppose you have 60 frames per second
+        physicsEngine->getDynamicsWorld()->stepSimulation(1.0f / 60.0f);
 
-        if (mChar != NULL)
+        if (mChar != nullptr)
         {
             this->mChar->updateAction(this->physicsEngine->getDynamicsWorld(), fe.timeSinceLastFrame);
             btTransform& trans = this->mChar->getWorldTransform();
             // Update player rendering position
-            this->mChar->setPosition(Ogre::Vector3(trans.getOrigin().getX(),
-                                                   trans.getOrigin().getY(),
-                                                   trans.getOrigin().getZ()));
-            this->mChar->setOrientation(Ogre::Quaternion(trans.getRotation().getW(),
-                                                         trans.getRotation().getX(),
-                                                         trans.getRotation().getY(),
-                                                         trans.getRotation().getZ()));
+            this->mChar->setOgrePosition(Ogre::Vector3(trans.getOrigin().getX(),
+                                                       trans.getOrigin().getY() - this->mChar->getCollisionObjectHalfHeight(),
+                                                       trans.getOrigin().getZ()));
+            this->mChar->setOgreOrientation(Ogre::Quaternion(trans.getRotation().getW(),
+                                                             trans.getRotation().getX(),
+                                                             trans.getRotation().getY(),
+                                                             trans.getRotation().getZ()));
 
             btVector3 t2 = mChar->getWorldTransform().getOrigin();
             std::cout << "player position: " << t2.x() << " " << t2.y() << " " << t2.z() << std::endl;
@@ -346,7 +352,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
             btCollisionObject* obj = this->physicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
             btRigidBody* body = btRigidBody::upcast(obj);
 
-            if (body && body->getMotionState()) 
+            if (body && body->getMotionState() && obj->getCollisionFlags() != btCollisionObject::CF_CHARACTER_OBJECT) 
             {
                 btTransform trans;
                 body->getMotionState()->getWorldTransform(trans);
@@ -366,7 +372,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
                     std::cout << sceneNode->getPosition() << std::endl;
                 }
             }
-        }  
+        }
    }
     return true;
 }
@@ -462,41 +468,6 @@ bool GameManager::keyPressed(const OIS::KeyEvent& ke)
 //---------------------------------------------------------------------------
 bool GameManager::keyReleased(const OIS::KeyEvent& ke) 
 { 
-  switch (ke.key)
-  {
-  // case OIS::KC_UP:
-  // case OIS::KC_W:
-  //     mDirection.z = 0;
-  //     break;
-   
-  // case OIS::KC_DOWN:
-  // case OIS::KC_S:
-  //     mDirection.z = 0;
-  //     break;
-   
-  // // case OIS::KC_LEFT:
-  // // case OIS::KC_A:
-  // //     mDirection.x = 0;
-  // //     break;
-   
-  // // case OIS::KC_RIGHT:
-  // // case OIS::KC_D:
-  // //     mDirection.x = 0;
-  // //     break;
-   
-  // case OIS::KC_PGDOWN:
-  // case OIS::KC_E:
-  //     mDirection.y = 0;
-  //     break;
-   
-  // case OIS::KC_PGUP:
-  // case OIS::KC_Q:
-  //     mDirection.y = 0;
-  //     break;
-   
-  default:
-      break;
-  }
   return true;
 }
 

@@ -30,7 +30,7 @@ ExtendedCamera::ExtendedCamera (Ogre::String name, Ogre::SceneManager *sceneMgr,
     mCameraNode->setPosition(Ogre::Vector3(0.0, 1000.0, 0.0));
 
     // Default tightness
-    mTightness = 0.01f;
+    mTightness = 0.08f;
 }
 ExtendedCamera::~ExtendedCamera () 
 {

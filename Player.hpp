@@ -34,8 +34,10 @@ public:
 
     btTransform& getWorldTransform();
 
-    void setPosition(Ogre::Vector3 vec);
-    void setOrientation(Ogre::Quaternion q);
+    void setOgrePosition(Ogre::Vector3 vec);
+    void setOgreOrientation(Ogre::Quaternion q);
+
+    float getCollisionObjectHalfHeight();
 
 protected:
     Ogre::String mName;
