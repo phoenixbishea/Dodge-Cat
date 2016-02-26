@@ -2,10 +2,10 @@ ACLOCAL_AMFLAGS= -I m4
 noinst_HEADERS= GameManager.h
 
 bin_PROGRAMS= PussyWetter
-PussyWetter_CPPFLAGS= -I$(top_srcdir) -std=c++11 -I/usr/include/bullet -I/usr/include/SDL -I/lusr/opt/cegui-0.8.4/include/cegui-0
+PussyWetter_CPPFLAGS= -I$(top_srcdir) -std=c++11 -I/usr/include/bullet -I/usr/include/SDL -I/usr/local/include/cegui-0
 PussyWetter_SOURCES= GameManager.cpp 
 PussyWetter_CXXFLAGS= $(OGRE_CFLAGS) $(OIS_CFLAGS) 
-PussyWetter_LDADD= $(OGRE_LIBS) $(OIS_LIBS)
+PussyWetter_LDADD= $(OGRE_LIBS) $(OIS_LIBS) 
 PussyWetter_LDFLAGS=  -lOgreOverlay -lboost_system -lSDL -lSDL_mixer -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lCEGUIBase-0 -lCEGUIOgreRenderer-0
 
 EXTRA_DIST= buildit makeit

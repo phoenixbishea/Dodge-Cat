@@ -69,6 +69,7 @@ private:
 
   CEGUI::OgreRenderer* mRenderer;
   Mix_Music* music;
+  Mix_Chunk* effect1;
 
   // For buffered input tutorial
   Ogre::Real mRotate;

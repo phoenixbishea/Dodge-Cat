@@ -174,20 +174,22 @@ void GameManager::createFrameListener()
 /* Setups up the basic resources needed for CEGUI */
 void GameManager::setupCEGUI()
 {
-  mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
 
+  // assert(&CEGUI::OgreRenderer::bootstrapSystem() != NULL);
+ mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
 
   //Sets up the default resource groups
-  CEGUI::ImageManager::setImagesetDefaultResourceGroup("Imagesets");
-  CEGUI::Font::setDefaultResourceGroup("Fonts");
-  CEGUI::Scheme::setDefaultResourceGroup("Schemes");
-  CEGUI::WidgetLookManager::setDefaultResourceGroup("LookNFeel");
-  CEGUI::WindowManager::setDefaultResourceGroup("Layouts");
+CEGUI::ImageManager::setImagesetDefaultResourceGroup("General");
+CEGUI::Font::setDefaultResourceGroup("General");
+CEGUI::Scheme::setDefaultResourceGroup("General");
+CEGUI::WidgetLookManager::setDefaultResourceGroup("General");
+CEGUI::WindowManager::setDefaultResourceGroup("General");
+CEGUI::ScriptModule::setDefaultResourceGroup("General");
 
 
   //Creates a scheme file and sets the mouse arrow to a default image
- //CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
- //CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage("TaharezLook/MouseArrow");
+ CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
+ CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage("TaharezLook/MouseArrow");
   
 }
 
@@ -198,11 +200,14 @@ void GameManager::createScene()
   
 
   Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
-  music = Mix_LoadMUS("rules.mp3");
+   music = Mix_LoadMUS("rules.mp3");
+  effect1 = Mix_LoadWAV("meow.wav");
   Mix_PlayMusic(music, -1);
 
-  setupCEGUI();
+  Mix_PlayChannel(-1, effect1, -1);
 
+ 
+  setupCEGUI();
 
   mSceneMgr->setAmbientLight(Ogre::ColourValue(0, 0, 0));
   mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
@@ -212,7 +217,7 @@ void GameManager::createScene()
   ninjaEntity->setCastShadows(true);
  
   mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ninjaEntity);
- 
+  
   // Create ground
   Ogre::Plane plane(Ogre::Vector3::UNIT_Y, 0);
  
@@ -262,12 +267,13 @@ void GameManager::createScene()
   mCamNode = node;
   node->attachObject(mCamera);
 
-  CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
-  CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+ CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
+ CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+ CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
 
   // CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
   // quit->setText("Quit");
-  //quit->setSize(CEGUI::UVector2(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+  // quit->setSize(CEGUI::UVector2(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
 
   // sheet->addChildWindow(quit);
   // CEGUI::System::getSingleton().setGUISheet(sheet);
@@ -304,7 +310,9 @@ void GameManager::createScene()
 void GameManager::destroyScene()
 {
   Mix_FreeMusic(music);
+  Mix_FreeChunk(effect1);
   Mix_CloseAudio();
+
 }
 
 //---------------------------------------------------------------------------
@@ -409,9 +417,9 @@ void GameManager::windowClosed(Ogre::RenderWindow* rw)
 bool GameManager::keyPressed(const OIS::KeyEvent& ke) 
 { 
   //Injects the current key pressed to CEGUI
-  CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
-  context.injectKeyDown((CEGUI::Key::Scan)ke.key);
-  context.injectChar((CEGUI::Key::Scan)ke.text);
+  // CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+  // context.injectKeyDown((CEGUI::Key::Scan)ke.key);
+  // context.injectChar((CEGUI::Key::Scan)ke.text);
 
 
   switch (ke.key)
@@ -471,7 +479,7 @@ bool GameManager::keyPressed(const OIS::KeyEvent& ke)
 bool GameManager::keyReleased(const OIS::KeyEvent& ke) 
 { 
 
- CEGUI::System::getSingleton().getDefaultGUIContext().injectKeyUp((CEGUI::Key::Scan)ke.key);
+ //CEGUI::System::getSingleton().getDefaultGUIContext().injectKeyUp((CEGUI::Key::Scan)ke.key);
 
   switch (ke.key)
   {
@@ -533,11 +541,11 @@ CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID)
 bool GameManager::mouseMoved(const OIS::MouseEvent& me) 
 { 
 
-  CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
-  context.injectMouseMove(me.state.X.rel, me.state.Y.rel);
+ // CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+  //context.injectMouseMove(me.state.X.rel, me.state.Y.rel);
   // Scroll wheel.
-  if (me.state.Z.rel)
-    context.injectMouseWheelChange(me.state.Z.rel / 120.0f);
+  // if (me.state.Z.rel)
+  //   context.injectMouseWheelChange(me.state.Z.rel / 120.0f);
 
   if (me.state.buttonDown(OIS::MB_Right))
   {
@@ -552,7 +560,7 @@ bool GameManager::mousePressed(
   const OIS::MouseEvent& me, OIS::MouseButtonID id) 
 { 
 
-  CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseButtonDown(convertButton(id));
+  //CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseButtonDown(convertButton(id));
   // if (id == OIS::MB_Left)
   // {
   //   Ogre::Light* light2 = mSceneMgr->getLight("Light1");
@@ -565,7 +573,7 @@ bool GameManager::mousePressed(
 bool GameManager::mouseReleased(
   const OIS::MouseEvent& me, OIS::MouseButtonID id) 
 { 
-  CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseButtonUp(convertButton(id));
+  //CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseButtonUp(convertButton(id));
   return true; 
 }
 
@@ -596,13 +604,13 @@ extern "C"
     {
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
       MessageBox(
-	NULL,
-	e.getFullDescription().c_str(),
-	"An exception has occured!",
-	MB_OK | MB_ICONERROR | MB_TASKMODAL);
+  NULL,
+  e.getFullDescription().c_str(),
+  "An exception has occured!",
+  MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else
       std::cerr << "An exception has occured: " <<
-	e.getFullDescription().c_str() << std::endl;
+  e.getFullDescription().c_str() << std::endl;
 #endif
     }
  
