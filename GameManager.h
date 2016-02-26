@@ -54,6 +54,7 @@ private:
   virtual bool mouseReleased(const OIS::MouseEvent& me, OIS::MouseButtonID id);
 
   virtual void setupCEGUI();
+  virtual bool quit(const CEGUI::EventArgs&);
  
   Ogre::Root* mRoot;
   Ogre::String mResourcesCfg;

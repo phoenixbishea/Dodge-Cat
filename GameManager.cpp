@@ -207,7 +207,7 @@ void GameManager::createScene()
   Mix_PlayChannel(-1, effect1, -1);
 
  
-  setupCEGUI();
+ 
 
   mSceneMgr->setAmbientLight(Ogre::ColourValue(0, 0, 0));
   mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
@@ -267,11 +267,20 @@ void GameManager::createScene()
   mCamNode = node;
   node->attachObject(mCamera);
 
+   setupCEGUI();
+
  CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
  CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
- CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
+ //CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
 
-  // CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+  CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+  quit->setText("Quit");
+  quit->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+  quit->setPosition(CEGUI::UVector2(CEGUI::UDim(0,100),CEGUI::UDim(0,100)));
+
+  sheet->addChild(quit);
+  CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
+  quit->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::quit, this));
   // quit->setText("Quit");
   // quit->setSize(CEGUI::UVector2(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
 
@@ -375,8 +384,8 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
 
   //Need to inject timestaps to CEGUI System
   
-  //CEGUI::System::getSingleton().injectTimePulse(fe.timeSinceLastFrame);
-  // if (mKeyboard->isKeyDown(OIS::KC_ESCAPE)) return false;
+  CEGUI::System::getSingleton().injectTimePulse(fe.timeSinceLastFrame);
+  if (mKeyboard->isKeyDown(OIS::KC_ESCAPE)) return false;
  
   return true;
 }
@@ -417,9 +426,9 @@ void GameManager::windowClosed(Ogre::RenderWindow* rw)
 bool GameManager::keyPressed(const OIS::KeyEvent& ke) 
 { 
   //Injects the current key pressed to CEGUI
-  // CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
-  // context.injectKeyDown((CEGUI::Key::Scan)ke.key);
-  // context.injectChar((CEGUI::Key::Scan)ke.text);
+  CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+  context.injectKeyDown((CEGUI::Key::Scan)ke.key);
+  context.injectChar((CEGUI::Key::Scan)ke.text);
 
 
   switch (ke.key)
@@ -479,7 +488,7 @@ bool GameManager::keyPressed(const OIS::KeyEvent& ke)
 bool GameManager::keyReleased(const OIS::KeyEvent& ke) 
 { 
 
- //CEGUI::System::getSingleton().getDefaultGUIContext().injectKeyUp((CEGUI::Key::Scan)ke.key);
+ CEGUI::System::getSingleton().getDefaultGUIContext().injectKeyUp((CEGUI::Key::Scan)ke.key);
 
   switch (ke.key)
   {
@@ -541,11 +550,11 @@ CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID)
 bool GameManager::mouseMoved(const OIS::MouseEvent& me) 
 { 
 
- // CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
-  //context.injectMouseMove(me.state.X.rel, me.state.Y.rel);
-  // Scroll wheel.
-  // if (me.state.Z.rel)
-  //   context.injectMouseWheelChange(me.state.Z.rel / 120.0f);
+ CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+  context.injectMouseMove(me.state.X.rel, me.state.Y.rel);
+  //Scroll wheel.
+  if (me.state.Z.rel)
+    context.injectMouseWheelChange(me.state.Z.rel / 120.0f);
 
   if (me.state.buttonDown(OIS::MB_Right))
   {
@@ -560,7 +569,7 @@ bool GameManager::mousePressed(
   const OIS::MouseEvent& me, OIS::MouseButtonID id) 
 { 
 
-  //CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseButtonDown(convertButton(id));
+  CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseButtonDown(convertButton(id));
   // if (id == OIS::MB_Left)
   // {
   //   Ogre::Light* light2 = mSceneMgr->getLight("Light1");
@@ -573,8 +582,13 @@ bool GameManager::mousePressed(
 bool GameManager::mouseReleased(
   const OIS::MouseEvent& me, OIS::MouseButtonID id) 
 { 
-  //CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseButtonUp(convertButton(id));
+  CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseButtonUp(convertButton(id));
   return true; 
+}
+
+bool GameManager::quit(const CEGUI::EventArgs&)
+{
+  mShutDown = true;
 }
 
 //---------------------------------------------------------------------------
