@@ -1,3 +1,4 @@
+
 #ifndef Player_hpp
 #define Player_hpp
 
@@ -5,11 +6,16 @@
 #include <OISInputManager.h>
 #include <OISKeyboard.h>
 #include <OgreSceneManager.h>
+#include <btBulletDynamicsCommon.h>
+#include <BulletDynamics/Character/btKinematicCharacterController.h>
+#include <BulletCollision/CollisionDispatch/btGhostObject.h>
+
+#include "BulletPhysics.hpp"
 
 class Player 
 {
 public:
-    Player (Ogre::String name, Ogre::SceneManager* sceneMgr);
+    Player (Ogre::String name, Ogre::SceneManager* sceneMgr, BulletPhysics* physicsEngine);
 
     ~Player ();
 
@@ -27,9 +33,19 @@ public:
 
     Ogre::Vector3 getWorldPosition ();
 
+    void updateAction(btCollisionWorld* world, btScalar dt);
+
+    btTransform getWorldTransform();
+
+    void setPosition(Ogre::Vector3 vec);
+    void setOrientation(Ogre::Quaternion q);
+
 protected:
     Ogre::String mName;
-    Ogre::SceneNode* mMainNode; // Main Player node
+    btPairCachingGhostObject* ghost;
+    btKinematicCharacterController* player;
+    //btRigidBody* body;
+    Ogre::SceneNode* mMainNode;
     Ogre::SceneNode* mSightNode; // "Sight" node - The Player is supposed to be looking here
     Ogre::SceneNode* mCameraNode; // Node for the chase camera
     Ogre::Entity* mEntity; // Player entity
