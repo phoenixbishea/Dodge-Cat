@@ -267,7 +267,7 @@ void GameManager::createScene()
   mCamNode = node;
   node->attachObject(mCamera);
 
-   setupCEGUI();
+ setupCEGUI();
 
  CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
  CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
