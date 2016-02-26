@@ -99,11 +99,11 @@ bool GameManager::setup()
   Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
   chooseSceneManager();
-  createCamera();
-  createViewports();
-
+  
   // Create the scene
   createScene();
+  createCamera();
+  createViewports();
 
   createFrameListener();
 
@@ -141,11 +141,8 @@ void GameManager::createCamera()
 {
   // Create the camera
   mCamera = mSceneMgr->createCamera("MainCam");
-
-  // mCamera->setPosition(Ogre::Vector3(0, 300, 500));
-  mCamera->setPosition (0, 0, 0);    // Required or else the camera will have an offset
-  mCamera->lookAt(Ogre::Vector3(0, 0, 0));
-  mCamera->setNearClipDistance(5);
+  ExtendedCamera* exCamera = new ExtendedCamera("ExtendedCamera", mSceneMgr, mCamera);
+  setExtendedCamera(exCamera);
 }
 
 //---------------------------------------------------------------------------
@@ -190,10 +187,8 @@ void GameManager::createScene()
   mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
 
   Player* player = new Player("Player 1", mSceneMgr, this->physicsEngine);
-  ExtendedCamera* exCamera = new ExtendedCamera("ExtendedCamera", mSceneMgr, mCamera);
 
   setCharacter(player);
-  setExtendedCamera(exCamera);
 
   // Add a point light
   Ogre::Light* light = mSceneMgr->createLight("MainLight");
@@ -239,43 +234,6 @@ void GameManager::createScene()
 
   //add the body to the dynamics world
   this->physicsEngine->getDynamicsWorld()->addRigidBody(groundBody);
-
-  // std::string physicsCubeName = "PhysicsCube";
-  // btVector3 initialPosition(0.0, 1000.0, 0.0);
-
-  // Ogre::Entity *entity = this->mSceneMgr->createEntity("models/cube.mesh");
-
-  // Ogre::SceneNode *newNode = this->mSceneMgr->getRootSceneNode()->createChildSceneNode(physicsCubeName);
-  // newNode->attachObject(entity);
-  // newNode->setPosition(Ogre::Vector3(initialPosition.getX(), initialPosition.getY(), initialPosition.getZ()));
-  // newNode->setOrientation(Ogre::Quaternion(1.0, 1.0, 1.0, 0.0));
-
-  // //create the new shape, and tell the physics that is a Box
-  // btCollisionShape *newRigidShape = new btBoxShape(btVector3(50.0f, 50.0f, 50.0f));
-  // this->physicsEngine->getCollisionShapes().push_back(newRigidShape);
-
-  // //set the initial position and transform. For this demo, we set the tranform to be none
-  // btTransform startTransform;
-  // startTransform.setIdentity();
-  // startTransform.setRotation(btQuaternion(1.0f, 1.0f, 1.0f, 0));
-
-  // //set the mass of the object. a mass of "0" means that it is an immovable object
-  // btScalar mass = 0.1f;
-  // btVector3 localInertia(0,0,0);
-
-  // startTransform.setOrigin(initialPosition);
-  // newRigidShape->calculateLocalInertia(mass, localInertia);
-
-  // //actually contruvc the body and add it to the dynamics world
-  // btDefaultMotionState *myMotionState = new btDefaultMotionState(startTransform);
-
-  // btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, newRigidShape, localInertia);
-  // btRigidBody *body = new btRigidBody(rbInfo);
-  // body->setRestitution(1);
-  // body->setUserPointer(newNode);
-
-  // physicsEngine->getDynamicsWorld()->addRigidBody(body);
-  // physicsEngine->trackRigidBodyWithName(body, physicsCubeName);
 
   //createWalls();
 }
@@ -349,7 +307,8 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
 {
 
     // mPlayerNode->translate(mDirection * fe.timeSinceLastFrame, Ogre::Node::TS_LOCAL);
-    if (mChar != NULL)
+
+  if (mChar != NULL)
     {
         mChar->update (fe.timeSinceLastFrame, mKeyboard);
 
@@ -360,19 +319,41 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
                                mChar->getSightNode ()->_getDerivedPosition());
         }
     }
-   if (this->physicsEngine != NULL) {
+
+   if (this->physicsEngine != NULL) 
+   {
         physicsEngine->getDynamicsWorld()->stepSimulation(1.0f / 120.0f); //suppose you have 60 frames per second
 
-        for (int i = 0; i < this->physicsEngine->getCollisionObjectCount(); i++) {
+        if (mChar != NULL)
+        {
+            this->mChar->updateAction(this->physicsEngine->getDynamicsWorld(), fe.timeSinceLastFrame);
+            btTransform& trans = this->mChar->getWorldTransform();
+            // Update player rendering position
+            this->mChar->setPosition(Ogre::Vector3(trans.getOrigin().getX(),
+                                                   trans.getOrigin().getY(),
+                                                   trans.getOrigin().getZ()));
+            this->mChar->setOrientation(Ogre::Quaternion(trans.getRotation().getW(),
+                                                         trans.getRotation().getX(),
+                                                         trans.getRotation().getY(),
+                                                         trans.getRotation().getZ()));
+
+            btVector3 t2 = mChar->getWorldTransform().getOrigin();
+            std::cout << "player position: " << t2.x() << " " << t2.y() << " " << t2.z() << std::endl;
+        }
+
+        for (int i = 0; i < this->physicsEngine->getCollisionObjectCount(); i++) 
+        {
             btCollisionObject* obj = this->physicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
             btRigidBody* body = btRigidBody::upcast(obj);
 
-            if (body && body->getMotionState()) {
+            if (body && body->getMotionState()) 
+            {
                 btTransform trans;
                 body->getMotionState()->getWorldTransform(trans);
 
                 void *userPointer = body->getUserPointer();
-                if (userPointer) {
+                if (userPointer) 
+                {
                     btQuaternion orientation = trans.getRotation();
                     Ogre::SceneNode *sceneNode = static_cast<Ogre::SceneNode *>(userPointer);
                     sceneNode->setPosition(Ogre::Vector3(trans.getOrigin().getX(),
@@ -385,22 +366,8 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
                     std::cout << sceneNode->getPosition() << std::endl;
                 }
             }
-        }
-
-        if (mChar != NULL)
-        {
-            this->mChar->updateAction(this->physicsEngine->getDynamicsWorld(), fe.timeSinceLastFrame);
-            btTransform trans = this->mChar->getWorldTransform();
-            this->mChar->setPosition(Ogre::Vector3(trans.getOrigin().getX(),
-                                                   trans.getOrigin().getY(),
-                                                   trans.getOrigin().getZ()));
-            this->mChar->setOrientation(Ogre::Quaternion(trans.getRotation().getW(),
-                                                         trans.getRotation().getX(),
-                                                         trans.getRotation().getY(),
-                                                         trans.getRotation().getZ()));
-        }
+        }  
    }
-
     return true;
 }
 

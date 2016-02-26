@@ -22,9 +22,6 @@ public:
     // Updates the Player (movement...)
     void update (Ogre::Real elapsedTime, OIS::Keyboard* input);
 
-    // Change visibility - Useful for 1st person view ;)
-    void setVisible (bool visible);
-
     // The three methods below returns the two camera-related nodes, 
     // and the current position of the Player (for the 1st person camera)
     Ogre::SceneNode* getSightNode ();
@@ -35,7 +32,7 @@ public:
 
     void updateAction(btCollisionWorld* world, btScalar dt);
 
-    btTransform getWorldTransform();
+    btTransform& getWorldTransform();
 
     void setPosition(Ogre::Vector3 vec);
     void setOrientation(Ogre::Quaternion q);

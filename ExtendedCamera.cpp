@@ -13,7 +13,7 @@ ExtendedCamera::ExtendedCamera (Ogre::String name, Ogre::SceneManager *sceneMgr,
     mCameraNode->setFixedYawAxis (true); // Needed because of auto tracking
 
     // Create our camera if it wasn't passed as a parameter
-    if (camera == 0)
+    if (camera == nullptr)
     {
         mCamera = mSceneMgr->createCamera (mName);
         mOwnCamera = true;
@@ -27,6 +27,7 @@ ExtendedCamera::ExtendedCamera (Ogre::String name, Ogre::SceneManager *sceneMgr,
     }
     // ... and attach the Ogre camera to the camera node
     mCameraNode->attachObject (mCamera);
+    mCameraNode->setPosition(Ogre::Vector3(0.0, 1000.0, 0.0));
 
     // Default tightness
     mTightness = 0.01f;

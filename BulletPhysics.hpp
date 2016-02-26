@@ -2,6 +2,7 @@
 #define __PHYSICS_H__
 
 #include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <vector>
 #include <string>
 #include <map>

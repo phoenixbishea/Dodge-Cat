@@ -10,7 +10,7 @@ Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* 
 
     // Setup basic node structure to handle 3rd person cameras
     mMainNode = mSceneMgr->getRootSceneNode ()->createChildSceneNode (mName);
-    mSightNode = mMainNode->createChildSceneNode (mName + "_sight", Ogre::Vector3 (0, 0, -100));
+    mSightNode = mMainNode->createChildSceneNode (mName + "_sight", Ogre::Vector3 (0, 0, -200));
     mCameraNode = mMainNode->createChildSceneNode (mName + "_camera", Ogre::Vector3 (0, 300, 500));
 
     // Give this character a shape :)
@@ -19,10 +19,12 @@ Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* 
 
     btCylinderShape* shape = new btCylinderShape(btVector3(20.0, 50.0, 20.0));
     ghost = new btPairCachingGhostObject();
+
     btTransform t = ghost->getWorldTransform();
-    t.setOrigin(btVector3(0.0, 10000.0, 0.0));
+    t.setOrigin(btVector3(0.0, 0.0, 0.0));
     ghost->setWorldTransform(t);
-    physicsEngine->getDynamicsWorld()->getPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
+
+    // physicsEngine->getDynamicsWorld()->getPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
     ghost->setCollisionShape(shape);
     ghost->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
     player = new btKinematicCharacterController(ghost, shape, 1.0);
@@ -30,6 +32,7 @@ Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* 
                                                           btBroadphaseProxy::CharacterFilter,
                                                           btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
     physicsEngine->getDynamicsWorld()->addAction(player);
+    
 
     // btTransform t;
     // t.setIdentity();
@@ -69,15 +72,13 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard *input)
 //    Handle movement
     if (input->isKeyDown (OIS::KC_W) || input->isKeyDown(OIS::KC_COMMA))
     {
-        // Ogre::SceneNode* node = static_cast<Ogre::SceneNode *>(body->getUserPointer());
-        // Ogre::Quaternion orientation = node->getOrientation();
-        // Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, 100 * elapsedTime);
-        // btVector3 move(direction.x, direction.y, direction.z);
-        // body->translate(move);
         Ogre::Quaternion orientation = mMainNode->getOrientation();
         Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, -100 * elapsedTime);
         btVector3 move(direction.x, direction.y, direction.z);
+
         player->setWalkDirection (move);
+        btVector3 t = player->getGhostObject()->getWorldTransform().getOrigin();
+        std::cout << "player position: " << t.x() << " " << t.y() << " " << t.z() << std::endl;
     }
     if (input->isKeyDown (OIS::KC_S) || input->isKeyDown(OIS::KC_O))
     {
@@ -85,12 +86,6 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard *input)
         Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, 100 * elapsedTime);
         btVector3 move(direction.x, direction.y, direction.z);
         player->setWalkDirection (move);
-
-        // Ogre::SceneNode* node = static_cast<Ogre::SceneNode *>(body->getUserPointer());
-        // Ogre::Quaternion orientation = node->getOrientation();
-        // Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, 100 * elapsedTime);
-        // btVector3 move(direction.x, direction.y, direction.z);
-        // body->translate(move);
     }
     if (input->isKeyDown (OIS::KC_A))
     {
@@ -120,12 +115,6 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard *input)
     }
 }
 
-// Change visibility - Useful for 1st person view ;)
-void Player::setVisible (bool visible) 
-{
-//    body->setVisible (visible);
-}
-
 // The three methods below returns the two camera-related nodes, 
 // and the current position of the Player (for the 1st person camera)
 Ogre::SceneNode* Player::getSightNode () 
@@ -148,7 +137,7 @@ void Player::updateAction(btCollisionWorld* world, btScalar dt)
     this->player->playerStep(world, dt);
 }
 
-btTransform Player::getWorldTransform()
+btTransform& Player::getWorldTransform()
 {
     return this->player->getGhostObject()->getWorldTransform();
 }
