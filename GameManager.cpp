@@ -1,6 +1,7 @@
 #include "GameManager.hpp"
 
 #define WALL_COLLIDE_ERROR 749
+#define CAT_SPAWN_DISTANCE 80.0f
 
 #include <OgreEntity.h>
 #include <OgreCamera.h>
@@ -709,10 +710,10 @@ void GameManager::spawnCat()
     CatNode->attachObject(entCat);
     Ogre::Vector3 nodepos = Ogre::Vector3(vec.x(), vec.y(), vec.z());
     Ogre::Vector3 lookdir = Ogre::Vector3(lookDirection.x(), lookDirection.y(), lookDirection.z());
-    nodepos += lookdir * 35.0;
+    nodepos += lookdir * CAT_SPAWN_DISTANCE;
 
     // Set the position of the Cat
-    CatTransform.setOrigin(vec + lookDirection * 35.0);
+    CatTransform.setOrigin(vec + lookDirection * CAT_SPAWN_DISTANCE);
     CatBody->setWorldTransform(CatTransform);
     CatNode->setPosition(nodepos);
     btQuaternion q = CatTransform.getRotation();
