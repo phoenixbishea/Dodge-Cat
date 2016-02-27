@@ -20,7 +20,7 @@ Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* 
     mEntity = mSceneMgr->createEntity (mName, "ninja.mesh");
     mMainNode->attachObject (mEntity);
 
-    btCylinderShape* shape = new btCylinderShape(btVector3(20.0, 50.0, 20.0));
+    btBoxShape* shape = new btBoxShape(btVector3(40.0, 100.0, 10.0));
     ghost = new btPairCachingGhostObject();
 
     btTransform t = ghost->getWorldTransform();
@@ -131,8 +131,13 @@ btTransform& Player::getWorldTransform()
     return this->player->getGhostObject()->getWorldTransform();
 }
 
+Ogre::Vector3 Player::getOgrePosition()
+{
+    return this->mMainNode->_getDerivedPosition();
+}
+
 void Player::setOgrePosition(Ogre::Vector3 vec) {
-    this->mMainNode->translate(vec - mMainNode->getPosition());
+    this->mMainNode->translate(vec - mMainNode->_getDerivedPosition());
 }
 
 void Player::setOgreOrientation(Ogre::Quaternion q) {
@@ -140,5 +145,5 @@ void Player::setOgreOrientation(Ogre::Quaternion q) {
 }
 
 float Player::getCollisionObjectHalfHeight() {
-    return 50.0;
+    return 100.0;
 }

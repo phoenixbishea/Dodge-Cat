@@ -56,6 +56,7 @@ private:
     virtual bool mouseReleased(const OIS::MouseEvent& me, OIS::MouseButtonID id);
 
     void createWalls();
+    void spawnCat();
 
   Ogre::Root* mRoot;
   Ogre::String mResourcesCfg;
@@ -75,6 +76,7 @@ private:
     ExtendedCamera* mExCamera;
 
     double timeSinceLastPhysicsStep;
+    double timeSinceLastCat;
 };
 
 #endif

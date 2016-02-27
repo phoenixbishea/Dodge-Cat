@@ -101,6 +101,7 @@ bool GameManager::setup()
   // Setup Bullet physics
   physicsEngine = new BulletPhysics();
   physicsEngine->initObjects();
+  physicsEngine->getDynamicsWorld()->setGravity(btVector3(0.0, -200.0, 0.0));
 
   // Create the scene
   createScene();
@@ -233,6 +234,7 @@ void GameManager::createScene()
 
   btRigidBody::btRigidBodyConstructionInfo groundRBInfo(groundMass, groundMotionState, groundShape, localGroundInertia);
   btRigidBody *groundBody = new btRigidBody(groundRBInfo);
+  groundBody->setRestitution(0.9);
 
   //add the body to the dynamics world
   this->physicsEngine->getDynamicsWorld()->addRigidBody(groundBody);
@@ -280,6 +282,7 @@ void GameManager::createWalls()
 
     btRigidBody::btRigidBodyConstructionInfo LeftWallRBInfo(LeftWallMass, LeftWallMotionState, LeftWallShape, localLeftWallInertia);
     btRigidBody *LeftWallBody = new btRigidBody(LeftWallRBInfo);
+    LeftWallBody->setRestitution(0.9);
 
     //add the body to the dynamics world
     this->physicsEngine->getDynamicsWorld()->addRigidBody(LeftWallBody);
@@ -320,6 +323,7 @@ void GameManager::createWalls()
 
     btRigidBody::btRigidBodyConstructionInfo RightWallRBInfo(RightWallMass, RightWallMotionState, RightWallShape, localRightWallInertia);
     btRigidBody *RightWallBody = new btRigidBody(RightWallRBInfo);
+    RightWallBody->setRestitution(0.9);
 
     //add the body to the dynamics world
     this->physicsEngine->getDynamicsWorld()->addRigidBody(RightWallBody);
@@ -360,6 +364,7 @@ void GameManager::createWalls()
 
     btRigidBody::btRigidBodyConstructionInfo FrontWallRBInfo(FrontWallMass, FrontWallMotionState, FrontWallShape, localFrontWallInertia);
     btRigidBody *FrontWallBody = new btRigidBody(FrontWallRBInfo);
+    FrontWallBody->setRestitution(0.9);
 
     //add the body to the dynamics world
     this->physicsEngine->getDynamicsWorld()->addRigidBody(FrontWallBody);
@@ -400,6 +405,7 @@ void GameManager::createWalls()
 
     btRigidBody::btRigidBodyConstructionInfo BackWallRBInfo(BackWallMass, BackWallMotionState, BackWallShape, localBackWallInertia);
     btRigidBody *BackWallBody = new btRigidBody(BackWallRBInfo);
+    BackWallBody->setRestitution(0.9);    
 
     //add the body to the dynamics world
     this->physicsEngine->getDynamicsWorld()->addRigidBody(BackWallBody);
@@ -440,6 +446,7 @@ void GameManager::createWalls()
 
     btRigidBody::btRigidBodyConstructionInfo CeilingRBInfo(CeilingMass, CeilingMotionState, CeilingShape, localCeilingInertia);
     btRigidBody *CeilingBody = new btRigidBody(CeilingRBInfo);
+    CeilingBody->setRestitution(0.9);
 
     //add the body to the dynamics world
     this->physicsEngine->getDynamicsWorld()->addRigidBody(CeilingBody);
@@ -506,6 +513,14 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
   // Capture/Update each input device
   mKeyboard->capture();
   mMouse->capture();
+
+  timeSinceLastCat += fe.timeSinceLastFrame;
+  if (timeSinceLastCat > 1.0)
+  {
+      spawnCat();
+      timeSinceLastCat -= 1.0;
+  }
+
 
   return true;
 }
@@ -580,6 +595,58 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         }
    }
     return true;
+}
+
+//---------------------------------------------------------------------------
+
+void GameManager::spawnCat()
+{
+    std::cout << "Spawning Cat" << std::endl;
+
+    // create the plane entity to the physics engine, and attach it to the node
+    btTransform CatTransform = mChar->getWorldTransform();
+    btVector3 vec = CatTransform.getOrigin();
+
+    btScalar CatMass(10.0);
+    btVector3 localCatInertia(0, 0, 0);
+
+    btCollisionShape *CatShape = new btSphereShape(20.0);
+    this->physicsEngine->getCollisionShapes().push_back(CatShape);
+    btDefaultMotionState *CatMotionState = new btDefaultMotionState(CatTransform);
+
+    CatShape->calculateLocalInertia(CatMass, localCatInertia);
+
+    btRigidBody::btRigidBodyConstructionInfo CatRBInfo(CatMass, CatMotionState, CatShape, localCatInertia);
+    btRigidBody *CatBody = new btRigidBody(CatRBInfo);
+
+    // Set the velocity of the Cat
+    Ogre::Vector3 pos = this->mChar->getSightNode()->_getDerivedPosition();
+    Ogre::Vector3 cpos = this->mChar->getCameraNode()->_getDerivedPosition();
+    btVector3 lookDirection(pos.x - cpos.x, pos.y - cpos.y, pos.z - cpos.z);
+    lookDirection.normalize();
+    CatBody->setLinearVelocity(lookDirection * 3000);
+
+    Ogre::Entity *entCat = mSceneMgr->createEntity("models/sphere.mesh");
+    entCat->setCastShadows(false);
+    Ogre::SceneNode *CatNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+    CatNode->attachObject(entCat);
+    Ogre::Vector3 nodepos = Ogre::Vector3(vec.x(), vec.y(), vec.z());
+    Ogre::Vector3 lookdir = Ogre::Vector3(lookDirection.x(), lookDirection.y(), lookDirection.z());
+    nodepos += lookdir * 20.0;
+
+    // Set the position of the Cat
+    CatTransform.setOrigin(vec + lookDirection * 20.0);
+    CatBody->setWorldTransform(CatTransform);
+    CatNode->setPosition(nodepos);
+    btQuaternion q = CatTransform.getRotation();
+    CatNode->setOrientation(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
+    CatNode->scale(Ogre::Vector3(0.25, 0.25, 0.25));
+
+    CatBody->setRestitution(1);
+    CatBody->setUserPointer(CatNode);
+
+    //add the body to the dynamics world
+    this->physicsEngine->getDynamicsWorld()->addRigidBody(CatBody);
 }
 
 //---------------------------------------------------------------------------
