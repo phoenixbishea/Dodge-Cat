@@ -5,6 +5,7 @@
 #include <OgreEntity.h>
 #include <OISInputManager.h>
 #include <OISKeyboard.h>
+#include <OISMouse.h>
 #include <OgreSceneManager.h>
 #include <btBulletDynamicsCommon.h>
 #include <BulletDynamics/Character/btKinematicCharacterController.h>
@@ -12,7 +13,7 @@
 
 #include "BulletPhysics.hpp"
 
-class Player 
+class Player
 {
 public:
     Player (Ogre::String name, Ogre::SceneManager* sceneMgr, BulletPhysics* physicsEngine);
@@ -20,7 +21,7 @@ public:
     ~Player ();
 
     // Updates the Player (movement...)
-    void update (Ogre::Real elapsedTime, OIS::Keyboard* input);
+    void update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* mouse);
 
     // The three methods below returns the two camera-related nodes, 
     // and the current position of the Player (for the 1st person camera)

@@ -316,7 +316,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
 
     if (mChar != NULL)
     {
-        mChar->update (fe.timeSinceLastFrame, mKeyboard);
+        mChar->update (fe.timeSinceLastFrame, mKeyboard, mMouse);
 
         if (mExCamera) 
         {
@@ -413,53 +413,10 @@ void GameManager::windowClosed(Ogre::RenderWindow* rw)
 //---------------------------------------------------------------------------
 bool GameManager::keyPressed(const OIS::KeyEvent& ke) 
 {
-  // 3rd Person - Chase Camera
-  if (ke.key == OIS::KC_F1)
-  {
-    if (mExCamera)
-    {
-      if (mChar)
-         mExCamera->instantUpdate (mChar->getCameraNode ()->_getDerivedPosition(), mChar->getSightNode ()->_getDerivedPosition());
-      mExCamera->setTightness (0.01f);
-    }
-  }
-
   switch (ke.key)
   {
   case OIS::KC_ESCAPE: 
     mShutDown = true;
-    break;
-  
-  // case OIS::KC_UP:
-  // case OIS::KC_W:
-  //   mDirection.z = -mMove;
-  //   break;
-
-  // case OIS::KC_DOWN:
-  // case OIS::KC_S:
-  //   mDirection.z = mMove;
-  //   break;
-
-  // // case OIS::KC_LEFT:
-  // // case OIS::KC_A:
-  // //   mDirection.x = -mMove;
-  // //   break;
-
-  // // case OIS::KC_RIGHT:
-  // // case OIS::KC_D:
-  // //   mDirection.x = mMove;
-  //   // break;
-
-  // case OIS::KC_PGDOWN:
-  // case OIS::KC_E:
-  //   mDirection.y = -mMove;
-  //   break;
-
-  // case OIS::KC_PGUP:
-  // case OIS::KC_Q:
-  //   mDirection.y = mMove;
-  //   break;
-  default:
     break;
   }
   return true; 
