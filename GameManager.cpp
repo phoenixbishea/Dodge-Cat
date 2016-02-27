@@ -182,12 +182,38 @@ void GameManager::createFrameListener()
   mRoot->addFrameListener(this);
 }
 
+void GameManager::setupSound()
+{
+  srand (time(NULL));
+  Mix_Chunk* effectTemp;
+
+  Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
+  music = Mix_LoadMUS("Rules.mp3");
+  effect1 = Mix_LoadWAV("angryMeow.wav");
+  Mix_VolumeChunk(effect1, MIX_MAX_VOLUME* 0.1);
+  effects.push_back(effect1);
+  effect2 = Mix_LoadWAV("cat.wav");
+  Mix_VolumeChunk(effect2, MIX_MAX_VOLUME* 0.1);
+  effects.push_back(effect2);
+  effect3 = Mix_LoadWAV("happyPurr.wav");
+  Mix_VolumeChunk(effect3, MIX_MAX_VOLUME* 0.1);
+  effects.push_back(effect3);
+
+
+  //Mix_VolumeMusic(MIX_MAX_VOLUME);
+   Mix_PlayMusic(music, -1);
+
+
+}
 //---------------------------------------------------------------------------
 void GameManager::createScene()
 {
   // Add ambient light
   mSceneMgr->setAmbientLight(Ogre::ColourValue(0.25, 0.25, 0.25));
   mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
+
+  setupSound();
+
 
   Player* player = new Player("Player 1", mSceneMgr, this->physicsEngine);
 
@@ -455,6 +481,10 @@ void GameManager::createWalls()
 //---------------------------------------------------------------------------
 void GameManager::destroyScene()
 {
+  Mix_FreeMusic(music);
+  for(int i = 0; i < effects.size(); ++i)
+    Mix_FreeChunk(effects[i]);
+  Mix_CloseAudio();
 }
 
 //---------------------------------------------------------------------------
@@ -576,8 +606,8 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
             {
                 btTransform trans;
                 body->getMotionState()->getWorldTransform(trans);
-
                 void *userPointer = body->getUserPointer();
+                Mix_PlayChannel(-1, effects.at(rand()%effects.size()) ,0);
                 if (userPointer)
                 {
                     btQuaternion orientation = trans.getRotation();
@@ -689,6 +719,12 @@ bool GameManager::keyPressed(const OIS::KeyEvent& ke)
   {
   case OIS::KC_ESCAPE:
     mShutDown = true;
+    break;
+  case OIS::KC_M:
+    Mix_VolumeMusic(Mix_VolumeMusic(-1)-1);
+    break;
+  case OIS::KC_N:
+    //music
     break;
   default:
     break;

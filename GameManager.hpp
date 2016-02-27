@@ -13,6 +13,12 @@
 #include <OISMouse.h>
 #include "BulletPhysics.hpp"
 
+#include <SDL.h>
+#include <SDL_mixer.h>
+#include <vector>
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
+
 class GameManager
   : public Ogre::WindowEventListener,
     public Ogre::FrameListener,
@@ -35,6 +41,7 @@ private:
   virtual void chooseSceneManager();
   virtual void createCamera();
   virtual void createFrameListener();
+  virtual void setupSound();
     virtual void createScene();
   virtual void destroyScene();
   virtual void createViewports();
@@ -77,6 +84,12 @@ private:
 
     double timeSinceLastPhysicsStep;
     double timeSinceLastCat;
+
+    Mix_Music* music;
+    Mix_Chunk* effect1;
+    Mix_Chunk* effect2;
+    Mix_Chunk* effect3;
+    std::vector<Mix_Chunk*> effects;
 };
 
 #endif
