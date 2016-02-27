@@ -5,7 +5,7 @@
 
 #define WALK_SPEED 500
 #define MAX_ROTATION 2
-#define DAMPING_FACTOR 0.3f
+#define DAMPING_FACTOR 0.5f
 #define FPS 60
 
 Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* physicsEngine) 
@@ -83,57 +83,85 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
     if (me.Y.rel < -0.1f || me.Y.rel > 0.1f)
     {
         Ogre::Real upperCam = 600.0;
-        Ogre::Real upperSight = 300.0;
+        Ogre::Real upperSight = 500.0;
         Ogre::Real lower = 0.0;
 
+        Ogre::Real sightY = mSightNode->getPosition().y;
         Ogre::Real camY = mCameraNode->getPosition().y;
+
+        sightY = std::max(lower, std::min(sightY - me.Y.rel * DAMPING_FACTOR, upperSight));
         camY = std::max(lower, std::min(camY + me.Y.rel * DAMPING_FACTOR, upperCam));
-        mCameraNode->setPosition(Ogre::Vector3(0, camY, 500));
 
         // Only update sight node if camera is less than or equal to 300 in y
         if (camY <= 300.0f)
         {
-            Ogre::Real sightY = mSightNode->getPosition().y;
-            sightY = std::max(lower, std::min(sightY - me.Y.rel * DAMPING_FACTOR, upperSight));
             mSightNode->setPosition(Ogre::Vector3(0, sightY, -200));
         }   
+
+        // Only update camera node y position if sight node y position is less than 300
+        if (sightY <= 300.0f)
+        {
+            mCameraNode->setPosition(Ogre::Vector3(0, camY, 500));
+        }
+        // Sight node y pos is greater than 300 and cam node y == 0
+        else
+        {
+            // The x movement of cam should be 50% slower than the y movement of sight
+            Ogre::Real camZ = mCameraNode->getPosition().z;
+            camZ += me.Y.rel * DAMPING_FACTOR * 0.5f;
+            camZ = std::max(100.0f, std::min(camZ, 500.0f));
+            mCameraNode->setPosition(Ogre::Vector3(0, 0, camZ));
+        }
     }
 
-    float rotationSpeed = 0;
-    if (me.X.rel > 0.1f)
-    {
-        rotationSpeed = std::max(me.X.rel, MAX_ROTATION) * DAMPING_FACTOR;
-    }
-    else if (me.X.rel < -0.1f)
-    {
-        rotationSpeed = std::min(me.X.rel, -MAX_ROTATION) * DAMPING_FACTOR;
-    }
-
-    btTransform t = player->getGhostObject()->getWorldTransform();
-    btQuaternion orientation = t.getRotation();
-    btQuaternion rotation;
-    rotation = rotation.getIdentity();
-    rotation.setX(0);
-    rotation.setY(-rotationSpeed * elapsedTime);
-    rotation.setZ(0);
-    orientation = rotation * orientation;
-    t.setRotation(orientation);
-    player->getGhostObject()->setWorldTransform(t);
-
-    // }
-    // if (input->isKeyDown (OIS::KC_D) || input->isKeyDown(OIS::KC_E))
+    // float rotationSpeed = 0;
+    // if (me.X.rel > 0.1f)
     // {
-    //     btTransform t = player->getGhostObject()->getWorldTransform();
-    //     btQuaternion orientation = t.getRotation();
-    //     btQuaternion rotation;
-    //     rotation = rotation.getIdentity();
-    //     rotation.setX(0);
-    //     rotation.setY(-ROTATION_SPEED * elapsedTime);
-    //     rotation.setZ(0);
-    //     orientation = rotation * orientation;
-    //     t.setRotation(orientation);
-    //     player->getGhostObject()->setWorldTransform(t);
+    //     rotationSpeed = std::max(me.X.rel, MAX_ROTATION) * DAMPING_FACTOR;
     // }
+    // else if (me.X.rel < -0.1f)
+    // {
+    //     rotationSpeed = std::min(me.X.rel, -MAX_ROTATION) * DAMPING_FACTOR;
+    // }
+
+    // btTransform t = player->getGhostObject()->getWorldTransform();
+    // btQuaternion orientation = t.getRotation();
+    // btQuaternion rotation;
+    // rotation = rotation.getIdentity();
+    // rotation.setX(0);
+    // rotation.setY(-rotationSpeed * elapsedTime);
+    // rotation.setZ(0);
+    // orientation = rotation * orientation;
+    // t.setRotation(orientation);
+    // player->getGhostObject()->setWorldTransform(t);
+
+    if (input->isKeyDown (OIS::KC_A))
+    {
+        btTransform t = player->getGhostObject()->getWorldTransform();
+        btQuaternion orientation = t.getRotation();
+        btQuaternion rotation;
+        rotation = rotation.getIdentity();
+        rotation.setX(0);
+        rotation.setY(MAX_ROTATION * elapsedTime);
+        rotation.setZ(0);
+        orientation = rotation * orientation;
+        t.setRotation(orientation);
+        player->getGhostObject()->setWorldTransform(t);
+    }
+
+    if (input->isKeyDown (OIS::KC_D) || input->isKeyDown(OIS::KC_E))
+    {
+        btTransform t = player->getGhostObject()->getWorldTransform();
+        btQuaternion orientation = t.getRotation();
+        btQuaternion rotation;
+        rotation = rotation.getIdentity();
+        rotation.setX(0);
+        rotation.setY(-MAX_ROTATION * elapsedTime);
+        rotation.setZ(0);
+        orientation = rotation * orientation;
+        t.setRotation(orientation);
+        player->getGhostObject()->setWorldTransform(t);
+    }
 }
 
 // The three methods below returns the two camera-related nodes, 
