@@ -33,6 +33,7 @@ public:
 
     void updateAction(btCollisionWorld* world, btScalar dt);
 
+    btPairCachingGhostObject* getGhostObject();
     btTransform& getWorldTransform();
 
     void setOgrePosition(Ogre::Vector3 vec);
