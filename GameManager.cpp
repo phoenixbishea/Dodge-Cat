@@ -201,7 +201,7 @@ void GameManager::setupSound()
   Mix_Chunk* effectTemp;
 
   Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
-  music = Mix_LoadMUS("Rules.mp3");
+  music = Mix_LoadMUS("The-Power-I-Feel.mp3");
   effect1 = Mix_LoadWAV("angryMeow.wav");
   Mix_VolumeChunk(effect1, MIX_MAX_VOLUME* 0.1);
   effects.push_back(effect1);
@@ -213,7 +213,7 @@ void GameManager::setupSound()
   effects.push_back(effect3);
 
 
-  //Mix_VolumeMusic(MIX_MAX_VOLUME);
+  Mix_VolumeMusic(MIX_MAX_VOLUME * 0.3);
    Mix_PlayMusic(music, -1);
 
 
@@ -694,8 +694,6 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
                                 continue;
                             if (std::abs(ptA.y()) <= 0.0 || std::abs(ptB.y()) <= 0.0)
                                 continue;
-
-
 
                             return false;
                         }
