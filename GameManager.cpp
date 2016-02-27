@@ -1,5 +1,7 @@
 #include "GameManager.hpp"
 
+#define WALL_COLLIDE_ERROR 749
+
 #include <OgreEntity.h>
 #include <OgreCamera.h>
 #include <OgreViewport.h>
@@ -11,6 +13,14 @@
 
 #include <string>
 #include <iostream>
+#include <cmath>
+
+//--------------------------------------------------------------------------
+
+std::ostream& operator << (std::ostream& out, const btVector3& vec)
+{
+    out << "(" << vec.x() << ", " << vec.y() << ", " << vec.z() << ")";
+}
 
 //---------------------------------------------------------------------------
 GameManager::GameManager()
@@ -27,7 +37,9 @@ GameManager::GameManager()
     physicsEngine(0),
     mChar(0),
     mExCamera(0),
-    timeSinceLastPhysicsStep(0)
+    timeSinceLastPhysicsStep(0),
+    timeSinceLastCat(0),
+    mLose(false)
 {
 }
 
@@ -589,7 +601,74 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
                                                                orientation.getX(),
                                                                orientation.getY(),
                                                                orientation.getZ()));
-                    std::cout << sceneNode->getPosition() << std::endl;
+                }
+            }
+        }
+
+        // Check to see if the player was hit by a ball
+        if (mChar != nullptr)
+        {
+            btManifoldArray manifoldArray;
+            btPairCachingGhostObject* ghostObject = this->mChar->getGhostObject();
+            btBroadphasePairArray& pairArray =
+                ghostObject->getOverlappingPairCache()->getOverlappingPairArray();
+            int numPairs = pairArray.size();
+
+            for (int i = 0; i < numPairs; ++i)
+            {
+                manifoldArray.clear();
+
+                const btBroadphasePair& pair = pairArray[i];
+
+                btBroadphasePair* collisionPair =
+                    this->physicsEngine->getDynamicsWorld()->getPairCache()->findPair(
+                        pair.m_pProxy0,pair.m_pProxy1);
+
+                if (!collisionPair) continue;
+
+                if (collisionPair->m_algorithm)
+                    collisionPair->m_algorithm->getAllContactManifolds(manifoldArray);
+
+                for (int j=0;j<manifoldArray.size();j++)
+                {
+                    btPersistentManifold* manifold = manifoldArray[j];
+
+                    bool isFirstBody = manifold->getBody0() == ghostObject;
+
+                    btScalar direction = isFirstBody ? btScalar(-1.0) : btScalar(1.0);
+
+                    for (int p = 0; p < manifold->getNumContacts(); ++p)
+                    {
+                        const btManifoldPoint& pt = manifold->getContactPoint(p);
+
+                        if (pt.getDistance() < 0.f)
+                        {
+                            const btVector3& ptA = pt.getPositionWorldOnA();
+                            const btVector3& ptB = pt.getPositionWorldOnB();
+                            const btVector3& normalOnB = pt.m_normalWorldOnB;
+
+                            if (numPairs > 1)
+                            {
+                                std::cout << std::endl << "********* MANIFOLD COLLISION *********" << std::endl;
+                                std::cout << ptA << std::endl;
+                                std::cout << ptB << std::endl;
+                                std::cout << normalOnB << std::endl;
+                                std::cout << "**************************************" << std::endl;
+                            }
+
+                            // Exclude collisions with walls
+                            if (std::abs(ptA.x()) >= WALL_COLLIDE_ERROR || std::abs(ptB.x()) >= WALL_COLLIDE_ERROR)
+                                continue;
+                            if (std::abs(ptA.z()) >= WALL_COLLIDE_ERROR || std::abs(ptB.z()) >= WALL_COLLIDE_ERROR)
+                                continue;
+                            if (std::abs(ptA.y()) <= 0.0 || std::abs(ptB.y()) <= 0.0)
+                                continue;
+
+
+
+                            return false;
+                        }
+                    }
                 }
             }
         }
@@ -601,8 +680,6 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
 
 void GameManager::spawnCat()
 {
-    std::cout << "Spawning Cat" << std::endl;
-
     // create the plane entity to the physics engine, and attach it to the node
     btTransform CatTransform = mChar->getWorldTransform();
     btVector3 vec = CatTransform.getOrigin();
@@ -632,10 +709,10 @@ void GameManager::spawnCat()
     CatNode->attachObject(entCat);
     Ogre::Vector3 nodepos = Ogre::Vector3(vec.x(), vec.y(), vec.z());
     Ogre::Vector3 lookdir = Ogre::Vector3(lookDirection.x(), lookDirection.y(), lookDirection.z());
-    nodepos += lookdir * 20.0;
+    nodepos += lookdir * 35.0;
 
     // Set the position of the Cat
-    CatTransform.setOrigin(vec + lookDirection * 20.0);
+    CatTransform.setOrigin(vec + lookDirection * 35.0);
     CatBody->setWorldTransform(CatTransform);
     CatNode->setPosition(nodepos);
     btQuaternion q = CatTransform.getRotation();

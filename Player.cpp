@@ -163,6 +163,11 @@ void Player::updateAction(btCollisionWorld* world, btScalar dt)
     this->player->playerStep(world, dt);
 }
 
+btPairCachingGhostObject* Player::getGhostObject()
+{
+    return this->player->getGhostObject();
+}
+
 btTransform& Player::getWorldTransform()
 {
     return this->player->getGhostObject()->getWorldTransform();

@@ -75,6 +75,8 @@ private:
   Player* mChar;
     ExtendedCamera* mExCamera;
 
+    bool mLose;
+
     double timeSinceLastPhysicsStep;
     double timeSinceLastCat;
 };
