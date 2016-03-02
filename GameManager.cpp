@@ -36,7 +36,7 @@ GameManager::GameManager()
     mMouse(0),
     mKeyboard(0),
     physicsEngine(0),
-    mChar(0),
+    mPlayer(0),
     mExCamera(0),
     timeSinceLastPhysicsStep(0),
     timeSinceLastCat(0),
@@ -57,9 +57,9 @@ GameManager::~GameManager()
 }
 
 //---------------------------------------------------------------------------
-void GameManager::setCharacter (Player* character)
+void GameManager::setCharacter (Player* player)
 {
-  mChar = character;
+  mPlayer = player;
 }
 
 //---------------------------------------------------------------------------
@@ -96,32 +96,33 @@ bool GameManager::go()
 //---------------------------------------------------------------------------
 bool GameManager::setup()
 {
-  mRoot = new Ogre::Root(mPluginsCfg);
+  mRoot = new Ogre::Root(mPluginsCfg); // OGRE
 
-  setupResources();
+  setupResources(); // OGRE
 
   // Attempt to configure render system
-  bool carryOn = configure();
+  bool carryOn = configure(); // OGRE
   if (!carryOn) return false;
 
   // Load resources
-  loadResources();
+  loadResources(); // OGRE
   // Set default mipmap level (NB some APIs ignore this)
   Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
-  chooseSceneManager();
+  chooseSceneManager(); // OGRE
 
   // Setup Bullet physics
   physicsEngine = new BulletPhysics();
   physicsEngine->initObjects();
   physicsEngine->getDynamicsWorld()->setGravity(btVector3(0.0, -200.0, 0.0));
 
+  setupSound();
   // Create the scene
-  createScene();
-  createCamera();
-  createViewports();
+  createScene(); // Bullet and OGRE: wall, lights, and player creation
+  createCamera(); // OGRE + extended camera
+  createViewports(); // OGRE
 
-  createFrameListener();
+  createFrameListener(); // Set up inputs with OGRE, OIS
 
   return true;
 }
@@ -215,8 +216,6 @@ void GameManager::setupSound()
 
   Mix_VolumeMusic(MIX_MAX_VOLUME * 0.3);
    Mix_PlayMusic(music, -1);
-
-
 }
 //---------------------------------------------------------------------------
 void GameManager::createScene()
@@ -224,9 +223,6 @@ void GameManager::createScene()
   // Add ambient light
   mSceneMgr->setAmbientLight(Ogre::ColourValue(0.25, 0.25, 0.25));
   mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
-
-  setupSound();
-
 
   Player* player = new Player("Player 1", mSceneMgr, this->physicsEngine);
 
@@ -577,15 +573,15 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         return true;
     // mPlayerNode->translate(mDirection * fe.timeSinceLastFrame, Ogre::Node::TS_LOCAL);
 
-    if (mChar != NULL)
+    if (mPlayer != NULL)
     {
-        mChar->update (fe.timeSinceLastFrame, mKeyboard, mMouse);
+        mPlayer->update (fe.timeSinceLastFrame, mKeyboard, mMouse);
 
         if (mExCamera)
         {
             mExCamera->update (fe.timeSinceLastFrame,
-                               mChar->getCameraNode ()->_getDerivedPosition(),
-                               mChar->getSightNode ()->_getDerivedPosition());
+                               mPlayer->getCameraNode ()->_getDerivedPosition(),
+                               mPlayer->getSightNode ()->_getDerivedPosition());
         }
     }
 
@@ -593,41 +589,51 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
    {
         physicsEngine->getDynamicsWorld()->stepSimulation(1.0f / 60.0f);
 
-        if (mChar != nullptr)
+        if (mPlayer != nullptr)
         {
-            this->mChar->updateAction(this->physicsEngine->getDynamicsWorld(), fe.timeSinceLastFrame);
-            btTransform& trans = this->mChar->getWorldTransform();
+            this->mPlayer->updateAction(this->physicsEngine->getDynamicsWorld(), fe.timeSinceLastFrame);
+            btTransform& trans = this->mPlayer->getWorldTransform();
+
             // Update player rendering position
-            this->mChar->setOgrePosition(Ogre::Vector3(trans.getOrigin().getX(),
-                                                       trans.getOrigin().getY() - this->mChar->getCollisionObjectHalfHeight(),
+            this->mPlayer->setOgrePosition(Ogre::Vector3(trans.getOrigin().getX(),
+                                                       trans.getOrigin().getY() - this->mPlayer->getCollisionObjectHalfHeight(),
                                                        trans.getOrigin().getZ()));
-            this->mChar->setOgreOrientation(Ogre::Quaternion(trans.getRotation().getW(),
+
+            this->mPlayer->setOgreOrientation(Ogre::Quaternion(trans.getRotation().getW(),
                                                              trans.getRotation().getX(),
                                                              trans.getRotation().getY(),
                                                              trans.getRotation().getZ()));
 
-            btVector3 t2 = mChar->getWorldTransform().getOrigin();
-            std::cout << "player position: " << t2.x() << " " << t2.y() << " " << t2.z() << std::endl;
+            // btVector3 t2 = mPlayer->getWorldTransform().getOrigin();
+            // std::cout << "player position: " << t2.x() << " " << t2.y() << " " << t2.z() << std::endl;
         }
 
         for (int i = 0; i < this->physicsEngine->getCollisionObjectCount(); i++)
         {
+            // Get object from collision array and cast to rigidbody
             btCollisionObject* obj = this->physicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
             btRigidBody* body = btRigidBody::upcast(obj);
 
+            // Check collisions that are not with the player?
             if (body && body->getMotionState() && obj->getCollisionFlags() != btCollisionObject::CF_CHARACTER_OBJECT)
             {
                 btTransform trans;
                 body->getMotionState()->getWorldTransform(trans);
                 void *userPointer = body->getUserPointer();
+
+                // Play cat sound on collision
                 Mix_PlayChannel(-1, effects.at(rand()%effects.size()) ,0);
+
+                // Convert rigidbody to OGRE scenenode and update position and orientation
                 if (userPointer)
                 {
                     btQuaternion orientation = trans.getRotation();
                     Ogre::SceneNode *sceneNode = static_cast<Ogre::SceneNode *>(userPointer);
+
                     sceneNode->setPosition(Ogre::Vector3(trans.getOrigin().getX(),
                                                          trans.getOrigin().getY(),
                                                          trans.getOrigin().getZ()));
+
                     sceneNode->setOrientation(Ogre::Quaternion(orientation.getW(),
                                                                orientation.getX(),
                                                                orientation.getY(),
@@ -637,12 +643,13 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         }
 
         // Check to see if the player was hit by a ball
-        if (mChar != nullptr)
+        if (mPlayer != nullptr)
         {
             btManifoldArray manifoldArray;
-            btPairCachingGhostObject* ghostObject = this->mChar->getGhostObject();
+            btPairCachingGhostObject* ghostObject = this->mPlayer->getGhostObject();
             btBroadphasePairArray& pairArray =
                 ghostObject->getOverlappingPairCache()->getOverlappingPairArray();
+
             int numPairs = pairArray.size();
 
             for (int i = 0; i < numPairs; ++i)
@@ -710,7 +717,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
 void GameManager::spawnCat()
 {
     // create the plane entity to the physics engine, and attach it to the node
-    btTransform CatTransform = mChar->getWorldTransform();
+    btTransform CatTransform = mPlayer->getWorldTransform();
     btVector3 vec = CatTransform.getOrigin();
 
     btScalar CatMass(10.0);
@@ -725,13 +732,14 @@ void GameManager::spawnCat()
     btRigidBody::btRigidBodyConstructionInfo CatRBInfo(CatMass, CatMotionState, CatShape, localCatInertia);
     btRigidBody *CatBody = new btRigidBody(CatRBInfo);
 
-    // Set the velocity of the Cat
-    Ogre::Vector3 pos = this->mChar->getSightNode()->_getDerivedPosition();
-    Ogre::Vector3 cpos = this->mChar->getCameraNode()->_getDerivedPosition();
+    // Set the velocity of the Cat based on sight and camera nodes attached to the player
+    Ogre::Vector3 pos = this->mPlayer->getSightNode()->_getDerivedPosition();
+    Ogre::Vector3 cpos = this->mPlayer->getCameraNode()->_getDerivedPosition();
     btVector3 lookDirection(pos.x - cpos.x, pos.y - cpos.y, pos.z - cpos.z);
     lookDirection.normalize();
-    CatBody->setLinearVelocity(lookDirection * 1000);
+    CatBody->setLinearVelocity(lookDirection * 1000); // bullet
 
+    // OGRE stuff
     Ogre::Entity *entCat = mSceneMgr->createEntity("models/sphere.mesh");
     entCat->setCastShadows(false);
     Ogre::SceneNode *CatNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
@@ -744,6 +752,7 @@ void GameManager::spawnCat()
     CatTransform.setOrigin(vec + lookDirection * CAT_SPAWN_DISTANCE);
     CatBody->setWorldTransform(CatTransform);
     CatNode->setPosition(nodepos);
+
     btQuaternion q = CatTransform.getRotation();
     CatNode->setOrientation(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
     CatNode->scale(Ogre::Vector3(0.25, 0.25, 0.25));
@@ -817,11 +826,6 @@ bool GameManager::keyReleased(const OIS::KeyEvent& ke)
 //---------------------------------------------------------------------------
 bool GameManager::mouseMoved(const OIS::MouseEvent& me)
 {
-  if (me.state.buttonDown(OIS::MB_Right))
-  {
-    // mPlayerNode->yaw(Ogre::Degree(-mRotate * me.state.X.rel), Ogre::Node::TS_WORLD);
-    // mPlayerNode->pitch(Ogre::Degree(-mRotate * me.state.Y.rel), Ogre::Node::TS_LOCAL);
-  }
   return true;
 }
 
@@ -829,9 +833,6 @@ bool GameManager::mouseMoved(const OIS::MouseEvent& me)
 bool GameManager::mousePressed(
   const OIS::MouseEvent& me, OIS::MouseButtonID id)
 {
-  if (id == OIS::MB_Left)
-  {
-  }
   return true;
 }
 

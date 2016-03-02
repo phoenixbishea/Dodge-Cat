@@ -29,8 +29,6 @@ public:
 
     Ogre::SceneNode* getCameraNode ();
 
-    Ogre::Vector3 getWorldPosition ();
-
     void updateAction(btCollisionWorld* world, btScalar dt);
 
     btPairCachingGhostObject* getGhostObject();

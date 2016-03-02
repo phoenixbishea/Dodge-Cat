@@ -22,6 +22,6 @@ public:
   void BulletPhysics();
   void initObjects();
   btDiscreteDynamicsWorld* getDynamicsWorld();
-}
+};
 
 #endif // __PHYSICS_H__

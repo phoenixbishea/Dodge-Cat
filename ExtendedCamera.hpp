@@ -15,8 +15,6 @@ public:
 
     Ogre::Vector3 getCameraPosition ();
 
-    void instantUpdate (Ogre::Vector3 cameraPosition, Ogre::Vector3 targetPosition);
-
     void update (Ogre::Real elapsedTime, Ogre::Vector3 cameraPosition, Ogre::Vector3 targetPosition);
 
 protected:

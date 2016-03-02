@@ -79,7 +79,7 @@ private:
 
   BulletPhysics* physicsEngine;
 
-  Player* mChar;
+  Player* mPlayer;
     ExtendedCamera* mExCamera;
 
     bool mLose;

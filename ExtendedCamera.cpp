@@ -56,12 +56,6 @@ Ogre::Vector3 ExtendedCamera::getCameraPosition ()
     return mCameraNode->getPosition ();
 }
 
-void ExtendedCamera::instantUpdate (Ogre::Vector3 cameraPosition, Ogre::Vector3 targetPosition) 
-{
-    mCameraNode->setPosition (cameraPosition);
-    mTargetNode->setPosition (targetPosition);
-}
-
 void ExtendedCamera::update (Ogre::Real elapsedTime, Ogre::Vector3 cameraPosition, Ogre::Vector3 targetPosition) 
 {
     // Handle movement
