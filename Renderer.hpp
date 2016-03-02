@@ -1,26 +1,7 @@
 #ifndef Renderer_hpp
 #define Renderer_hpp
 
-#include "Player.hpp"
-#include "ExtendedCamera.hpp"
-
-#include <OgreRoot.h>
-#include <OgreWindowEventUtilities.h>
-
-#include <OISEvents.h>
-#include <OISInputManager.h>
-#include <OISKeyboard.h>
-#include <OISMouse.h>
-#include "BulletPhysics.hpp"
-
-#include <SDL.h>
-#include <SDL_mixer.h>
-#include <vector>
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
-
 class Renderer
-  : public Ogre::WindowEventListener,
 {
 public:
   Renderer();
@@ -118,37 +99,4 @@ void Renderer::initViewports()
   mCamera->setAspectRatio(
     Ogre::Real(vp->getActualWidth()) /
     Ogre::Real(vp->getActualHeight()));
-}
-
-//---------------------------------------------------------------------------
-
-// Adjust mouse clipping area
-void GameManager::windowResized(Ogre::RenderWindow* rw)
-{
-  int left, top;
-  unsigned int width, height, depth;
-
-  rw->getMetrics(width, height, depth, left, top);
-
-  const OIS::MouseState& ms = mMouse->getMouseState();
-  ms.width = width;
-  ms.height = height;
-}
-
-//---------------------------------------------------------------------------
-// Unattach OIS before window shutdown
-void GameManager::windowClosed(Ogre::RenderWindow* rw)
-{
-  // Only close for window that created OIS
-  if(rw == mWindow)
-  {
-    if(mInputMgr)
-    {
-      mInputMgr->destroyInputObject(mMouse);
-      mInputMgr->destroyInputObject(mKeyboard);
-
-      OIS::InputManager::destroyInputSystem(mInputMgr);
-      mInputMgr = 0;
-    }
-  }
 }

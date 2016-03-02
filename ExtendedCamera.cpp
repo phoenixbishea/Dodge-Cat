@@ -41,16 +41,6 @@ ExtendedCamera::~ExtendedCamera ()
     mSceneMgr->destroySceneNode (mName + "_target");
 }
 
-void ExtendedCamera::setTightness (Ogre::Real tightness) 
-{
-    mTightness = tightness;
-}
-
-Ogre::Real ExtendedCamera::getTightness () 
-{
-    return mTightness;
-}
-
 Ogre::Vector3 ExtendedCamera::getCameraPosition () 
 {
     return mCameraNode->getPosition ();

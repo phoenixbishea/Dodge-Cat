@@ -9,10 +9,6 @@ public:
     ExtendedCamera (Ogre::String name, Ogre::SceneManager *sceneMgr, Ogre::Camera *camera = 0);
     ~ExtendedCamera ();
 
-    void setTightness (Ogre::Real tightness);
-
-    Ogre::Real getTightness ();
-
     Ogre::Vector3 getCameraPosition ();
 
     void update (Ogre::Real elapsedTime, Ogre::Vector3 cameraPosition, Ogre::Vector3 targetPosition);
