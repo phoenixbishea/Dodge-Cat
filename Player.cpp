@@ -20,8 +20,13 @@ Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* 
     mCameraNode = mMainNode->createChildSceneNode (mName + "_camera", Ogre::Vector3 (0, 300, 500));
 
     // Give this character a shape :)
-    mEntity = mSceneMgr->createEntity (mName, "ninja.mesh");
-    mMainNode->attachObject (mEntity);
+    mEntity = mSceneMgr->createEntity (mName, "SprayBottle.mesh");
+    mEntity->setMaterialName ("bottle.material");
+    Ogre::SceneNode* bottleNode = mMainNode->createChildSceneNode();
+    bottleNode->attachObject (mEntity);
+    //    bottleNode->pitch(Ogre::Radian(Ogre::Degree(90)));
+    bottleNode->pitch(Ogre::Radian(Ogre::Degree(90)));
+    bottleNode->roll(Ogre::Radian(Ogre::Degree(90)));
 
     btBoxShape* shape = new btBoxShape(btVector3(40.0, 100.0, 10.0));
     ghost = new btPairCachingGhostObject();
