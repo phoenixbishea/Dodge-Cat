@@ -11,6 +11,7 @@
 #include <OgreConfigFile.h>
 #include <OgreException.h>
 #include <OgreMeshManager.h>
+#include <OgreSubMesh.h>
 
 #include <string>
 #include <iostream>
@@ -740,10 +741,27 @@ void GameManager::spawnCat()
     CatBody->setLinearVelocity(lookDirection * 1000); // bullet
 
     // OGRE stuff
-    Ogre::Entity *entCat = mSceneMgr->createEntity("models/sphere.mesh");
+    static bool meshCreated = false;
+    if (!meshCreated)
+    {
+      Ogre::MeshManager::getSingleton()
+        .create("Cat.mesh",
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+      meshCreated = true;
+    }
+
+    Ogre::Entity *entCat =
+      mSceneMgr
+      ->createEntity(Ogre::MeshManager::getSingleton()
+                     .getByName("Cat.mesh",
+                                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME));
     entCat->setCastShadows(false);
-    Ogre::SceneNode *CatNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+    Ogre::SceneNode *mainNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+    Ogre::SceneNode *CatNode = mainNode->createChildSceneNode();
     CatNode->attachObject(entCat);
+    Ogre::Real catScale = 300.0;
+    CatNode->scale(Ogre::Vector3(catScale, catScale, catScale));
+    CatNode->pitch(Ogre::Radian(Ogre::Degree(-90)));
     Ogre::Vector3 nodepos = Ogre::Vector3(vec.x(), vec.y(), vec.z());
     Ogre::Vector3 lookdir = Ogre::Vector3(lookDirection.x(), lookDirection.y(), lookDirection.z());
     nodepos += lookdir * CAT_SPAWN_DISTANCE;
