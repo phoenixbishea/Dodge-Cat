@@ -278,40 +278,39 @@ void GameManager::createScene()
 }
 
 //---------------------------------------------------------------------------
-
 void GameManager::createWalls()
 {
     /*************
      * Left Wall *
      *************/
-    Ogre::Plane leftWallPlane(Ogre::Vector3::UNIT_X, 0);
+    Ogre::Plane leftWallPlane(Ogre::Vector3::UNIT_X, 0); ////////////////////////////////////////////
     Ogre::MeshManager::getSingleton()
-        .createPlane("leftWall",
+        .createPlane("leftWall",  ////////////////////////////////////////////
                      Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                     leftWallPlane,
-                     6000, 1500,
+                     leftWallPlane, ////////////////////////////////////////////
+                     6000, 1500, 
                      20, 20,
                      true,
                      1, 5, 5,
-                     Ogre::Vector3::UNIT_Z);
+                     Ogre::Vector3::UNIT_Z); ////////////////////////////////////////////
 
     Ogre::Entity *entLeftWall = mSceneMgr->createEntity("LeftWallEntity", "leftWall");
     entLeftWall->setCastShadows(false);
     entLeftWall->setMaterialName("Examples/Rockwall");
     Ogre::SceneNode *LeftWallNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("LeftWallNode");
     LeftWallNode->attachObject(entLeftWall);
-    LeftWallNode->setPosition(Ogre::Vector3(-750.0, 3000.0, 0.0));
+    LeftWallNode->setPosition(Ogre::Vector3(-750.0, 3000.0, 0.0)); ////////////////////////////////////////////
 
     // create the plane entity to the physics engine, and attach it to the node
     btTransform LeftWallTransform;
     LeftWallTransform.setIdentity();
-    LeftWallTransform.setOrigin(btVector3(-750, 3000, 0));
+    LeftWallTransform.setOrigin(btVector3(-750, 3000, 0)); ////////////////////////////////////////////
 
     btScalar LeftWallMass(0.0); // the mass is 0, because the LeftWall is immovable (static)
     btVector3 localLeftWallInertia(0, 0, 0);
 
     btCollisionShape *LeftWallShape = new btBoxShape(btVector3(0.1, 6000.0, 1500.0));
-    btDefaultMotionState *LeftWallMotionState = new btDefaultMotionState(LeftWallTransform);
+    btDefaultMotionState *LeftWallMotionState = new btDefaultMotionState(LeftWallTransform); ////////////////////////////////////////////
 
     LeftWallShape->calculateLocalInertia(LeftWallMass, localLeftWallInertia);
 

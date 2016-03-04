@@ -1,27 +1,7 @@
-#include "Listener.hpp"
+#include "NewGameManager.hpp"
 
 //---------------------------------------------------------------------------
-Listener::Listener(Ogre::RenderWindow* rw, BulletPhysics* physEng, 
-    ExtendedCamera* exCam)
-
-    : mInputMgr(0),
-    mKeyboard(0),
-    mMouse(0),
-    mWindow(rw), 
-    mPhysicsEngine(physEng), 
-    mExCamera(exCam),
-
-    mShutDown(false)
-{
-}
-
-//---------------------------------------------------------------------------
-Listener::~Listener()
-{
-}
-
-//---------------------------------------------------------------------------
-void Listener::initInput()
+void NewGameManager::initInput()
 {
     Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
     
@@ -41,13 +21,13 @@ void Listener::initInput()
     mMouse = static_cast<OIS::Mouse*>(
     mInputMgr->createInputObject(OIS::OISMouse, true));
 
-    // Register Listener as source of CALLBACK methods
+    // Register NewGameManager as source of CALLBACK methods
     mMouse->setEventCallback(this);
     mKeyboard->setEventCallback(this);
 }
 
 // ---------------------Adjust mouse clipping area---------------------------
-void Listener::windowResized(Ogre::RenderWindow* rw)
+void NewGameManager::windowResized(Ogre::RenderWindow* rw)
 {
     int left, top;
     unsigned int width, height, depth;
@@ -60,7 +40,7 @@ void Listener::windowResized(Ogre::RenderWindow* rw)
 }
 
 //-----------------Unattach OIS before window shutdown-----------------------
-void Listener::windowClosed(Ogre::RenderWindow* rw)
+void NewGameManager::windowClosed(Ogre::RenderWindow* rw)
 {
     // Only close for window that created OIS
     if (rw == mWindow)
@@ -77,7 +57,7 @@ void Listener::windowClosed(Ogre::RenderWindow* rw)
 }
 
 //---------------------------------------------------------------------------
-bool Listener::keyPressed(const OIS::KeyEvent& ke)
+bool NewGameManager::keyPressed(const OIS::KeyEvent& ke)
 {
     if (ke.key == OIS::KC_ESCAPE)
     {
@@ -87,33 +67,33 @@ bool Listener::keyPressed(const OIS::KeyEvent& ke)
 }
 
 //---------------------------------------------------------------------------
-bool Listener::keyReleased(const OIS::KeyEvent& ke)
+bool NewGameManager::keyReleased(const OIS::KeyEvent& ke)
 {
     return true;
 }
 
 //---------------------------------------------------------------------------
-bool Listener::mouseMoved(const OIS::MouseEvent& me)
+bool NewGameManager::mouseMoved(const OIS::MouseEvent& me)
 {
     return true;
 }
 
 //---------------------------------------------------------------------------
-bool Listener::mousePressed(
+bool NewGameManager::mousePressed(
     const OIS::MouseEvent& me, OIS::MouseButtonID id)
 {
     return true;
 }
 
 //---------------------------------------------------------------------------
-bool Listener::mouseReleased(
+bool NewGameManager::mouseReleased(
     const OIS::MouseEvent& me, OIS::MouseButtonID id)
 {
     return true;
 }
 
 //---------------------------------------------------------------------------
-bool Listener::RenderingQueued(const Ogre::Event& fe)
+bool NewGameManager::frameRenderingQueued(const Ogre::Event& fe)
 {
     if (mWindow->isClosed())
     {
@@ -140,7 +120,7 @@ bool Listener::RenderingQueued(const Ogre::Event& fe)
 }
 
 //---------------------------------------------------------------------------
-bool Listener::Started(const Ogre::Event& fe)
+bool NewGameManager::frameStarted(const Ogre::Event& fe)
 {
 //     timeSinceLastPhysicsStep += fe.timeSinceLast;
 //     if (timeSinceLastPhysicsStep > 1.0 / 60.0)
