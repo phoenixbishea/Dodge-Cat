@@ -40,8 +40,8 @@ GameManager::GameManager()
     mExCamera(0),
     timeSinceLastPhysicsStep(0),
     timeSinceLastCat(0),
-    mLose(false),
-    mState(mainState)
+    mState(mainState),
+    mScore(0)
 {
 }
 
@@ -216,22 +216,28 @@ void GameManager::setupSound()
   srand (time(NULL));
   Mix_Chunk* effectTemp;
 
- // Mix_AllocateChannels(16);
+  Mix_AllocateChannels(32);
   Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
   music = Mix_LoadMUS("The-Power-I-Feel.mp3");
   effect1 = Mix_LoadWAV("angryMeow.wav");
   Mix_VolumeChunk(effect1, MIX_MAX_VOLUME* 0.1);
   effects.push_back(effect1);
   effect2 = Mix_LoadWAV("cat.wav");
-  Mix_VolumeChunk(effect2, MIX_MAX_VOLUME* 0.1);
+  Mix_VolumeChunk(effect2, MIX_MAX_VOLUME* 0.05);
   effects.push_back(effect2);
   effect3 = Mix_LoadWAV("happyPurr.wav");
   Mix_VolumeChunk(effect3, MIX_MAX_VOLUME* 0.1);
   effects.push_back(effect3);
+  scoreUp = Mix_LoadWAV("scoreUp1.wav");
+  Mix_VolumeChunk(scoreUp, MIX_MAX_VOLUME * 0.15);
+  //Mix_PlayChannel(-1, scoreUp, -1);
 
+  if(!scoreUp) {
+    printf("Mix_LoadWAV: %s\n", Mix_GetError());
+    // handle error
+}
 
   Mix_VolumeMusic(MIX_MAX_VOLUME * 0.3);
-  Mix_PlayMusic(music, -1);
 
 
 }
@@ -253,30 +259,41 @@ void GameManager::setupGUI()
   CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
   CEGUI::Window* mainSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
   CEGUI::Window* quitSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
-  CEGUI::Window* blankSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+  CEGUI::Window* playSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
 
   //Create the main menu
-  CEGUI::Window* quitMain = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
   CEGUI::Window* start = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/StartButton");
+  CEGUI::Window* quitMain = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+  
 
   CEGUI::Window* quitOver = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitOverButton");
   CEGUI::Window* reStart = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/RestartButton");
 
-  quitMain->setText("Quit");
-  quitMain->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
-  quitMain->setPosition(CEGUI::UVector2(CEGUI::UDim(0,100),CEGUI::UDim(0,100)));
+  CEGUI::Window* scoreBoard = wmgr.createWindow("TaharezLook/StaticText", "CEGUIDemo/scoreBoard"); 
+
 
   start->setText("Start");
   start->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
-  start->setPosition(CEGUI::UVector2(CEGUI::UDim(0,200),CEGUI::UDim(0,200)));
+  start->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,0)));
+  
+  quitMain->setText("Quit");
+  quitMain->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+  quitMain->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,100)));
+  
+
+
+  scoreBoard->setText("Score: " + Ogre::StringConverter::toString(mScore));
+  scoreBoard->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+  scoreBoard->setPosition(CEGUI::UVector2(CEGUI::UDim(0.05f,0),CEGUI::UDim(0.05f,0)));
+
 
   quitOver->setText("Quit");
   quitOver->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
-  quitOver->setPosition(CEGUI::UVector2(CEGUI::UDim(0,100),CEGUI::UDim(0,100)));
+  quitOver->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,100)));
 
   reStart->setText("Restart");
-  start->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
-  start->setPosition(CEGUI::UVector2(CEGUI::UDim(0,200),CEGUI::UDim(0,200)));
+  reStart->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+  reStart->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,0)));
 
   quitMain->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::quit, this));
   quitOver->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::quit, this));
@@ -286,6 +303,11 @@ void GameManager::setupGUI()
   startButtons.push_back(start);
   startButtons.push_back(quitMain);
 
+  gameOverButtons.push_back(quitOver);
+  gameOverButtons.push_back(reStart);
+
+  playButtons.push_back(scoreBoard);
+
 
   mainSheet->addChild(start);
   mainSheet->addChild(quitMain);
@@ -293,9 +315,11 @@ void GameManager::setupGUI()
   quitSheet->addChild(quitOver);
   quitSheet->addChild(reStart);
 
+  playSheet->addChild(scoreBoard);
+
   sheets.push_back(mainSheet);
   sheets.push_back(quitSheet);
-  sheets.push_back(blankSheet);
+  sheets.push_back(playSheet);
 }
 
 //---------------------------------------------------------------------------
@@ -358,6 +382,9 @@ void GameManager::createScene()
   this->physicsEngine->getDynamicsWorld()->addRigidBody(groundBody);
 
   createWalls();
+
+  Mix_PlayMusic(music, -1);
+
 }
 
 //---------------------------------------------------------------------------
@@ -642,6 +669,14 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
     if (timeSinceLastCat > 1.0)
     {
         spawnCat();
+        ++mScore;
+        if(Mix_PlayChannel(0, scoreUp, 0)==-1) {
+          printf("Mix_PlayChannel: %s\n",Mix_GetError());
+          // may be critical error, or maybe just no channels were free.
+        // you could allocated another channel in that case...
+        assert(false);
+      }
+        playButtons.at(0)->setText("Score: " + Ogre::StringConverter::toString(mScore));
         timeSinceLastCat -= 1.0;
     }
 }
@@ -902,9 +937,16 @@ context.injectKeyDown((CEGUI::Key::Scan)ke.key);
     mShutDown = true;
     break;
   case OIS::KC_M:
-    Mix_VolumeMusic(Mix_VolumeMusic(-1)-1);
+    if(Mix_VolumeMusic(-1) == 0) 
+      Mix_VolumeMusic(MIX_MAX_VOLUME * .3);
+    else
+      Mix_VolumeMusic(0);
     break;
   case OIS::KC_N:
+    if(Mix_Volume(-1,-1) == 0)
+      Mix_Volume(-1,MIX_MAX_VOLUME * .6);
+    else
+      Mix_Volume(-1, 0);
     //music
     break;
   default:
@@ -987,7 +1029,8 @@ bool GameManager::start(const CEGUI::EventArgs&)
 {
   mState = playState;
   createScene();
-  CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->hide();
+   CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(2));
+  // CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->hide();
   CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().hide();
 }
 
@@ -997,7 +1040,7 @@ bool GameManager::reStart(const CEGUI::EventArgs&)
   /* Restarts the scene and physis world */
   // reStartScene(); 
   
-  CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->hide();
+   CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(2));
   CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().hide(); 
 }
 
