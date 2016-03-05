@@ -7,6 +7,8 @@
 #include <OISKeyboard.h>
 #include <OISMouse.h>
 #include <OgreSceneManager.h>
+#include <OgreSubMesh.h>
+#include <OgreMeshManager.h>
 #include <btBulletDynamicsCommon.h>
 #include <BulletDynamics/Character/btKinematicCharacterController.h>
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
@@ -44,8 +46,9 @@ protected:
     Ogre::String mName;
     btPairCachingGhostObject* ghost;
     btKinematicCharacterController* player;
-    //btRigidBody* body;
+    btRigidBody* paddleBody;
     Ogre::SceneNode* mMainNode;
+  Ogre::SceneNode* mCannonNode;
     Ogre::SceneNode* mSightNode; // "Sight" node - The Player is supposed to be looking here
     Ogre::SceneNode* mCameraNode; // Node for the chase camera
     Ogre::Entity* mEntity; // Player entity

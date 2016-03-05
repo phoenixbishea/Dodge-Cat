@@ -21,6 +21,7 @@ ogre.cfg
 Ogre.log
 stamp-h1
 .deps
+resources.cfg
 
 # Object files
 *.o

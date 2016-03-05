@@ -1,7 +1,8 @@
 #include "GameManager.hpp"
 
 #define WALL_COLLIDE_ERROR 749
-#define CAT_SPAWN_DISTANCE 80.0f
+#define CAT_SPAWN_DISTANCE 150.0f
+#define CAT_SPEED 2000
 
 #include <OgreEntity.h>
 #include <OgreCamera.h>
@@ -16,13 +17,6 @@
 #include <string>
 #include <iostream>
 #include <cmath>
-
-//--------------------------------------------------------------------------
-
-std::ostream& operator << (std::ostream& out, const btVector3& vec)
-{
-    out << "(" << vec.x() << ", " << vec.y() << ", " << vec.z() << ")";
-}
 
 //---------------------------------------------------------------------------
 GameManager::GameManager()
@@ -250,7 +244,7 @@ void GameManager::createScene()
 
   Ogre::Entity *entGround = mSceneMgr->createEntity("GroundEntity", "ground");
   entGround->setCastShadows(false);
-  entGround->setMaterialName("Examples/white");
+  entGround->setMaterialName("Examples/Rockwall");
   Ogre::SceneNode *groundNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("groundNode");
   groundNode->attachObject(entGround);
   groundNode->setPosition(Ogre::Vector3(0.0, 0.0, 0.0));
@@ -686,15 +680,6 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
                             const btVector3& ptB = pt.getPositionWorldOnB();
                             const btVector3& normalOnB = pt.m_normalWorldOnB;
 
-                            if (numPairs > 1)
-                            {
-                                std::cout << std::endl << "********* MANIFOLD COLLISION *********" << std::endl;
-                                std::cout << ptA << std::endl;
-                                std::cout << ptB << std::endl;
-                                std::cout << normalOnB << std::endl;
-                                std::cout << "**************************************" << std::endl;
-                            }
-
                             // Exclude collisions with walls
                             if (std::abs(ptA.x()) >= WALL_COLLIDE_ERROR || std::abs(ptB.x()) >= WALL_COLLIDE_ERROR)
                                 continue;
@@ -738,7 +723,7 @@ void GameManager::spawnCat()
     Ogre::Vector3 cpos = this->mPlayer->getCameraNode()->_getDerivedPosition();
     btVector3 lookDirection(pos.x - cpos.x, pos.y - cpos.y, pos.z - cpos.z);
     lookDirection.normalize();
-    CatBody->setLinearVelocity(lookDirection * 1000); // bullet
+    CatBody->setLinearVelocity(lookDirection * CAT_SPEED); // bullet
 
     // OGRE stuff
     static bool meshCreated = false;
@@ -759,9 +744,10 @@ void GameManager::spawnCat()
     Ogre::SceneNode *mainNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
     Ogre::SceneNode *CatNode = mainNode->createChildSceneNode();
     CatNode->attachObject(entCat);
-    Ogre::Real catScale = 300.0;
+    Ogre::Real catScale = 100.0;
     CatNode->scale(Ogre::Vector3(catScale, catScale, catScale));
-    CatNode->pitch(Ogre::Radian(Ogre::Degree(-90)));
+    CatNode->yaw(Ogre::Radian(Ogre::Degree(180)));
+    CatNode->pitch(Ogre::Radian(Ogre::Degree(90)));
     Ogre::Vector3 nodepos = Ogre::Vector3(vec.x(), vec.y(), vec.z());
     Ogre::Vector3 lookdir = Ogre::Vector3(lookDirection.x(), lookDirection.y(), lookDirection.z());
     nodepos += lookdir * CAT_SPAWN_DISTANCE;
@@ -769,14 +755,13 @@ void GameManager::spawnCat()
     // Set the position of the Cat
     CatTransform.setOrigin(vec + lookDirection * CAT_SPAWN_DISTANCE);
     CatBody->setWorldTransform(CatTransform);
-    CatNode->setPosition(nodepos);
+    mainNode->setPosition(nodepos);
 
     btQuaternion q = CatTransform.getRotation();
-    CatNode->setOrientation(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
-    CatNode->scale(Ogre::Vector3(0.25, 0.25, 0.25));
+    mainNode->setOrientation(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
 
     CatBody->setRestitution(1);
-    CatBody->setUserPointer(CatNode);
+    CatBody->setUserPointer(mainNode);
 
     //add the body to the dynamics world
     this->physicsEngine->getDynamicsWorld()->addRigidBody(CatBody);

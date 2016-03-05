@@ -7,8 +7,10 @@
 #define MAX_ROTATION 2
 #define DAMPING_FACTOR 0.5f
 #define FPS 60
+#define PADDLE_HEIGHT 350.0
+#define PADDLE_OFFSET 100.0
 
-Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* physicsEngine) 
+Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* physicsEngine)
 {
     // Setup basic member references
     mName = name;
@@ -20,15 +22,44 @@ Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* 
     mCameraNode = mMainNode->createChildSceneNode (mName + "_camera", Ogre::Vector3 (0, 300, 500));
 
     // Give this character a shape :)
-    mEntity = mSceneMgr->createEntity (mName, "SprayBottle.mesh");
-    mEntity->setMaterialName ("bottle.material");
-    Ogre::SceneNode* bottleNode = mMainNode->createChildSceneNode();
-    bottleNode->attachObject (mEntity);
-    //    bottleNode->pitch(Ogre::Radian(Ogre::Degree(90)));
-    bottleNode->pitch(Ogre::Radian(Ogre::Degree(90)));
-    bottleNode->roll(Ogre::Radian(Ogre::Degree(90)));
+    Ogre::MeshManager::getSingleton()
+      .create("cannon/CannonBase.mesh",
+              Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    Ogre::MeshManager::getSingleton()
+      .create("cannon/CannonSpray.mesh",
+              Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
-    btBoxShape* shape = new btBoxShape(btVector3(40.0, 100.0, 10.0));
+    Ogre::Entity* baseEntity =
+      mSceneMgr
+      ->createEntity(Ogre::MeshManager::getSingleton()
+                     .getByName("cannon/CannonBase.mesh",
+                                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME));
+    Ogre::Entity* sprayEntity =
+      mSceneMgr
+      ->createEntity(Ogre::MeshManager::getSingleton()
+                     .getByName("cannon/CannonSpray.mesh",
+                                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME));
+    Ogre::SceneNode* baseNode = mMainNode->createChildSceneNode();
+    mCannonNode = mMainNode->createChildSceneNode();
+
+    // Put the cannon base into position
+    baseNode->attachObject(baseEntity);
+    baseNode->roll(Ogre::Radian(Ogre::Degree(180)));
+    baseNode->yaw(Ogre::Radian(Ogre::Degree(90)));
+
+    // Put the cannon and spray bottle into position
+    Ogre::SceneNode* cannonNode = mCannonNode->createChildSceneNode();
+    cannonNode->attachObject(sprayEntity);
+    cannonNode->roll(Ogre::Radian(Ogre::Degree(180)));
+    cannonNode->yaw(Ogre::Radian(Ogre::Degree(180)));
+    cannonNode->translate(Ogre::Vector3(0.0, 100.0, 0.0));
+    cannonNode->scale(Ogre::Vector3(0.77, 0.77, 0.77));
+
+    // Scale both parts of the cannon
+    mMainNode->scale(Ogre::Vector3(0.6, 0.6, 0.6));
+
+    btBoxShape* boxShape = new btBoxShape(btVector3(40.0, 100.0, 40.0));
+
     ghost = new btPairCachingGhostObject();
 
     btTransform t = ghost->getWorldTransform();
@@ -36,21 +67,47 @@ Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* 
     ghost->setWorldTransform(t);
 
     // physicsEngine->getDynamicsWorld()->getPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
-    ghost->setCollisionShape(shape);
+    ghost->setCollisionShape(boxShape);
     ghost->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
-    player = new btKinematicCharacterController(ghost, shape, 1.0);
+    player = new btKinematicCharacterController(ghost, boxShape, 1.0);
     physicsEngine->getDynamicsWorld()->addCollisionObject(ghost,
                                                           btBroadphaseProxy::CharacterFilter,
                                                           btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
     physicsEngine->getDynamicsWorld()->addAction(player);
 
-
     btVector3 trans = ghost->getWorldTransform().getOrigin();
-    std::cout << trans.x() << ", " << trans.y() << ", " << trans.z() << std::endl; 
+    std::cout << trans.x() << ", " << trans.y() << ", " << trans.z() << std::endl;
 
+    btTransform boxTrans = ghost->getWorldTransform();
+    btVector3 vec = boxTrans.getOrigin() + btVector3(0, PADDLE_HEIGHT / 2, -150);
+    btQuaternion rotation;
+    boxTrans.setOrigin(vec);
+    boxTrans.setRotation(rotation);
+
+    btScalar boxMass(0.0);
+    btVector3 localBoxInertia(0, 0, 0);
+
+    btBoxShape* boxShape2 = new btBoxShape(btVector3(PADDLE_HEIGHT, PADDLE_HEIGHT, 2));
+    physicsEngine->getCollisionShapes().push_back(boxShape2);
+    btDefaultMotionState* boxMotionState = new btDefaultMotionState(boxTrans);
+
+    boxShape2->calculateLocalInertia(boxMass, localBoxInertia);
+
+    btRigidBody::btRigidBodyConstructionInfo boxRBInfo(boxMass, boxMotionState, boxShape2, localBoxInertia);
+    paddleBody = new btRigidBody(boxRBInfo);
+    paddleBody->setRestitution(1.0);
+
+    Ogre::SceneNode* DELETEME = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+    Ogre::Entity* ENT = mSceneMgr->createEntity("models/cube.mesh");
+    DELETEME->attachObject(ENT);
+    DELETEME->setPosition(Ogre::Vector3(vec.x(), vec.y(), vec.z()));
+    paddleBody->setUserPointer(DELETEME);
+    assert(paddleBody->getUserPointer() != nullptr);
+
+    physicsEngine->getDynamicsWorld()->addRigidBody(paddleBody);
 }
 
-Player::~Player () 
+Player::~Player ()
 {
     //  mMainNode->detachAllObjects ();
     delete mEntity;
@@ -98,7 +155,8 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
         Ogre::Real sightY = mSightNode->getPosition().y;
         Ogre::Real camY = mCameraNode->getPosition().y;
 
-        // Find the new position of the nodes relative to y mouse movement and clamp using the bounds
+        // Find the new position of the nodes relative to y mouse movement and
+        // clamp using the bounds
         sightY = std::max(lower, std::min(sightY - me.Y.rel * DAMPING_FACTOR, upperSight));
         camY = std::max(lower, std::min(camY + me.Y.rel * DAMPING_FACTOR, upperCam));
 
@@ -107,7 +165,7 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
         {
             // Camera class relies on this...
             mSightNode->setPosition(Ogre::Vector3(0, sightY, -200));
-        }   
+        }
 
         // Only update camera node y position if sight node y position is less than 300
         if (sightY <= 300.0f)
@@ -123,6 +181,13 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
             camZ = std::max(100.0f, std::min(camZ, 500.0f));
             mCameraNode->setPosition(Ogre::Vector3(0, 0, camZ));
         }
+
+        // Rotate the cannon and spray bottle based on the location of the
+        // sight node and the camera node
+        Ogre::Degree pitch(mCannonNode->getOrientation().getPitch());
+        pitch -= Ogre::Degree(me.Y.rel * 0.03);
+        if (pitch < Ogre::Degree(85.0f) && pitch > Ogre::Degree(-10.0f))
+          mCannonNode->pitch(-Ogre::Radian(Ogre::Degree(me.Y.rel * 0.03)));
     }
 
     // Left rotation
@@ -162,6 +227,27 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
         t.setRotation(orientation);
         player->getGhostObject()->setWorldTransform(t);
     }
+
+    Ogre::Quaternion orientation = mCannonNode->_getDerivedOrientation();
+
+    std::cout << "Orientation: " << orientation << std::endl;
+    Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, -PADDLE_OFFSET); // * elapsedTime);
+    // Create bullet vector 3 where it will be moving
+    std::cout << "Direction: " << direction << std::endl;
+
+    btVector3 move(direction.x, direction.y, direction.z);
+
+    btTransform trans = ghost->getWorldTransform();
+    btVector3 origin = trans.getOrigin() + move;
+    if (origin.y() < PADDLE_HEIGHT / 2)
+      origin.setY(PADDLE_HEIGHT / 2);
+    trans.setOrigin(origin);
+    trans.setRotation(btQuaternion(orientation.x,
+                                   orientation.y,
+                                   orientation.z,
+                                   orientation.w));
+    paddleBody->setWorldTransform(trans);
+    std::cout << trans.getOrigin() << std::endl;
 }
 
 // The three methods below returns the two camera-related nodes, 
@@ -207,3 +293,4 @@ void Player::setOgreOrientation(Ogre::Quaternion q) {
 float Player::getCollisionObjectHalfHeight() {
     return 100.0;
 }
+
