@@ -18,12 +18,13 @@ NewGameManager::NewGameManager()
     mSound(0),
 
     mShutDown(false),
+    mScore(0),
 
     mTimeSinceLastPhysicsStep(0),
     mTimeSinceLastCat(0),
 
-    mState(mainState),
-    mScore(0)
+    mState(MAIN_MENU),
+    mRenderer(0)
 {
 }
 
@@ -52,7 +53,7 @@ bool NewGameManager::go()
     // initScene();
 
     mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
-    initGUI(this, &NewGameManager::quit, &NewGameManager::start);
+    initGUI();
 
     // mSound = new Sound();
     // mSound->initSound();
@@ -192,7 +193,8 @@ void NewGameManager::initListener()
     mRoot->addFrameListener(this);
 }
 
-void initGUI()
+//---------------------------------------------------------------------------
+void NewGameManager::initGUI()
 {
     // Sets up the default resource groups
     CEGUI::ImageManager::setImagesetDefaultResourceGroup("General");
@@ -240,7 +242,7 @@ void initGUI()
     startButtons.push_back(start);
     startButtons.push_back(quitMain);
 
-    playButtons.push_back(scoreBoard);
+    mPlayButtons.push_back(scoreBoard);
 
     mainSheet->addChild(start);
     mainSheet->addChild(quitMain);
@@ -382,7 +384,7 @@ bool NewGameManager::keyReleased(const OIS::KeyEvent& ke)
 //---------------------------------------------------------------------------
 bool NewGameManager::mouseMoved(const OIS::MouseEvent& me)
 {
-    if (mState != playState) 
+    if (mState != PLAY) 
     {
         CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
         context.injectMouseMove(me.state.X.rel, me.state.Y.rel);
@@ -393,7 +395,6 @@ bool NewGameManager::mouseMoved(const OIS::MouseEvent& me)
         //     context.injectMouseWheelChange(me.state.Z.rel / 120.0f);
         // } 
     }  
-}
     return true;
 }
 
@@ -414,15 +415,31 @@ bool NewGameManager::mouseReleased(
 }
 
 //---------------------------------------------------------------------------
-bool GameManager::quit(const CEGUI::EventArgs&)
+CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID)
+{
+    switch (buttonID)
+    {
+        case OIS::MB_Left:
+            return CEGUI::LeftButton;
+        case OIS::MB_Right:
+            return CEGUI::RightButton;
+        case OIS::MB_Middle:
+            return CEGUI::MiddleButton;
+        default:
+            return CEGUI::LeftButton;
+    }
+}
+
+//---------------------------------------------------------------------------
+bool NewGameManager::quit(const CEGUI::EventArgs&)
 {
     mShutDown = true;
 }
 
 //---------------------------------------------------------------------------
-bool GameManager::start(const CEGUI::EventArgs&)
+bool NewGameManager::start(const CEGUI::EventArgs&)
 {
-    mState = playState;
+    mState = PLAY;
 
     initScene();
 
@@ -450,7 +467,7 @@ bool NewGameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
     mKeyboard->capture();
     mMouse->capture();
 
-    if (mState == playState)
+    if (mState == PLAY)
     {
         mTimeSinceLastCat += fe.timeSinceLastFrame;
         if (mTimeSinceLastCat > 1.0)
@@ -469,7 +486,7 @@ bool NewGameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
 //---------------------------------------------------------------------------
 bool NewGameManager::frameStarted(const Ogre::FrameEvent& fe)
 {
-    if (mState == mainState) 
+    if (mState == MAIN_MENU) 
     {
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(0));
         return true;

@@ -35,8 +35,10 @@
 #include <CEGUI/RendererModules/Ogre/Renderer.h>
 
 #define WALL_COLLIDE_ERROR 745
-#define CAT_SPAWN_DISTANCE 80.0f
-#define CAT_VELOCITY 1500
+
+enum GameState {MAIN_MENU = 0, PLAY = 1};
+
+CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
 
 class NewGameManager
     : public Ogre::WindowEventListener,
@@ -54,8 +56,10 @@ private:
     bool initOgre();
     void initBullet();
     void initInput();
-    void initListener(); 
     void initScene();
+    void initListener(); 
+    
+    void initGUI();
 
     void initOgreResources();
     bool initOgreWindow();
@@ -72,6 +76,9 @@ private:
     bool mouseMoved(const OIS::MouseEvent& me);
     bool mousePressed(const OIS::MouseEvent& me, OIS::MouseButtonID id);
     bool mouseReleased(const OIS::MouseEvent& me, OIS::MouseButtonID id);
+
+    bool quit(const CEGUI::EventArgs&);
+    bool start(const CEGUI::EventArgs&);
 
     bool frameRenderingQueued(const Ogre::FrameEvent& fe);
     bool frameStarted(const Ogre::FrameEvent& fe);
@@ -92,9 +99,17 @@ private:
     Sound* mSound;
 
     bool mShutDown;
+    int mScore;
 
     double mTimeSinceLastPhysicsStep;
     double mTimeSinceLastCat;
+
+    GameState mState;
+    CEGUI::OgreRenderer* mRenderer;
+    std::vector<CEGUI::Window*> sheets;
+    std::vector<CEGUI::Window*> startButtons;
+    std::vector<CEGUI::Window*> gameOverButtons;
+    std::vector<CEGUI::Window*> mPlayButtons;
 };
 
 #endif

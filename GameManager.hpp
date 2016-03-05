@@ -1,130 +1,115 @@
-#ifndef GameManager_h
-#define GameManager_h
+#ifndef GameManager_hpp
+#define GameManager_hpp
 
-#include "Player.hpp"
+#include "BulletPhysics.hpp"
+#include "Cat.hpp"
 #include "ExtendedCamera.hpp"
+#include "Player.hpp"
+#include "Sound.hpp"
+#include "Wall.hpp"
 
 #include <OgreRoot.h>
 #include <OgreWindowEventUtilities.h>
-#include <OgreStringConverter.h>
+#include <OgreCamera.h>
+#include <OgreViewport.h>
+#include <OgreSceneManager.h>
+#include <OgreRenderWindow.h>
 
-/* Input OIS */
+#include <OgreEntity.h>
+#include <OgreConfigFile.h>
+#include <OgreException.h>
+#include <OgreMeshManager.h>
+
 #include <OISEvents.h>
 #include <OISInputManager.h>
 #include <OISKeyboard.h>
 #include <OISMouse.h>
 
-/* Bullet Physics */
-#include "BulletPhysics.hpp"
+#include <vector>
 
-/* Sound */
-#include <SDL.h>
-#include <SDL_mixer.h>
+#include <string>
+#include <iostream>
+#include <cmath>
 
-/* CEGUI */
-// #include "GUIManager.hpp"
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/Ogre/Renderer.h>
 
-#include <vector>
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
+#define WALL_COLLIDE_ERROR 745
 
-enum gameState {mainState = 0, playState = 1, endState = 2};
+enum GameState {MAIN_MENU = 0, PLAY = 1};
 
+CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
 
 class GameManager
-  : public Ogre::WindowEventListener,
+    : public Ogre::WindowEventListener,
     public Ogre::FrameListener,
     public OIS::KeyListener,
     public OIS::MouseListener
 {
 public:
-  GameManager();
-  virtual ~GameManager();
+    GameManager();
+    ~GameManager();
 
-  bool go();
-
-  void setCharacter (Player* character);
-
-  void setExtendedCamera (ExtendedCamera *cam);
+    bool go();
 
 private:
-  virtual bool setup();
-  virtual bool configure();
-  virtual void chooseSceneManager();
-  virtual void createCamera();
-  virtual void createFrameListener();
-  virtual void setupSound();
-  virtual void createScene();
-  virtual void destroyScene();
-  virtual void createViewports();
-  virtual void setupResources();
-  virtual void loadResources();
-  virtual bool frameRenderingQueued(const Ogre::FrameEvent& fe);
-  virtual bool frameStarted(const Ogre::FrameEvent& fe);
+    bool initOgre();
+    void initBullet();
+    void initInput();
+    void initScene();
+    void initListener(); 
+    
+    void initGUI();
 
-  virtual void windowResized(Ogre::RenderWindow* rw);
-  virtual void windowClosed(Ogre::RenderWindow* rw);
+    void initOgreResources();
+    bool initOgreWindow();
+    void initOgreViewports();
 
-  // For buffered input tutorial
-  // Key listener callbacks
-  virtual bool keyPressed(const OIS::KeyEvent& ke);
-  virtual bool keyReleased(const OIS::KeyEvent& ke);
-  // Mouse listener callbacks
-  virtual bool mouseMoved(const OIS::MouseEvent& me);
-  virtual bool mousePressed(const OIS::MouseEvent& me, OIS::MouseButtonID id);
-  virtual bool mouseReleased(const OIS::MouseEvent& me, OIS::MouseButtonID id);
+    void spawnCat();
 
+    void windowResized(Ogre::RenderWindow* rw);
+    void windowClosed(Ogre::RenderWindow* rw);
 
-  virtual void setupGUI();
-  virtual bool quit(const CEGUI::EventArgs&);
-  virtual bool start(const CEGUI::EventArgs&);
-  // virtual bool reStart(const CEGUI::EventArgs&);
+    bool keyPressed(const OIS::KeyEvent& ke);
+    bool keyReleased(const OIS::KeyEvent& ke);
 
+    bool mouseMoved(const OIS::MouseEvent& me);
+    bool mousePressed(const OIS::MouseEvent& me, OIS::MouseButtonID id);
+    bool mouseReleased(const OIS::MouseEvent& me, OIS::MouseButtonID id);
 
-  void createWalls();
-  void spawnCat();
+    bool quit(const CEGUI::EventArgs&);
+    bool start(const CEGUI::EventArgs&);
 
-  Ogre::Root* mRoot;
-  Ogre::String mResourcesCfg;
-  Ogre::String mPluginsCfg;
-  Ogre::RenderWindow* mWindow;
-  Ogre::SceneManager* mSceneMgr;
-  Ogre::Camera* mCamera;
+    bool frameRenderingQueued(const Ogre::FrameEvent& fe);
+    bool frameStarted(const Ogre::FrameEvent& fe);
 
-  bool mShutDown;
-  OIS::InputManager* mInputMgr;
-  OIS::Keyboard* mKeyboard;
-  OIS::Mouse* mMouse;
+    Ogre::Root* mRoot;
+    Ogre::RenderWindow* mWindow;
+    Ogre::SceneManager* mSceneMgr;
+    Ogre::Camera* mCamera;
+    ExtendedCamera* mExCamera;
+    Player* mPlayer;
 
-  BulletPhysics* physicsEngine;
+    BulletPhysics* mPhysicsEngine;
 
-  Player* mChar;
-  ExtendedCamera* mExCamera;
+    OIS::InputManager* mInputMgr;
+    OIS::Keyboard* mKeyboard;
+    OIS::Mouse* mMouse;
 
-  int mScore;
+    Sound* mSound;
 
-  double timeSinceLastPhysicsStep;
-  double timeSinceLastCat;
+    bool mShutDown;
+    int mScore;
 
-  Mix_Music* music;
-  Mix_Chunk* effect1;
-  Mix_Chunk* effect2;
-  Mix_Chunk* effect3;
-  std::vector<Mix_Chunk*> effects;
-  Mix_Chunk* scoreUp;
-  Mix_Chunk* spray;
+    double mTimeSinceLastPhysicsStep;
+    double mTimeSinceLastCat;
 
-  // GUIManager* mGUI;
-  gameState mState;
-  CEGUI::OgreRenderer* mRenderer;
-  std::vector<CEGUI::Window*> sheets;
-  std::vector<CEGUI::Window*> startButtons;
-  std::vector<CEGUI::Window*> gameOverButtons;
-  std::vector<CEGUI::Window*> playButtons;
-
-
+    GameState mState;
+    CEGUI::OgreRenderer* mRenderer;
+    std::vector<CEGUI::Window*> sheets;
+    std::vector<CEGUI::Window*> startButtons;
+    std::vector<CEGUI::Window*> gameOverButtons;
+    std::vector<CEGUI::Window*> mPlayButtons;
 };
 
 #endif
