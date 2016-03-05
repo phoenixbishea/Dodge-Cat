@@ -8,7 +8,7 @@
 #define DAMPING_FACTOR 0.5f
 #define FPS 60
 #define PADDLE_HEIGHT 350.0
-#define PADDLE_OFFSET 100.0
+#define PADDLE_OFFSET 110.0
 
 Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* physicsEngine)
 {
@@ -58,12 +58,12 @@ Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* 
     // Scale both parts of the cannon
     mMainNode->scale(Ogre::Vector3(0.6, 0.6, 0.6));
 
-    btBoxShape* boxShape = new btBoxShape(btVector3(40.0, 100.0, 40.0));
+    btBoxShape* boxShape = new btBoxShape(btVector3(40.0, 70.0, 40.0));
 
     ghost = new btPairCachingGhostObject();
 
     btTransform t = ghost->getWorldTransform();
-    t.setOrigin(btVector3(0.0, 10.0, 0.0));
+    t.setOrigin(btVector3(0.0, 0.0, 0.0));
     ghost->setWorldTransform(t);
 
     // physicsEngine->getDynamicsWorld()->getPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
@@ -76,7 +76,7 @@ Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* 
     physicsEngine->getDynamicsWorld()->addAction(player);
 
     btVector3 trans = ghost->getWorldTransform().getOrigin();
-    std::cout << trans.x() << ", " << trans.y() << ", " << trans.z() << std::endl;
+//    std::cout << trans.x() << ", " << trans.y() << ", " << trans.z() << std::endl;
 
     btTransform boxTrans = ghost->getWorldTransform();
     btVector3 vec = boxTrans.getOrigin() + btVector3(0, PADDLE_HEIGHT / 2, -150);
@@ -230,10 +230,10 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
 
     Ogre::Quaternion orientation = mCannonNode->_getDerivedOrientation();
 
-    std::cout << "Orientation: " << orientation << std::endl;
+//    std::cout << "Orientation: " << orientation << std::endl;
     Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, -PADDLE_OFFSET); // * elapsedTime);
     // Create bullet vector 3 where it will be moving
-    std::cout << "Direction: " << direction << std::endl;
+//    std::cout << "Direction: " << direction << std::endl;
 
     btVector3 move(direction.x, direction.y, direction.z);
 
@@ -247,7 +247,7 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
                                    orientation.z,
                                    orientation.w));
     paddleBody->setWorldTransform(trans);
-    std::cout << trans.getOrigin() << std::endl;
+    //std::cout << trans.getOrigin() << std::endl;
 }
 
 // The three methods below returns the two camera-related nodes, 
@@ -282,6 +282,11 @@ Ogre::Vector3 Player::getOgrePosition()
     return this->mMainNode->_getDerivedPosition();
 }
 
+Ogre::Vector3 Player::getOgreLookDirection()
+{
+    return this->mCannonNode->_getDerivedOrientation() * Ogre::Vector3(0, 0, -1);
+}
+
 void Player::setOgrePosition(Ogre::Vector3 vec) {
     this->mMainNode->translate(vec - mMainNode->_getDerivedPosition());
 }
@@ -291,6 +296,6 @@ void Player::setOgreOrientation(Ogre::Quaternion q) {
 }
 
 float Player::getCollisionObjectHalfHeight() {
-    return 100.0;
+    return 70.0;
 }
 

@@ -719,9 +719,8 @@ void GameManager::spawnCat()
     btRigidBody *CatBody = new btRigidBody(CatRBInfo);
 
     // Set the velocity of the Cat based on sight and camera nodes attached to the player
-    Ogre::Vector3 pos = this->mPlayer->getSightNode()->_getDerivedPosition();
-    Ogre::Vector3 cpos = this->mPlayer->getCameraNode()->_getDerivedPosition();
-    btVector3 lookDirection(pos.x - cpos.x, pos.y - cpos.y, pos.z - cpos.z);
+    Ogre::Vector3 direction = this->mPlayer->getOgreLookDirection();
+    btVector3 lookDirection(direction.x, direction.y, direction.z);
     lookDirection.normalize();
     CatBody->setLinearVelocity(lookDirection * CAT_SPEED); // bullet
 
@@ -750,10 +749,15 @@ void GameManager::spawnCat()
     CatNode->pitch(Ogre::Radian(Ogre::Degree(90)));
     Ogre::Vector3 nodepos = Ogre::Vector3(vec.x(), vec.y(), vec.z());
     Ogre::Vector3 lookdir = Ogre::Vector3(lookDirection.x(), lookDirection.y(), lookDirection.z());
-    nodepos += lookdir * CAT_SPAWN_DISTANCE;
+    Ogre::Vector3 up(0, 1, 0);
+    Ogre::Vector3 cannonOffset = lookdir.crossProduct(up);
+    std::cout << "Cannon Offset: " << cannonOffset << std::endl;
+    nodepos += lookdir * CAT_SPAWN_DISTANCE + cannonOffset * 55;
 
     // Set the position of the Cat
-    CatTransform.setOrigin(vec + lookDirection * CAT_SPAWN_DISTANCE);
+    CatTransform.setOrigin(vec +
+                           lookDirection * CAT_SPAWN_DISTANCE +
+                           btVector3(cannonOffset.x, cannonOffset.y, cannonOffset.z) * 55);
     CatBody->setWorldTransform(CatTransform);
     mainNode->setPosition(nodepos);
 

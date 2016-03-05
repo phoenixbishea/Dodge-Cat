@@ -39,6 +39,7 @@ public:
     void setOgrePosition(Ogre::Vector3 vec);
     void setOgreOrientation(Ogre::Quaternion q);
     Ogre::Vector3 getOgrePosition();
+    Ogre::Vector3 getOgreLookDirection();
 
     float getCollisionObjectHalfHeight();
 
