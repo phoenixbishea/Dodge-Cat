@@ -1,6 +1,11 @@
 #include "BulletPhysics.hpp"
 #include <stdexcept>
 
+std::ostream& operator << (std::ostream& out, const btVector3& vec)
+{
+  out << "(" << vec.x() << ", " << vec.y() << ", " << vec.z() << ")";
+}
+
 BulletPhysics::BulletPhysics() {}
 
 void BulletPhysics::initObjects()

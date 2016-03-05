@@ -317,8 +317,8 @@ void GameManager::spawnCat()
 {
     Cat cat(mPhysicsEngine, mSceneMgr, mPlayer);
     cat.initCatPhysics(10.0f, 20.0f);
-    cat.setVelocity(1500.0f);
-    cat.initCatOgre("models/sphere.mesh");
+    cat.setVelocity();
+    cat.initCatOgre("Cat.mesh");
 }
 
 // ---------------------Adjust mouse clipping area---------------------------
@@ -617,15 +617,6 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
                                 const btVector3& ptB = pt.getPositionWorldOnB();
                                 const btVector3& normalOnB = pt.m_normalWorldOnB;
 
-                                if (numPairs > 1)
-                                {
-                                    std::cout << std::endl << "********* MANIFOLD COLLISION *********" << std::endl;
-                                    std::cout << ptA << std::endl;
-                                    std::cout << ptB << std::endl;
-                                    std::cout << normalOnB << std::endl;
-                                    std::cout << "**************************************" << std::endl;
-                                }
-
                                 // Exclude collisions with walls
                                 if (std::abs(ptA.x()) >= WALL_COLLIDE_ERROR || std::abs(ptB.x()) >= WALL_COLLIDE_ERROR)
                                 {
@@ -649,7 +640,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
                 }
             }
         }
-    }
+   }
     return true;
 }
 

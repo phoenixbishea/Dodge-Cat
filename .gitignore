@@ -22,6 +22,7 @@ Ogre.log
 stamp-h1
 .deps
 CEGUI.log
+resources.cfg
 
 # Object files
 *.o
@@ -32,3 +33,4 @@ PussyWetter
 # Emacs temp files
 \#*\#
 *~
+.\#*
