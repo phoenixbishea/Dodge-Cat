@@ -12,11 +12,12 @@
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 
 #include "BulletPhysics.hpp"
+#include "Sound.hpp"
 
 class Player
 {
 public:
-    Player (Ogre::String name, Ogre::SceneManager* sceneMgr, BulletPhysics* physicsEngine);
+    Player (Ogre::String name, Ogre::SceneManager* sceneMgr, BulletPhysics* physicsEngine, Sound* sound);
 
     ~Player ();
 
@@ -50,6 +51,8 @@ protected:
     Ogre::SceneNode* mCameraNode; // Node for the chase camera
     Ogre::Entity* mEntity; // Player entity
     Ogre::SceneManager* mSceneMgr;
+
+    Sound* mSound;
 };
 
 #endif

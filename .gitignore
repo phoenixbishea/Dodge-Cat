@@ -21,6 +21,7 @@ ogre.cfg
 Ogre.log
 stamp-h1
 .deps
+CEGUI.log
 
 # Object files
 *.o

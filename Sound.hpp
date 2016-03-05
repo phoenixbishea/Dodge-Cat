@@ -4,6 +4,7 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 
+#include <iostream>
 #include <vector>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -17,6 +18,7 @@ private:
     
     Mix_Chunk* mScoreUp;
     Mix_Chunk* mSpray;
+    Mix_Chunk* mMovement;
 
     float mMusicVolume;
     float mEffectVolume; 

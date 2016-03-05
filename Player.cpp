@@ -8,11 +8,13 @@
 #define DAMPING_FACTOR 0.5f
 #define FPS 60
 
-Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* physicsEngine) 
+Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* physicsEngine, Sound* sound) 
 {
     // Setup basic member references
     mName = name;
     mSceneMgr = sceneMgr;
+
+    mSound = sound;
 
     // Setup basic node structure to handle 3rd person cameras
     mMainNode = mSceneMgr->getRootSceneNode ()->createChildSceneNode (mName);
@@ -59,7 +61,7 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
     const OIS::MouseState& me = mouse->getMouseState();
     
     // Forward movement
-    if (input->isKeyDown (OIS::KC_W) || input->isKeyDown(OIS::KC_COMMA))
+    if (input->isKeyDown (OIS::KC_W) || input->isKeyDown(OIS::KC_COMMA) || input->isKeyDown(OIS::KC_UP))
     {
         Ogre::Quaternion orientation = mMainNode->getOrientation();
         Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, -WALK_SPEED); // * elapsedTime);
@@ -73,7 +75,7 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
         // std::cout << "player position: " << t.x() << " " << t.y() << " " << t.z() << std::endl;
     }
     // Backward Movement (same idea as in forward movement)
-    if (input->isKeyDown (OIS::KC_S) || input->isKeyDown(OIS::KC_O))
+    if (input->isKeyDown (OIS::KC_S) || input->isKeyDown(OIS::KC_O) || input->isKeyDown(OIS::KC_DOWN))
     {
         Ogre::Quaternion orientation = mMainNode->getOrientation();
         Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, WALK_SPEED);// * elapsedTime);
@@ -85,6 +87,8 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
     // Camera movement based on mouse movement
     if (me.Y.rel < -0.1f || me.Y.rel > 0.1f)
     {
+        mSound->playSound("move");
+
         Ogre::Real upperCam = 600.0; // how high camera can go up
         Ogre::Real upperSight = 500.0; // how high sight node can go up
         Ogre::Real lower = 0.0; // how low each node can go
@@ -121,7 +125,7 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
     }
 
     // Left rotation
-    if (input->isKeyDown (OIS::KC_A))
+    if (input->isKeyDown (OIS::KC_A) || input->isKeyDown(OIS::KC_LEFT))
     {
         // Ghost object is represenation of kinematic controller?
         btTransform t = player->getGhostObject()->getWorldTransform();
@@ -138,10 +142,11 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
         // Set the results
         t.setRotation(orientation);
         player->getGhostObject()->setWorldTransform(t);
+        mSound->playSound("move");
     }
 
     // Right rotation
-    if (input->isKeyDown (OIS::KC_D) || input->isKeyDown(OIS::KC_E))
+    if (input->isKeyDown(OIS::KC_D) || input->isKeyDown(OIS::KC_E) || input->isKeyDown(OIS::KC_RIGHT))
     {
         btTransform t = player->getGhostObject()->getWorldTransform();
         btQuaternion orientation = t.getRotation();
@@ -156,6 +161,7 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
 
         t.setRotation(orientation);
         player->getGhostObject()->setWorldTransform(t);
+        mSound->playSound("move");
     }
 }
 

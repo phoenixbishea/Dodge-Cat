@@ -136,7 +136,7 @@ void GameManager::initScene()
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.25, 0.25, 0.25));
     mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
 
-    mPlayer = new Player("Player 1", mSceneMgr, mPhysicsEngine);
+    mPlayer = new Player("Player 1", mSceneMgr, mPhysicsEngine, mSound);
 
     // Add a point light
     Ogre::Light* light = mSceneMgr->createLight("MainLight");
@@ -441,10 +441,10 @@ bool GameManager::start(const CEGUI::EventArgs&)
 {
     mState = PLAY;
 
-    initScene();
-
     mSound = new Sound();
     mSound->initSound();
+
+    initScene();
 
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(2));
     CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().hide();

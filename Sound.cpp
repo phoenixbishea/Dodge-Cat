@@ -6,7 +6,8 @@ Sound::Sound()
 	mMusicVolume(0.3f),
 	mEffectVolume(0.1f),
 	mScoreUp(0),
-	mSpray(0)
+	mSpray(0),
+	mMovement(0)
 {
 }
 
@@ -24,6 +25,7 @@ void Sound::initSound()
 
     mScoreUp = Mix_LoadWAV("scoreUp1.wav");
     mSpray = Mix_LoadWAV("spraySound1.wav");
+    mMovement = Mix_LoadWAV("turningMove.wav");
 
     setMusicVolume(mMusicVolume);
     setEffectVolume(mEffectVolume);
@@ -48,6 +50,14 @@ void Sound::playSound(const char* effectName)
 	{
 		Mix_PlayChannel(1, mSpray, 0);
 	}
+
+	if (effectName == "move")
+	{
+		std::cout << "Move sound\n";
+		Mix_PlayChannel(2, mMovement, 0);
+		Mix_Volume(2, MIX_MAX_VOLUME * mEffectVolume * 100);
+	}
+
 }
 
 //---------------------------------------------------------------------------
