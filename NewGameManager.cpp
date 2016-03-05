@@ -20,7 +20,10 @@ NewGameManager::NewGameManager()
     mShutDown(false),
 
     mTimeSinceLastPhysicsStep(0),
-    mTimeSinceLastCat(0)
+    mTimeSinceLastCat(0),
+
+    mState(mainState),
+    mScore(0)
 {
 }
 
@@ -46,10 +49,13 @@ bool NewGameManager::go()
     initInput();
     initListener();
 
-    initScene();
+    // initScene();
 
-    mSound = new Sound();
-    mSound->initSound();
+    mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
+    initGUI(this, &NewGameManager::quit, &NewGameManager::start);
+
+    // mSound = new Sound();
+    // mSound->initSound();
 
     // This starts the rendering loop
     // We don't need any special handling of the loop since we can
@@ -186,6 +192,68 @@ void NewGameManager::initListener()
     mRoot->addFrameListener(this);
 }
 
+void initGUI()
+{
+    // Sets up the default resource groups
+    CEGUI::ImageManager::setImagesetDefaultResourceGroup("General");
+    CEGUI::Font::setDefaultResourceGroup("General");
+    CEGUI::Scheme::setDefaultResourceGroup("General");
+    CEGUI::WidgetLookManager::setDefaultResourceGroup("General");
+    CEGUI::WindowManager::setDefaultResourceGroup("General");
+    CEGUI::ScriptModule::setDefaultResourceGroup("General");
+
+    CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
+    CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage("TaharezLook/MouseArrow");
+
+    CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
+    CEGUI::Window* mainSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+    CEGUI::Window* quitSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+    CEGUI::Window* playSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+
+    //Create the main menu
+    CEGUI::Window* start = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/StartButton");
+    CEGUI::Window* quitMain = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+    CEGUI::Window* title = wmgr.createWindow("TaharezLook/Label", "CEGUIDemo/MainTitle");
+
+    CEGUI::Window* scoreBoard = wmgr.createWindow("TaharezLook/StaticText", "CEGUIDemo/scoreBoard"); 
+
+    start->setText("Start");
+    start->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+    start->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,0)));
+
+    quitMain->setText("Quit");
+    quitMain->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+    quitMain->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,100)));
+
+    title->setText("Dodge Cat");
+    title->setSize(CEGUI::USize(CEGUI::UDim(0.30,0), CEGUI::UDim(0.10,0)));
+    title->setPosition(CEGUI::UVector2(CEGUI::UDim(0.33f,0),CEGUI::UDim(0.18f,0)));
+
+    scoreBoard->setText("Score: 0");
+    scoreBoard->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+    scoreBoard->setPosition(CEGUI::UVector2(CEGUI::UDim(0.05f,0),CEGUI::UDim(0.05f,0)));
+
+    quitMain->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&NewGameManager::quit, this));
+
+    start->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&NewGameManager::start, this));
+
+    startButtons.push_back(start);
+    startButtons.push_back(quitMain);
+
+    playButtons.push_back(scoreBoard);
+
+    mainSheet->addChild(start);
+    mainSheet->addChild(quitMain);
+    mainSheet->addChild(title);
+
+
+    playSheet->addChild(scoreBoard);
+
+    sheets.push_back(mainSheet);
+    sheets.push_back(quitSheet);
+    sheets.push_back(playSheet);
+}
+
 //---------------------------------------------------------------------------
 void NewGameManager::initOgreResources()
 {
@@ -284,6 +352,10 @@ void NewGameManager::windowClosed(Ogre::RenderWindow* rw)
 //---------------------------------------------------------------------------
 bool NewGameManager::keyPressed(const OIS::KeyEvent& ke)
 {
+    // CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+    // context.injectKeyDown((CEGUI::Key::Scan)ke.key);
+    // context.injectChar((CEGUI::Key::Scan)ke.text);
+
     if (ke.key == OIS::KC_ESCAPE)
     {
         mShutDown = true;
@@ -303,12 +375,25 @@ bool NewGameManager::keyPressed(const OIS::KeyEvent& ke)
 //---------------------------------------------------------------------------
 bool NewGameManager::keyReleased(const OIS::KeyEvent& ke)
 {
+    // CEGUI::System::getSingleton().getDefaultGUIContext().injectKeyUp((CEGUI::Key::Scan)ke.key);
     return true;
 }
 
 //---------------------------------------------------------------------------
 bool NewGameManager::mouseMoved(const OIS::MouseEvent& me)
 {
+    if (mState != playState) 
+    {
+        CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+        context.injectMouseMove(me.state.X.rel, me.state.Y.rel);
+
+        // Scroll wheel.
+        // if (me.state.Z.rel)
+        // {
+        //     context.injectMouseWheelChange(me.state.Z.rel / 120.0f);
+        // } 
+    }  
+}
     return true;
 }
 
@@ -316,6 +401,7 @@ bool NewGameManager::mouseMoved(const OIS::MouseEvent& me)
 bool NewGameManager::mousePressed(
     const OIS::MouseEvent& me, OIS::MouseButtonID id)
 {
+    CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseButtonDown(convertButton(id));
     return true;
 }
 
@@ -323,7 +409,28 @@ bool NewGameManager::mousePressed(
 bool NewGameManager::mouseReleased(
     const OIS::MouseEvent& me, OIS::MouseButtonID id)
 {
+    CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseButtonUp(convertButton(id));
     return true;
+}
+
+//---------------------------------------------------------------------------
+bool GameManager::quit(const CEGUI::EventArgs&)
+{
+    mShutDown = true;
+}
+
+//---------------------------------------------------------------------------
+bool GameManager::start(const CEGUI::EventArgs&)
+{
+    mState = playState;
+
+    initScene();
+
+    mSound = new Sound();
+    mSound->initSound();
+
+    CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(2));
+    CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().hide();
 }
 
 //---------------------------------------------------------------------------
@@ -343,11 +450,17 @@ bool NewGameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
     mKeyboard->capture();
     mMouse->capture();
 
-    mTimeSinceLastCat += fe.timeSinceLastFrame;
-    if (mTimeSinceLastCat > 1.0)
+    if (mState == playState)
     {
-        spawnCat();
-        mTimeSinceLastCat -= 1.0;
+        mTimeSinceLastCat += fe.timeSinceLastFrame;
+        if (mTimeSinceLastCat > 1.0)
+        {
+            spawnCat();
+            ++mScore;
+            mPlayButtons.at(0)->setText("Score: " + Ogre::StringConverter::toString(mScore));
+
+            mTimeSinceLastCat -= 1.0;
+        }
     }
 
     return true;
@@ -356,156 +469,164 @@ bool NewGameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
 //---------------------------------------------------------------------------
 bool NewGameManager::frameStarted(const Ogre::FrameEvent& fe)
 {
-    mTimeSinceLastPhysicsStep += fe.timeSinceLastFrame;
-    if (mTimeSinceLastPhysicsStep > 1.0 / 60.0)
+    if (mState == mainState) 
     {
-        mTimeSinceLastPhysicsStep -= 1.0 / 60.0;
+        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(0));
+        return true;
     }
     else
     {
-        return true;
-    }
-
-    if (mPlayer != NULL)
-    {
-        mPlayer->update (fe.timeSinceLastFrame, mKeyboard, mMouse);
-
-        if (mExCamera)
+        mTimeSinceLastPhysicsStep += fe.timeSinceLastFrame;
+        if (mTimeSinceLastPhysicsStep > 1.0 / 60.0)
         {
-            mExCamera->update (fe.timeSinceLastFrame,
-            mPlayer->getCameraNode ()->_getDerivedPosition(),
-            mPlayer->getSightNode ()->_getDerivedPosition());
+            mTimeSinceLastPhysicsStep -= 1.0 / 60.0;
         }
-    }
-
-    if (mPhysicsEngine != nullptr)
-    {
-        mPhysicsEngine->getDynamicsWorld()->stepSimulation(1.0f / 60.0f);
-
-        if (mPlayer != nullptr)
+        else
         {
-            mPlayer->updateAction(mPhysicsEngine->getDynamicsWorld(), fe.timeSinceLastFrame);
-            btTransform& trans = mPlayer->getWorldTransform();
-
-            // Update player rendering position
-            mPlayer->setOgrePosition(Ogre::Vector3(trans.getOrigin().getX(),
-            trans.getOrigin().getY() - mPlayer->getCollisionObjectHalfHeight(),
-            trans.getOrigin().getZ()));
-
-            mPlayer->setOgreOrientation(Ogre::Quaternion(trans.getRotation().getW(),
-            trans.getRotation().getX(),
-            trans.getRotation().getY(),
-            trans.getRotation().getZ()));
+            return true;
         }
 
-        for (int i = 0; i < mPhysicsEngine->getCollisionObjectCount(); i++)
+        if (mPlayer != NULL)
         {
-            // Get object from collision array and cast to rigidbody
-            btCollisionObject* obj = mPhysicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
-            btRigidBody* body = btRigidBody::upcast(obj);
+            mPlayer->update (fe.timeSinceLastFrame, mKeyboard, mMouse);
 
-            // Check collisions that are not with the player?
-            if (body && body->getMotionState() && obj->getCollisionFlags() != btCollisionObject::CF_CHARACTER_OBJECT)
+            if (mExCamera)
             {
-                btTransform trans;
-                body->getMotionState()->getWorldTransform(trans);
-                void *userPointer = body->getUserPointer();
-
-                // Play cat sound on collision
-                mSound->playSound("meow");
-
-                // Convert rigidbody to OGRE scenenode and update position and orientation
-                if (userPointer)
-                {
-                    btQuaternion orientation = trans.getRotation();
-                    Ogre::SceneNode *sceneNode = static_cast<Ogre::SceneNode *>(userPointer);
-
-                    sceneNode->setPosition(Ogre::Vector3(trans.getOrigin().getX(),
-                        trans.getOrigin().getY(),
-                        trans.getOrigin().getZ()));
-
-                    sceneNode->setOrientation(Ogre::Quaternion(orientation.getW(),
-                        orientation.getX(),
-                        orientation.getY(),
-                        orientation.getZ()));
-                }
+                mExCamera->update (fe.timeSinceLastFrame,
+                mPlayer->getCameraNode ()->_getDerivedPosition(),
+                mPlayer->getSightNode ()->_getDerivedPosition());
             }
         }
 
-        // Check to see if the player was hit by a ball
-        if (mPlayer != nullptr)
+        if (mPhysicsEngine != nullptr)
         {
-            btManifoldArray manifoldArray;
-            btPairCachingGhostObject* ghostObject = mPlayer->getGhostObject();
-            btBroadphasePairArray& pairArray =
-            ghostObject->getOverlappingPairCache()->getOverlappingPairArray();
+            mPhysicsEngine->getDynamicsWorld()->stepSimulation(1.0f / 60.0f);
 
-            int numPairs = pairArray.size();
-
-            for (int i = 0; i < numPairs; ++i)
+            if (mPlayer != nullptr)
             {
-                manifoldArray.clear();
+                mPlayer->updateAction(mPhysicsEngine->getDynamicsWorld(), fe.timeSinceLastFrame);
+                btTransform& trans = mPlayer->getWorldTransform();
 
-                const btBroadphasePair& pair = pairArray[i];
+                // Update player rendering position
+                mPlayer->setOgrePosition(Ogre::Vector3(trans.getOrigin().getX(),
+                trans.getOrigin().getY() - mPlayer->getCollisionObjectHalfHeight(),
+                trans.getOrigin().getZ()));
 
-                btBroadphasePair* collisionPair =
-                mPhysicsEngine->getDynamicsWorld()->getPairCache()->findPair(
-                pair.m_pProxy0,pair.m_pProxy1);
+                mPlayer->setOgreOrientation(Ogre::Quaternion(trans.getRotation().getW(),
+                trans.getRotation().getX(),
+                trans.getRotation().getY(),
+                trans.getRotation().getZ()));
+            }
 
-                if (!collisionPair) 
+            for (int i = 0; i < mPhysicsEngine->getCollisionObjectCount(); i++)
+            {
+                // Get object from collision array and cast to rigidbody
+                btCollisionObject* obj = mPhysicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
+                btRigidBody* body = btRigidBody::upcast(obj);
+
+                // Check collisions that are not with the player?
+                if (body && body->getMotionState() && obj->getCollisionFlags() != btCollisionObject::CF_CHARACTER_OBJECT)
                 {
-                    continue;
-                }
+                    btTransform trans;
+                    body->getMotionState()->getWorldTransform(trans);
+                    void *userPointer = body->getUserPointer();
 
-                if (collisionPair->m_algorithm)
-                {
-                    collisionPair->m_algorithm->getAllContactManifolds(manifoldArray);
-                }
+                    // Play cat sound on collision
+                    mSound->playSound("meow");
 
-                for (int j=0;j<manifoldArray.size();j++)
-                {
-                    btPersistentManifold* manifold = manifoldArray[j];
-
-                    bool isFirstBody = manifold->getBody0() == ghostObject;
-
-                    btScalar direction = isFirstBody ? btScalar(-1.0) : btScalar(1.0);
-
-                    for (int p = 0; p < manifold->getNumContacts(); ++p)
+                    // Convert rigidbody to OGRE scenenode and update position and orientation
+                    if (userPointer)
                     {
-                        const btManifoldPoint& pt = manifold->getContactPoint(p);
+                        btQuaternion orientation = trans.getRotation();
+                        Ogre::SceneNode *sceneNode = static_cast<Ogre::SceneNode *>(userPointer);
 
-                        if (pt.getDistance() < 0.f)
+                        sceneNode->setPosition(Ogre::Vector3(trans.getOrigin().getX(),
+                            trans.getOrigin().getY(),
+                            trans.getOrigin().getZ()));
+
+                        sceneNode->setOrientation(Ogre::Quaternion(orientation.getW(),
+                            orientation.getX(),
+                            orientation.getY(),
+                            orientation.getZ()));
+                    }
+                }
+            }
+
+            // Check to see if the player was hit by a ball
+            if (mPlayer != nullptr)
+            {
+                btManifoldArray manifoldArray;
+                btPairCachingGhostObject* ghostObject = mPlayer->getGhostObject();
+                btBroadphasePairArray& pairArray =
+                ghostObject->getOverlappingPairCache()->getOverlappingPairArray();
+
+                int numPairs = pairArray.size();
+
+                for (int i = 0; i < numPairs; ++i)
+                {
+                    manifoldArray.clear();
+
+                    const btBroadphasePair& pair = pairArray[i];
+
+                    btBroadphasePair* collisionPair =
+                    mPhysicsEngine->getDynamicsWorld()->getPairCache()->findPair(
+                    pair.m_pProxy0,pair.m_pProxy1);
+
+                    if (!collisionPair) 
+                    {
+                        continue;
+                    }
+
+                    if (collisionPair->m_algorithm)
+                    {
+                        collisionPair->m_algorithm->getAllContactManifolds(manifoldArray);
+                    }
+
+                    for (int j=0;j<manifoldArray.size();j++)
+                    {
+                        btPersistentManifold* manifold = manifoldArray[j];
+
+                        bool isFirstBody = manifold->getBody0() == ghostObject;
+
+                        btScalar direction = isFirstBody ? btScalar(-1.0) : btScalar(1.0);
+
+                        for (int p = 0; p < manifold->getNumContacts(); ++p)
                         {
-                            const btVector3& ptA = pt.getPositionWorldOnA();
-                            const btVector3& ptB = pt.getPositionWorldOnB();
-                            const btVector3& normalOnB = pt.m_normalWorldOnB;
+                            const btManifoldPoint& pt = manifold->getContactPoint(p);
 
-                            if (numPairs > 1)
+                            if (pt.getDistance() < 0.f)
                             {
-                                std::cout << std::endl << "********* MANIFOLD COLLISION *********" << std::endl;
-                                std::cout << ptA << std::endl;
-                                std::cout << ptB << std::endl;
-                                std::cout << normalOnB << std::endl;
-                                std::cout << "**************************************" << std::endl;
-                            }
+                                const btVector3& ptA = pt.getPositionWorldOnA();
+                                const btVector3& ptB = pt.getPositionWorldOnB();
+                                const btVector3& normalOnB = pt.m_normalWorldOnB;
 
-                            // Exclude collisions with walls
-                            if (std::abs(ptA.x()) >= WALL_COLLIDE_ERROR || std::abs(ptB.x()) >= WALL_COLLIDE_ERROR)
-                            {
-                                continue;
-                            }
+                                if (numPairs > 1)
+                                {
+                                    std::cout << std::endl << "********* MANIFOLD COLLISION *********" << std::endl;
+                                    std::cout << ptA << std::endl;
+                                    std::cout << ptB << std::endl;
+                                    std::cout << normalOnB << std::endl;
+                                    std::cout << "**************************************" << std::endl;
+                                }
 
-                            if (std::abs(ptA.z()) >= WALL_COLLIDE_ERROR || std::abs(ptB.z()) >= WALL_COLLIDE_ERROR)
-                            {
-                                continue;
-                            }
+                                // Exclude collisions with walls
+                                if (std::abs(ptA.x()) >= WALL_COLLIDE_ERROR || std::abs(ptB.x()) >= WALL_COLLIDE_ERROR)
+                                {
+                                    continue;
+                                }
 
-                            if (std::abs(ptA.y()) <= 0.0 || std::abs(ptB.y()) <= 0.0)
-                            {    
-                                continue;
-                            }
+                                if (std::abs(ptA.z()) >= WALL_COLLIDE_ERROR || std::abs(ptB.z()) >= WALL_COLLIDE_ERROR)
+                                {
+                                    continue;
+                                }
 
-                            return false;
+                                if (std::abs(ptA.y()) <= 0.0 || std::abs(ptB.y()) <= 0.0)
+                                {    
+                                    continue;
+                                }
+
+                                return false;
+                            }
                         }
                     }
                 }

@@ -14,6 +14,9 @@ private:
 	Mix_Music* mBackgroundMusic;
     Mix_Chunk* mEffect;
     std::vector<Mix_Chunk*> mMeowEffects;
+    
+    Mix_Chunk* mScoreUp;
+    Mix_Chunk* mSpray;
 
     float mMusicVolume;
     float mEffectVolume; 

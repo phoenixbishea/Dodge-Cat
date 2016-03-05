@@ -4,7 +4,9 @@ Sound::Sound()
 	: mBackgroundMusic(0),
 	mEffect(0),
 	mMusicVolume(0.3f),
-	mEffectVolume(0.1f)
+	mEffectVolume(0.1f),
+	mScoreUp(0),
+	mSpray(0)
 {
 }
 
@@ -20,6 +22,9 @@ void Sound::initSound()
     mMeowEffects.push_back(Mix_LoadWAV("cat.wav"));
     mMeowEffects.push_back(Mix_LoadWAV("happyPurr.wav"));
 
+    mScoreUp = Mix_LoadWAV("scoreUp1.wav");
+    mSpray = Mix_LoadWAV("spraySound1.wav");
+
     setMusicVolume(mMusicVolume);
     setEffectVolume(mEffectVolume);
 
@@ -32,7 +37,17 @@ void Sound::playSound(const char* effectName)
 	if (effectName == "meow")
 	{
 		Mix_PlayChannel(-1, mMeowEffects.at(rand() % mMeowEffects.size()) ,0);
-	}	
+	}
+
+	if (effectName == "score")
+	{
+		Mix_PlayChannel(0, mScoreUp, 0);
+	}
+
+	if (effectName == "spray")
+	{
+		Mix_PlayChannel(1, mSpray, 0);
+	}
 }
 
 //---------------------------------------------------------------------------

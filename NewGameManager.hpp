@@ -31,6 +31,9 @@
 #include <iostream>
 #include <cmath>
 
+#include <CEGUI/CEGUI.h>
+#include <CEGUI/RendererModules/Ogre/Renderer.h>
+
 #define WALL_COLLIDE_ERROR 745
 #define CAT_SPAWN_DISTANCE 80.0f
 #define CAT_VELOCITY 1500
