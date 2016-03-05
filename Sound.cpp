@@ -55,7 +55,6 @@ void Sound::playSound(const char* effectName)
 	{
 		std::cout << "Move sound\n";
 		Mix_PlayChannel(2, mMovement, 0);
-		Mix_Volume(2, MIX_MAX_VOLUME * mEffectVolume * 100);
 	}
 
 }
