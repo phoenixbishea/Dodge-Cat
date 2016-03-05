@@ -15,6 +15,8 @@ NewGameManager::NewGameManager()
     mMouse(0),
     mKeyboard(0),
 
+    mSound(0),
+
     mShutDown(false),
 
     mTimeSinceLastPhysicsStep(0),
@@ -34,25 +36,20 @@ NewGameManager::~NewGameManager()
 //---------------------------------------------------------------------------
 bool NewGameManager::go()
 {
-    std::cout << "Go called\n";
     if (!initOgre())
     {
         return false;
     }
-    std::cout << "Ogre init\n";
 
     initBullet();
-    std::cout << "Bullet init\n";
 
     initInput();
-    std::cout << "Input init\n";
     initListener();
-    std::cout << "Listener init\n";
 
     initScene();
-    std::cout << "Scene init\n";
 
-    initSound();
+    mSound = new Sound();
+    mSound->initSound();
 
     // This starts the rendering loop
     // We don't need any special handling of the loop since we can
@@ -67,7 +64,6 @@ bool NewGameManager::initOgre()
 {
   mRoot = new Ogre::Root("plugins.cfg");
   initOgreResources();
-  std::cout << "Successful init\n";
 
   if (!initOgreWindow())
   {
@@ -75,7 +71,6 @@ bool NewGameManager::initOgre()
   }
 
   Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-  std::cout << "Successful init 1\n";
 
   // Set default mipmap level (NB some APIs ignore this)
   Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
@@ -134,7 +129,7 @@ void NewGameManager::initScene()
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.25, 0.25, 0.25));
     mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
 
-    mPlayer = new Player("Player 1", mSceneMgr, this->mPhysicsEngine);
+    mPlayer = new Player("Player 1", mSceneMgr, mPhysicsEngine);
 
     // Add a point light
     Ogre::Light* light = mSceneMgr->createLight("MainLight");
@@ -180,28 +175,6 @@ void NewGameManager::initScene()
     walls[5]->createWallPhysics(0.0f, 6000.0f, 0.0f, 1500.0f, 5.0f, 1500.0f);
 }
 
-void NewGameManager::initSound()
-{
-  srand (time(NULL));
-  Mix_Chunk* effectTemp;
-
-  Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
-  music = Mix_LoadMUS("The-Power-I-Feel.mp3");
-  effect1 = Mix_LoadWAV("angryMeow.wav");
-  Mix_VolumeChunk(effect1, MIX_MAX_VOLUME* 0.1);
-  effects.push_back(effect1);
-  effect2 = Mix_LoadWAV("cat.wav");
-  Mix_VolumeChunk(effect2, MIX_MAX_VOLUME* 0.1);
-  effects.push_back(effect2);
-  effect3 = Mix_LoadWAV("happyPurr.wav");
-  Mix_VolumeChunk(effect3, MIX_MAX_VOLUME* 0.1);
-  effects.push_back(effect3);
-
-
-  Mix_VolumeMusic(MIX_MAX_VOLUME * 0.3);
-   Mix_PlayMusic(music, -1);
-}
-
 //---------------------------------------------------------------------------
 void NewGameManager::initListener()
 {
@@ -216,15 +189,13 @@ void NewGameManager::initListener()
 //---------------------------------------------------------------------------
 void NewGameManager::initOgreResources()
 {
-    std::cout << "initOgreResources called\n";
     // Load resource paths from config file
     Ogre::ConfigFile cf;
     cf.load("resources.cfg");
-    std::cout << "initOgreResources called 1\n";
+
     // Go through all sections & settings in the file
     Ogre::String name, locType;
     Ogre::ConfigFile::SectionIterator secIt = cf.getSectionIterator();
-    std::cout << "initOgreResources called 2\n";
     while (secIt.hasMoreElements())
     {
         Ogre::ConfigFile::SettingsMultiMap* settings = secIt.getNext();
@@ -237,14 +208,11 @@ void NewGameManager::initOgreResources()
             Ogre::ResourceGroupManager::getSingleton().addResourceLocation(name, locType);
         }
     }
-    std::cout << "initOgreResources called 3\n";
-    std::cout << "initOgreResources called 4\n";
 }
 
 //---------------------------------------------------------------------------
 bool NewGameManager::initOgreWindow()
 {
-    std::cout << "initOgreWindow called\n";
     // Show the configuration dialog and initialise the system.
     // You can skip this and use root.restoreConfig() to load configuration
     // settings if you were sure there are valid ones saved in ogre.cfg.
@@ -264,7 +232,6 @@ bool NewGameManager::initOgreWindow()
 //---------------------------------------------------------------------------
 void NewGameManager::initOgreViewports()
 {
-    std::cout << "initOgreViewports called\n";
     // Create one viewport, entire window
     Ogre::Viewport* vp = mWindow->addViewport(mCamera);
     vp->setBackgroundColour(Ogre::ColourValue(0, 0, 0));
@@ -275,55 +242,13 @@ void NewGameManager::initOgreViewports()
         Ogre::Real(vp->getActualHeight()));
 }
 
-//--------------------------Needs Refactoring--------------------------------
+//---------------------------------------------------------------------------
 void NewGameManager::spawnCat()
 {
-    // create the plane entity to the physics engine, and attach it to the node
-    btTransform CatTransform = mPlayer->getWorldTransform();
-    btVector3 vec = CatTransform.getOrigin();
-
-    btScalar CatMass(10.0);
-    btVector3 localCatInertia(0, 0, 0);
-
-    btCollisionShape *CatShape = new btSphereShape(20.0);
-    this->mPhysicsEngine->getCollisionShapes().push_back(CatShape);
-    btDefaultMotionState *CatMotionState = new btDefaultMotionState(CatTransform);
-
-    CatShape->calculateLocalInertia(CatMass, localCatInertia);
-
-    btRigidBody::btRigidBodyConstructionInfo CatRBInfo(CatMass, CatMotionState, CatShape, localCatInertia);
-    btRigidBody *CatBody = new btRigidBody(CatRBInfo);
-
-    // Set the velocity of the Cat based on sight and camera nodes attached to the player
-    Ogre::Vector3 pos = this->mPlayer->getSightNode()->_getDerivedPosition();
-    Ogre::Vector3 cpos = this->mPlayer->getCameraNode()->_getDerivedPosition();
-    btVector3 lookDirection(pos.x - cpos.x, pos.y - cpos.y, pos.z - cpos.z);
-    lookDirection.normalize();
-    CatBody->setLinearVelocity(lookDirection * CAT_VELOCITY); // bullet
-
-    // OGRE stuff
-    Ogre::Entity *entCat = mSceneMgr->createEntity("models/sphere.mesh");
-    entCat->setCastShadows(false);
-    Ogre::SceneNode *CatNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-    CatNode->attachObject(entCat);
-    Ogre::Vector3 nodepos = Ogre::Vector3(vec.x(), vec.y(), vec.z());
-    Ogre::Vector3 lookdir = Ogre::Vector3(lookDirection.x(), lookDirection.y(), lookDirection.z());
-    nodepos += lookdir * CAT_SPAWN_DISTANCE;
-
-    // Set the position of the Cat
-    CatTransform.setOrigin(vec + lookDirection * CAT_SPAWN_DISTANCE);
-    CatBody->setWorldTransform(CatTransform);
-    CatNode->setPosition(nodepos);
-
-    btQuaternion q = CatTransform.getRotation();
-    CatNode->setOrientation(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
-    CatNode->scale(Ogre::Vector3(0.25, 0.25, 0.25));
-
-    CatBody->setRestitution(1);
-    CatBody->setUserPointer(CatNode);
-
-    //add the body to the dynamics world
-    this->mPhysicsEngine->getDynamicsWorld()->addRigidBody(CatBody);
+    Cat cat(mPhysicsEngine, mSceneMgr, mPlayer);
+    cat.initCatPhysics(10.0f, 20.0f);
+    cat.setVelocity(1500.0f);
+    cat.initCatOgre("models/sphere.mesh");
 }
 
 // ---------------------Adjust mouse clipping area---------------------------
@@ -363,6 +288,15 @@ bool NewGameManager::keyPressed(const OIS::KeyEvent& ke)
     {
         mShutDown = true;
     }
+    else if (ke.key == OIS::KC_M)
+    {
+        mSound->muteUnmuteMusic();
+    }
+    else if (ke.key == OIS::KC_N)
+    {
+        mSound->muteUnmuteEffects();
+    }
+
     return true;
 }
 
@@ -444,33 +378,30 @@ bool NewGameManager::frameStarted(const Ogre::FrameEvent& fe)
         }
     }
 
-    if (this->mPhysicsEngine != nullptr)
+    if (mPhysicsEngine != nullptr)
     {
         mPhysicsEngine->getDynamicsWorld()->stepSimulation(1.0f / 60.0f);
 
         if (mPlayer != nullptr)
         {
-            this->mPlayer->updateAction(this->mPhysicsEngine->getDynamicsWorld(), fe.timeSinceLastFrame);
-            btTransform& trans = this->mPlayer->getWorldTransform();
+            mPlayer->updateAction(mPhysicsEngine->getDynamicsWorld(), fe.timeSinceLastFrame);
+            btTransform& trans = mPlayer->getWorldTransform();
 
             // Update player rendering position
-            this->mPlayer->setOgrePosition(Ogre::Vector3(trans.getOrigin().getX(),
-            trans.getOrigin().getY() - this->mPlayer->getCollisionObjectHalfHeight(),
+            mPlayer->setOgrePosition(Ogre::Vector3(trans.getOrigin().getX(),
+            trans.getOrigin().getY() - mPlayer->getCollisionObjectHalfHeight(),
             trans.getOrigin().getZ()));
 
-            this->mPlayer->setOgreOrientation(Ogre::Quaternion(trans.getRotation().getW(),
+            mPlayer->setOgreOrientation(Ogre::Quaternion(trans.getRotation().getW(),
             trans.getRotation().getX(),
             trans.getRotation().getY(),
             trans.getRotation().getZ()));
-
-            // btVector3 t2 = mPlayer->getWorldTransform().getOrigin();
-            // std::cout << "player position: " << t2.x() << " " << t2.y() << " " << t2.z() << std::endl;
         }
 
-        for (int i = 0; i < this->mPhysicsEngine->getCollisionObjectCount(); i++)
+        for (int i = 0; i < mPhysicsEngine->getCollisionObjectCount(); i++)
         {
             // Get object from collision array and cast to rigidbody
-            btCollisionObject* obj = this->mPhysicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
+            btCollisionObject* obj = mPhysicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
             btRigidBody* body = btRigidBody::upcast(obj);
 
             // Check collisions that are not with the player?
@@ -481,7 +412,7 @@ bool NewGameManager::frameStarted(const Ogre::FrameEvent& fe)
                 void *userPointer = body->getUserPointer();
 
                 // Play cat sound on collision
-                Mix_PlayChannel(-1, effects.at(rand()%effects.size()) ,0);
+                mSound->playSound("meow");
 
                 // Convert rigidbody to OGRE scenenode and update position and orientation
                 if (userPointer)
@@ -505,7 +436,7 @@ bool NewGameManager::frameStarted(const Ogre::FrameEvent& fe)
         if (mPlayer != nullptr)
         {
             btManifoldArray manifoldArray;
-            btPairCachingGhostObject* ghostObject = this->mPlayer->getGhostObject();
+            btPairCachingGhostObject* ghostObject = mPlayer->getGhostObject();
             btBroadphasePairArray& pairArray =
             ghostObject->getOverlappingPairCache()->getOverlappingPairArray();
 
@@ -518,7 +449,7 @@ bool NewGameManager::frameStarted(const Ogre::FrameEvent& fe)
                 const btBroadphasePair& pair = pairArray[i];
 
                 btBroadphasePair* collisionPair =
-                this->mPhysicsEngine->getDynamicsWorld()->getPairCache()->findPair(
+                mPhysicsEngine->getDynamicsWorld()->getPairCache()->findPair(
                 pair.m_pProxy0,pair.m_pProxy1);
 
                 if (!collisionPair) 

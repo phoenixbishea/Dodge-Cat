@@ -2,8 +2,10 @@
 #define NewGameManager_hpp
 
 #include "BulletPhysics.hpp"
+#include "Cat.hpp"
 #include "ExtendedCamera.hpp"
 #include "Player.hpp"
+#include "Sound.hpp"
 #include "Wall.hpp"
 
 #include <OgreRoot.h>
@@ -23,12 +25,7 @@
 #include <OISKeyboard.h>
 #include <OISMouse.h>
 
-#include <SDL.h>
-#include <SDL_mixer.h>
-
 #include <vector>
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
 
 #include <string>
 #include <iostream>
@@ -56,7 +53,6 @@ private:
     void initInput();
     void initListener(); 
     void initScene();
-    void initSound();
 
     void initOgreResources();
     bool initOgreWindow();
@@ -90,16 +86,12 @@ private:
     OIS::Keyboard* mKeyboard;
     OIS::Mouse* mMouse;
 
+    Sound* mSound;
+
     bool mShutDown;
 
     double mTimeSinceLastPhysicsStep;
     double mTimeSinceLastCat;
-
-    Mix_Music* music;
-    Mix_Chunk* effect1;
-    Mix_Chunk* effect2;
-    Mix_Chunk* effect3;
-    std::vector<Mix_Chunk*> effects;
 };
 
 #endif

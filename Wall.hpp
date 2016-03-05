@@ -125,4 +125,3 @@ void Wall::createGroundPhysics(const float x, const float y, const float z)
 // length 			0.1 	0.1 	1500	1500	1500
 // height  		6000	6000	6000	6000	0.1
 // depth			1500	1500	0.1 	0.1 	1500
-
