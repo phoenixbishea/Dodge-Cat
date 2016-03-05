@@ -231,6 +231,8 @@ void GameManager::setupSound()
   scoreUp = Mix_LoadWAV("scoreUp1.wav");
   Mix_VolumeChunk(scoreUp, MIX_MAX_VOLUME * 0.15);
   //Mix_PlayChannel(-1, scoreUp, -1);
+  spray = Mix_LoadWAV("spraySound1.wav");
+  Mix_VolumeChunk(spray, MIX_MAX_VOLUME* 0.1);
 
   if(!scoreUp) {
     printf("Mix_LoadWAV: %s\n", Mix_GetError());
@@ -271,6 +273,10 @@ void GameManager::setupGUI()
 
   CEGUI::Window* scoreBoard = wmgr.createWindow("TaharezLook/StaticText", "CEGUIDemo/scoreBoard"); 
 
+  CEGUI::Window* MenuBackground = wmgr.createWindow("TaharezLook/StaticImage", "Background");
+  // CEGUI::Texture* texture = CEGUI::System::getSingletonPtr()->getRenderer()->createTexture("wetCat.jpg","menu");
+  MenuBackground->setProperty("Image", "wetCat.jpg" );
+
 
   start->setText("Start");
   start->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
@@ -290,13 +296,13 @@ void GameManager::setupGUI()
   scoreBoard->setPosition(CEGUI::UVector2(CEGUI::UDim(0.05f,0),CEGUI::UDim(0.05f,0)));
 
 
-  quitOver->setText("Quit");
-  quitOver->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
-  quitOver->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,100)));
+  // quitOver->setText("Quit");
+  // quitOver->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+  // quitOver->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,100)));
 
-  reStart->setText("Main Menu");
-  reStart->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
-  reStart->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,0)));
+  // reStart->setText("Main Menu");
+  // reStart->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+  // reStart->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,0)));
 
   quitMain->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::quit, this));
   // quitOver->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::quit, this));
@@ -315,7 +321,7 @@ void GameManager::setupGUI()
   mainSheet->addChild(start);
   mainSheet->addChild(quitMain);
   mainSheet->addChild(title);
-
+  //mainSheet->addChild(MenuBackground);
   // quitSheet->addChild(quitOver);
   // quitSheet->addChild(reStart);
 
