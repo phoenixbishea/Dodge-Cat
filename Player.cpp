@@ -98,13 +98,6 @@ Player::Player (Ogre::String name, Ogre::SceneManager *sceneMgr, BulletPhysics* 
     paddleBody = new btRigidBody(boxRBInfo);
     paddleBody->setRestitution(1.0);
 
-    Ogre::SceneNode* DELETEME = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-    Ogre::Entity* ENT = mSceneMgr->createEntity("models/cube.mesh");
-    DELETEME->attachObject(ENT);
-    DELETEME->setPosition(Ogre::Vector3(vec.x(), vec.y(), vec.z()));
-    paddleBody->setUserPointer(DELETEME);
-    assert(paddleBody->getUserPointer() != nullptr);
-
     physicsEngine->getDynamicsWorld()->addRigidBody(paddleBody);
 }
 
