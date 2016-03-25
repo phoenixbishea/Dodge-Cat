@@ -23,6 +23,7 @@ public:
 
 		if (forward)
 		{
+			// velocity should be a btVector3 that can be handled by bullet
 			obj.velocity = obj.orientation * Vector3(0, 0, -WALK_SPEED);
 		}
 		else if (down)
@@ -39,14 +40,6 @@ public:
 			Quaternion rotation = Quaternion(0, -ROTATION_SPEED * world->elapsedTime, 0);
 			obj.orientation = rotation * orientation;
 		}
-
-		const OIS::MouseState& me = mouse->getMouseState();
-		bool mouseMovement = me.Y.rel < -DEAD_ZONE || me.Y.rel > DEAD_ZONE;
-
-		if (mouseMovement)
-		{
-
-		}
 	}
 
 private:
@@ -56,25 +49,3 @@ private:
 };
 
 #endif
-
-
-class PlayerInputComponent : public InputComponent
-{
-public:
-  virtual void update(Bjorn& bjorn)
-  {
-    switch (Controller::getJoystickDirection())
-    {
-      case DIR_LEFT:
-        bjorn.velocity -= WALK_ACCELERATION;
-        break;
-
-      case DIR_RIGHT:
-        bjorn.velocity += WALK_ACCELERATION;
-        break;
-    }
-  }
-
-private:
-  static const int WALK_ACCELERATION = 1;
-};

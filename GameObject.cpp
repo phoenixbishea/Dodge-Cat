@@ -12,11 +12,6 @@ GameObject::GameObject(InputComponent* input,
   mGUI(gui)
 {}
 
-GameObject* GameObject::createPlayer()
-{
-    return new GameObject(new PlayerInputComponent(), new PlayerPhysicsComponent(), new PlayerGraphicsComponent(), new PlayerSoundComponent());
-}
-
 void GameObject::send(int message)
 {
 	for (int i = 0; i < MAX_COMPONENTS; i++)
