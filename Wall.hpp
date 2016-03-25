@@ -88,16 +88,16 @@ void Wall::createWallPhysics(const float x, const float y, const float z,
 //---------------------------------------------------------------------------
 void Wall::createGroundPhysics(const float x, const float y, const float z)
 {
-	// create the plane entity to the physics engine, and attach it to the node
+	// Create the plane entity to the physics engine, and attach it to the node
     btTransform transform;
     transform.setIdentity();
-    transform.setOrigin(btVector3(x, y, z)); ////////////////////////////////////////////
+    transform.setOrigin(btVector3(x, y, z));
 
-    btScalar mass(0.0); // the mass is 0, because the LeftWall is immovable (static)
+    btScalar mass(0.0); // The mass is 0, because the LeftWall is immovable
     btVector3 localInertia(0, 0, 0);
 
     btCollisionShape* shape = new btStaticPlaneShape(btVector3(0.0, 1.0, 0.0), 0.0);
-    btDefaultMotionState* motionState = new btDefaultMotionState(transform); ////////////////////////////////////////////
+    btDefaultMotionState* motionState = new btDefaultMotionState(transform);
 
     shape->calculateLocalInertia(mass, localInertia);
 
@@ -105,7 +105,7 @@ void Wall::createGroundPhysics(const float x, const float y, const float z)
     btRigidBody* body = new btRigidBody(rigidBodyInfo);
     body->setRestitution(0.9);
 
-    //add the body to the dynamics world
+    // Add the body to the physics world
     this->mPhysicsEngine->getDynamicsWorld()->addRigidBody(body);
 }
 

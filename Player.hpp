@@ -1,62 +1,46 @@
-
 #ifndef Player_hpp
 #define Player_hpp
 
-#include <OgreEntity.h>
-#include <OISInputManager.h>
-#include <OISKeyboard.h>
-#include <OISMouse.h>
-#include <OgreSceneManager.h>
-#include <OgreSubMesh.h>
-#include <OgreMeshManager.h>
-#include <btBulletDynamicsCommon.h>
-#include <BulletDynamics/Character/btKinematicCharacterController.h>
-#include <BulletCollision/CollisionDispatch/btGhostObject.h>
-
-#include "BulletPhysics.hpp"
-#include "Sound.hpp"
-
-class Player
+class Player : GameObject
 {
 public:
-    Player (Ogre::String name, Ogre::SceneManager* sceneMgr, BulletPhysics* physicsEngine, Sound* sound);
+    Vector velocity;
+    Quaternion orientation;
 
-    ~Player ();
+    Vector sightPosition;
+    Vector cameraPositon;
 
-    // Updates the Player (movement...)
-    void update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* mouse);
+    float cannonPitch;
+    Quaternion cannonOrientation;
 
-    // The three methods below returns the two camera-related nodes, 
-    // and the current position of the Player (for the 1st person camera)
-    Ogre::SceneNode* getSightNode ();
+    Player(InputComponent* input, PhysicsComponent* physics,
+           GraphicsComponent* graphics, CameraComponent* camera,
+           SoundComponent* sound, GUIComponent* gui)
+    : mInput(input),
+    mPhysics(physics),
+    mGraphics(graphics),
+    mCamera(camera),
+    mSound(sound),
+    mGUI(gui)
+    {}
 
-    Ogre::SceneNode* getCameraNode ();
+    void update(BulletPhysics* physics, OIS::Keyboard* keyboard, OIS::Mouse* mouse, World& world)
+    {
+        mInput->update(*this, keyboard, mouse, world);
+        mPhysics->update(*this, physics, world);
+        mGraphics->update(*this);
+        mCamera->update(*this);
+    }
+private:
+    InputComponent* mInput;
+    PhysicsComponent* mPhysics;
+    GraphicsComponent* mGraphics;
+    CameraComponent* mCamera;
+    SoundComponent* mSound;
+    GUIComponent* mGUI;
 
-    void updateAction(btCollisionWorld* world, btScalar dt);
-
-    btPairCachingGhostObject* getGhostObject();
-    btTransform& getWorldTransform();
-
-    void setOgrePosition(Ogre::Vector3 vec);
-    void setOgreOrientation(Ogre::Quaternion q);
-    Ogre::Vector3 getOgrePosition();
-    Ogre::Vector3 getOgreLookDirection();
-
-    float getCollisionObjectHalfHeight();
-
-protected:
-    Ogre::String mName;
-    btPairCachingGhostObject* ghost;
-    btKinematicCharacterController* player;
-    btRigidBody* paddleBody;
-    Ogre::SceneNode* mMainNode;
-  Ogre::SceneNode* mCannonNode;
-    Ogre::SceneNode* mSightNode; // "Sight" node - The Player is supposed to be looking here
-    Ogre::SceneNode* mCameraNode; // Node for the chase camera
-    Ogre::Entity* mEntity; // Player entity
-    Ogre::SceneManager* mSceneMgr;
-
-    Sound* mSound;
+    static const int MAX_COMPONENTS = 6;
+    Component* mComponents[MAX_COMPONENTS];
 };
 
 #endif

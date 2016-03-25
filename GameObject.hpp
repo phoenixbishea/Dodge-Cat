@@ -2,22 +2,21 @@
 class GameObject
 {
 public:
-	GameObject(InputComponent* input,
-			   PhysicsComponent* physics,
-			   GraphicsComponent* graphics,
-			   SoundComponent* sound,
-			   GUIComponent* gui);
-	void send(int message);
-
-	Vector3 velocity;
-	Quaternion orientation;
+    GameObject(InputComponent* input,
+               PhysicsComponent* physics,
+               GraphicsComponent* graphics,
+               CameraComponent* camera,
+               SoundComponent* sound,
+               GUIComponent* gui);
+    void send(int message);
 private:
-	InputComponent* mInput;
-	PhysicsComponent* mPhysics;
-	GraphicsComponent* mGraphics;
-	SoundComponent* mSound;
-	GUIComponent* mGUI;
+    InputComponent* mInput;
+    PhysicsComponent* mPhysics;
+    GraphicsComponent* mGraphics;
+    CameraComponent* mCamera;
+    SoundComponent* mSound;
+    GUIComponent* mGUI;
 
-	static const int MAX_COMPONENTS = 5;
-	Component* mComponents[MAX_COMPONENTS];
+    static const int MAX_COMPONENTS = 6;
+    Component* mComponents[MAX_COMPONENTS];
 };

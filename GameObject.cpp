@@ -14,11 +14,11 @@ GameObject::GameObject(InputComponent* input,
 
 void GameObject::send(int message)
 {
-	for (int i = 0; i < MAX_COMPONENTS; i++)
-	{
-		if (mComponents[i] != NULL)
-		{
-			mComponents[i]->receive(message);
-		}
-	}
+    for (int i = 0; i < MAX_COMPONENTS; i++)
+    {
+        if (mComponents[i] != NULL)
+        {
+            mComponents[i]->receive(message);
+        }
+    }
 }

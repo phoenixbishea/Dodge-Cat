@@ -541,7 +541,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
                 btCollisionObject* obj = mPhysicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
                 btRigidBody* body = btRigidBody::upcast(obj);
 
-                // Check collisions that are not with the player?
+                // Update physics and graphics for nonplayer objects
                 if (body && body->getMotionState() && obj->getCollisionFlags() != btCollisionObject::CF_CHARACTER_OBJECT)
                 {
                     btTransform trans;

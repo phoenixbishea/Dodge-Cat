@@ -29,11 +29,11 @@ public:
 
 		if (forward)
 		{
-			obj.velocity = obj.orientation * Vector3(0, 0, -MOVE_SPEED);
+			obj.velocity = obj.orientation * Vector(0, 0, -MOVE_SPEED);
 		}
 		else if (down)
 		{
-			obj.velocity = obj.orientation * Vector3(0, 0, MOVE_SPEED);
+			obj.velocity = obj.orientation * Vector(0, 0, MOVE_SPEED);
 		}
 		else if (left)
 		{
@@ -93,6 +93,7 @@ private:
 	const float UPPER_SIGHT = 500.0f
 	const float MIDDLE_BOUND = 300.0f;
 	const float LOWER_BOUND = 0.0f;
-};	const float DAMPING_FACTOR = 0.5f;
+	const float DAMPING_FACTOR = 0.5f;
+};	
 
 #endif
