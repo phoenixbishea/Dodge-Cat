@@ -55,7 +55,7 @@ bool GameManager::go()
     // initScene();
 
     mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
-   // initGUI();
+    initGUI();
 
     // mSound = new Sound();
     // mSound->initSound();
