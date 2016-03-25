@@ -4,8 +4,6 @@
 #include <btBulletDynamicsCommon.h>
 #include <OgreVector3.h>
 
-#include "Quaternion.hpp"
-
 class Vector {
 private:
     btVector3 value;
@@ -38,20 +36,47 @@ public:
     /*
       Vector math operations
     */
-    Vector3 operator + (const Vector3& other) const;
-    Vector3 operator - (const Vector3& other) const;
-    Vector3 operator * (const Vector3& other) const;
-    Vector3 operator / (const Vector3& other) const;
+    bool operator == (const Vector&) const;
+    bool operator == (const Vector&&) const;
+    bool operator != (const Vector&) const;
+    bool operator != (const Vector&&) const;
 
-    Vector3& operator += (const Vector3& other);
-    Vector3& operator -= (const Vector3& other);
-    Vector3& operator *= (const Vector3& other);
-    Vector3& operator /= (const Vector3& other);
+    bool operator == (const btVector3&) const;
+    bool operator == (const btVector3&&) const;
+    bool operator != (const btVector3&) const;
+    bool operator != (const btVector3&&) const;
 
-    Vector3& dot(const Vector3&);
-    Vector3 dotted(const Vector3&);
+    bool operator == (const Ogre::Vector3&) const;
+    bool operator == (const Ogre::Vector3&&) const;
+    bool operator != (const Ogre::Vector3&) const;
+    bool operator != (const Ogre::Vector3&&) const;
 
-    Vector3
+    Vector operator + (const Vector&) const;
+    Vector operator - (const Vector&) const;
+    Vector operator * (float) const;
+    Vector operator / (float) const;
+
+    Vector operator + (const btVector3&) const;
+    Vector operator - (const btVector3&) const;
+
+    Vector operator + (const Ogre::Vector3&) const;
+    Vector operator - (const Ogre::Vector3&) const;
+
+    Vector& operator += (const Vector&);
+    Vector& operator -= (const Vector&);
+    Vector& operator *= (float);
+    Vector& operator /= (float);
+
+    Vector& operator += (const btVector3&);
+    Vector& operator -= (const btVector3&);
+
+    Vector& operator += (const Ogre::Vector3&);
+    Vector& operator -= (const Ogre::Vector3&);
+
+    float dot(const Vector&) const;
+
+    Vector& normalize();
+    Vector normalized();
 };
 
 

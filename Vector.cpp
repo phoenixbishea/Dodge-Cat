@@ -28,31 +28,33 @@ float Vector::z() const {
     return this->value.z();
 }
 
-void Vector::setX(float x) const {
+void Vector::setX(float x) {
     return this->value.setX(x);
 }
 
-void Vector::setY(float y) const {
+void Vector::setY(float y) {
     return this->value.setY(y);
 }
 
-void Vector::setZ(float z) const {
+void Vector::setZ(float z) {
     return this->value.setZ(z);
 }
 
-void setValue(const btVector3& other) {
+void Vector::setValue(const btVector3& other) {
     this->value.setValue(other.x(), other.y(), other.z());
 }
 
-void setValue(const btVector3&& other) {
+void Vector::setValue(const btVector3&& other) {
     this->value.setValue(other.x(), other.y(), other.z());
 }
 
-void setValue(const Ogre::Vector3& other) {
+void Vector::setValue(const Ogre::Vector3& other) {
     this->value.setValue(other.x, other.y, other.z);
 }
 
-void setValue(const Ogre::Vector3&& other) {
+void Vector::setValue(const Ogre::Vector3&&
+
+              other) {
     this->value.setValue(other.x, other.y, other.z);
 }
 
@@ -64,56 +66,152 @@ btVector3 Vector::toBullet() const {
     return value;
 }
 
-Vector3 Vector::operator + (const Vector3& other) const {
-    return Vector3(value.x() + other.x(), value.y() + other.y(), value.z() + other.z());
+/* Vector operations */
+bool Vector::operator == (const Vector& other) const {
+    return this->toOgre() == other.toOgre();
 }
 
-Vector3 Vector::operator - (const Vector3& other) const {
-    return Vector3(value.x() - other.x(), value.y() - other.y(), value.z() - other.z());
+bool Vector::operator == (const Vector&& other) const {
+    return this->toOgre() == other.toOgre();
 }
 
-Vector3 Vector::operator * (const Vector3& other) const {
-    return Vector3(value.x() * other.x(), value.y() * other.y(), value.z() * other.z());
+bool Vector::operator != (const Vector& other) const {
+    return this->toOgre() != other.toOgre();
 }
 
-Vector3 Vector::operator / (const Vector3& other) const {
-    return Vector3(value.x() / other.x(), value.y() / other.y(), value.z() / other.z());
+bool Vector::operator != (const Vector&& other) const {
+    return this->toOgre() != other.toOgre();
+}
+
+bool Vector::operator == (const btVector3& other) const {
+    return this->value.x() == other.x() &&
+        this->value.y() == other.y() &&
+        this->value.z() == other.z();
+}
+
+bool Vector::operator == (const btVector3&& other) const {
+    return this->value.x() == other.x() &&
+        this->value.y() == other.y() &&
+        this->value.z() == other.z();
+}
+
+bool Vector::operator != (const btVector3& other) const {
+    return this->value.x() != other.x() ||
+        this->value.y() != other.y() ||
+        this->value.z() != other.z();
+}
+
+bool Vector::operator != (const btVector3&& other) const {
+    return this->value.x() != other.x() ||
+        this->value.y() != other.y() ||
+        this->value.z() != other.z();
+}
+
+bool Vector::operator == (const Ogre::Vector3& other) const {
+    return this->toOgre() == other;
+}
+
+bool Vector::operator == (const Ogre::Vector3&& other) const {
+    return this->toOgre() == other;
+}
+
+bool Vector::operator != (const Ogre::Vector3& other) const {
+    return this->toOgre() != other;
+}
+
+bool Vector::operator != (const Ogre::Vector3&& other) const {
+    return this->toOgre() != other;
+}
+
+Vector Vector::operator + (const Vector& other) const {
+    return Vector(value.x() + other.x(), value.y() + other.y(), value.z() + other.z());
+}
+
+Vector Vector::operator - (const Vector& other) const {
+    return Vector(value.x() - other.x(), value.y() - other.y(), value.z() - other.z());
+}
+
+Vector Vector::operator * (float scale) const {
+    return Vector(value * scale);
+}
+
+Vector Vector::operator / (float scale) const {
+    return Vector(value / scale);
+}
+
+/* btVector3 operations */
+Vector Vector::operator + (const btVector3& other) const {
+    return Vector(value.x() + other.x(), value.y() + other.y(), value.z() + other.z());
+}
+
+Vector Vector::operator - (const btVector3& other) const {
+    return Vector(value.x() - other.x(), value.y() - other.y(), value.z() - other.z());
+}
+
+/* Ogre::Vector3 operations */
+Vector Vector::operator + (const Ogre::Vector3& other) const {
+    return Vector(value.x() + other.x, value.y() + other.y, value.z() + other.z);
+}
+
+Vector Vector::operator - (const Ogre::Vector3& other) const {
+    return Vector(value.x() - other.x, value.y() - other.y, value.z() - other.z);
 }
 
 
-Vector3& Vector::operator += (const Vector3& other) const {
-    value.setX(value.x() + other.x());
-    value.setY(value.y() + other.y());
-    value.setZ(value.z() + other.z());
-    return value;
+
+Vector& Vector::operator += (const Vector& other) {
+    this->value += other.value;
+    return *this;
 }
 
-Vector3& Vector::operator -= (const Vector3& other) const {
-    value.setX(value.x() - other.x());
-    value.setY(value.y() - other.y());
-    value.setZ(value.z() - other.z());
-    return value;
+Vector& Vector::operator -= (const Vector& other) {
+    this->value -= other.value;
+    return *this;
 }
 
-Vector3& Vector::operator *= (const Vector3& other) const {
-    value.setX(value.x() * other.x());
-    value.setY(value.y() * other.y());
-    value.setZ(value.z() * other.z());
-    return value;
+Vector& Vector::operator *= (float scale) {
+    this->value *= scale;
+    return *this;
 }
 
-Vector3& Vector::operator /= (const Vector3& other) const {
-    value.setX(value.x() / other.x());
-    value.setY(value.y() / other.y());
-    value.setZ(value.z() / other.z());
-    return value;
+Vector& Vector::operator /= (float scale) {
+    this->value /= scale;
+    return *this;
 }
 
-Vector3& Vector::dot (const Vector3& other) {
-    this->value = this->value.dot(other.value);
-    return this;
+
+/* btVector3 operations */
+Vector& Vector::operator += (const btVector3& other) {
+    this->value += other;
+    return *this;
 }
 
-Vector3 Vector::dotted (const Vector3& other) {
+Vector& Vector::operator -= (const btVector3& other) {
+    this->value -= other;
+    return *this;
+}
+
+/* Ogre::Vector3 operations */
+Vector& Vector::operator += (const Ogre::Vector3& other) {
+    this->value = btVector3(value.x() + other.x, value.y() + other.y, value.z() + other.z);
+    return *this;
+}
+
+Vector& Vector::operator -= (const Ogre::Vector3& other) {
+    this->value = btVector3(value.x() - other.x, value.y() - other.y, value.z() - other.z);
+    return *this;
+}
+
+float Vector::dot (const Vector& other) const {
     return this->value.dot(other.value);
 }
+
+Vector& Vector::normalize () {
+    this->value.normalize();
+    return *this;
+}
+
+Vector Vector::normalized () {
+    return Vector(this->value.normalized());
+}
+
