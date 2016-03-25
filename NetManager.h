@@ -17,7 +17,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
-#include "SDLnet/SDL_net.h"
+#include "SDL/SDL_net.h"
 
 
 /* ****************************************************************************

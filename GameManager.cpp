@@ -1,5 +1,7 @@
 #include "GameManager.hpp"
 
+#include <stdexcept>
+
 //---------------------------------------------------------------------------
 GameManager::GameManager()
   : mRoot(0),
@@ -53,7 +55,7 @@ bool GameManager::go()
     // initScene();
 
     mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
-    initGUI();
+   // initGUI();
 
     // mSound = new Sound();
     // mSound->initSound();
@@ -207,25 +209,42 @@ void GameManager::initGUI()
     CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
     CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage("TaharezLook/MouseArrow");
 
+    /* Setups all the sheets */
     CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
-    CEGUI::Window* mainSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
-    CEGUI::Window* quitSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
-    CEGUI::Window* playSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+    CEGUI::Window* mainSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/mainSheet");
+    CEGUI::Window* quitSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/quitSheet");
+    CEGUI::Window* playSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/playSheet");
+    CEGUI::Window* networkSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/networkSheet");
+    CEGUI::Window* loadingSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/loadingSheet");
 
     //Create the main menu
-    CEGUI::Window* start = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/StartButton");
-    CEGUI::Window* quitMain = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
     CEGUI::Window* title = wmgr.createWindow("TaharezLook/Label", "CEGUIDemo/MainTitle");
+    CEGUI::Window* start = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/StartButton");
+    CEGUI::Window* multiplayer = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/multiplayerButton");
+    CEGUI::Window* quitMain = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
 
     CEGUI::Window* scoreBoard = wmgr.createWindow("TaharezLook/StaticText", "CEGUIDemo/scoreBoard"); 
 
-    start->setText("Start");
+    /* Creates the mutiplayer screen */
+    CEGUI::Window* host = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/HostButton");  
+    CEGUI::Window* connect = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/ConnectButton");
+    CEGUI::Window* connectIn = wmgr.createWindow("TaharezLook/Editbox", "CEGUIDemo/connectIn");
+    CEGUI::Window* back = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/BackButton");    
+
+    /* Creates the loading screen */
+    CEGUI::Window* loading = wmgr.createWindow("TaharezLook/Label", "CEGUIDemo/LoadingScreen");   
+
+    start->setText("Singleplayer");
     start->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
     start->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,0)));
 
+    multiplayer->setText("Multiplayer");
+    multiplayer->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+    multiplayer->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,100)));
+
     quitMain->setText("Quit");
     quitMain->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
-    quitMain->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,100)));
+    quitMain->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,200)));
 
     title->setText("Dodge Cat");
     title->setSize(CEGUI::USize(CEGUI::UDim(0.30,0), CEGUI::UDim(0.10,0)));
@@ -235,25 +254,74 @@ void GameManager::initGUI()
     scoreBoard->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
     scoreBoard->setPosition(CEGUI::UVector2(CEGUI::UDim(0.05f,0),CEGUI::UDim(0.05f,0)));
 
-    quitMain->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::quit, this));
+    host->setText("Host");
+    host->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+    host->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,0)));
+
+    connect->setText("Connect");
+    connect->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+    connect->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,100)));
+
+    connectIn->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+    connectIn->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,200),CEGUI::UDim(0.4f,100)));
+
+    back->setText("Back");
+    back->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+    back->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,200)));
+
+    loading->setText("Waiting for connection");
+    loading->setSize(CEGUI::USize(CEGUI::UDim(0.2,0), CEGUI::UDim(0.1,0)));
+    loading->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,0)));
+   
 
     start->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::start, this));
+    multiplayer->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::mpSheet, this));
+    quitMain->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::quit, this));
+
+    host->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::setupServer, this));
+    connect->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::connectServer, this));
+    connectIn->subscribeEvent(CEGUI::Editbox::EventTextAccepted, CEGUI::Event::Subscriber(&GameManager::connectServer, this));
+    back->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::back, this));
 
     startButtons.push_back(start);
     startButtons.push_back(quitMain);
+    startButtons.push_back(multiplayer);
+    startButtons.push_back(title);
 
     mPlayButtons.push_back(scoreBoard);
 
+    multiplayerButtons.push_back(host);
+    multiplayerButtons.push_back(connect);
+    multiplayerButtons.push_back(connectIn);
+    multiplayerButtons.push_back(back);
+
     mainSheet->addChild(start);
+    mainSheet->addChild(multiplayer);
     mainSheet->addChild(quitMain);
     mainSheet->addChild(title);
 
-
     playSheet->addChild(scoreBoard);
+
+    networkSheet->addChild(host);
+    networkSheet->addChild(connect);
+    networkSheet->addChild(connectIn);
+    networkSheet->addChild(back);
+
+    loadingSheet->addChild(loading);
 
     sheets.push_back(mainSheet);
     sheets.push_back(quitSheet);
     sheets.push_back(playSheet);
+    sheets.push_back(networkSheet);
+    sheets.push_back(loadingSheet);
+}
+
+void GameManager::initServer()
+{
+    if (! mNetManager.initNetManager())
+        throw std::runtime_error("Could not start the NetManager " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+    mNetManager.startServer();
+
 }
 
 //---------------------------------------------------------------------------
@@ -354,13 +422,22 @@ void GameManager::windowClosed(Ogre::RenderWindow* rw)
 //---------------------------------------------------------------------------
 bool GameManager::keyPressed(const OIS::KeyEvent& ke)
 {
-    // CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
-    // context.injectKeyDown((CEGUI::Key::Scan)ke.key);
-    // context.injectChar((CEGUI::Key::Scan)ke.text);
+    CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+    context.injectKeyDown((CEGUI::Key::Scan)ke.key);
+    context.injectChar((CEGUI::Key::Scan)ke.text);
 
     if (ke.key == OIS::KC_ESCAPE)
     {
-        mShutDown = true;
+        /* If esc is pressed we go back a menu level */
+       if(mState != MAIN_MENU && mState != PLAY)
+        {
+            menuChange();
+        }
+        else
+        {
+            /* We quit from the main menu and the game */
+            mShutDown = true;
+        }
     }
     else if (ke.key == OIS::KC_M)
     {
@@ -377,7 +454,7 @@ bool GameManager::keyPressed(const OIS::KeyEvent& ke)
 //---------------------------------------------------------------------------
 bool GameManager::keyReleased(const OIS::KeyEvent& ke)
 {
-    // CEGUI::System::getSingleton().getDefaultGUIContext().injectKeyUp((CEGUI::Key::Scan)ke.key);
+    CEGUI::System::getSingleton().getDefaultGUIContext().injectKeyUp((CEGUI::Key::Scan)ke.key);
     return true;
 }
 
@@ -449,6 +526,53 @@ bool GameManager::start(const CEGUI::EventArgs&)
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(2));
     CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().hide();
 }
+
+bool GameManager::mpSheet(const CEGUI::EventArgs&)
+{
+    mState = NETWORK;
+    CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(3));
+}
+
+bool GameManager::setupServer(const CEGUI::EventArgs&)
+{
+    mState = LOADING;
+
+    CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(4));
+
+    initServer();
+}
+
+
+bool GameManager::connectServer(const CEGUI::EventArgs&)
+{
+    std::cout << "IP SAY WHATTTTTT: " << multiplayerButtons.at(2)->getText() << std::endl;
+}
+
+/* Calls menuChange that will change the menu based on the game state */
+bool GameManager::back(const CEGUI::EventArgs&)
+{
+    menuChange();
+}
+
+void GameManager::menuChange()
+{
+    if(mState == PLAY)
+    {
+        mState = MAIN_MENU;
+        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(0));
+    }
+    else if(mState == NETWORK)
+    {
+        mState = MAIN_MENU;
+        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(0));
+    }
+    else if(mState == LOADING)
+    {
+        mState = NETWORK;
+        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(3));
+    }
+}
+
 
 //---------------------------------------------------------------------------
 bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)

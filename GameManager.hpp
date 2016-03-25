@@ -34,9 +34,11 @@
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/Ogre/Renderer.h>
 
+#include "NetManager.h"
+
 #define WALL_COLLIDE_ERROR 745
 
-enum GameState {MAIN_MENU = 0, PLAY = 1};
+enum GameState {MAIN_MENU = 0, PLAY = 1, NETWORK = 2, LOADING = 3};
 
 CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
 
@@ -60,6 +62,7 @@ private:
     void initListener(); 
     
     void initGUI();
+    void initServer();
 
     void initOgreResources();
     bool initOgreWindow();
@@ -79,6 +82,13 @@ private:
 
     bool quit(const CEGUI::EventArgs&);
     bool start(const CEGUI::EventArgs&);
+    bool mpSheet(const CEGUI::EventArgs&);
+    bool handleText(const CEGUI::EventArgs&);
+    bool setupServer(const CEGUI::EventArgs&);
+    bool connectServer(const CEGUI::EventArgs&);
+    bool back(const CEGUI::EventArgs&);
+
+    void menuChange();
 
     bool frameRenderingQueued(const Ogre::FrameEvent& fe);
     bool frameStarted(const Ogre::FrameEvent& fe);
@@ -108,8 +118,11 @@ private:
     CEGUI::OgreRenderer* mRenderer;
     std::vector<CEGUI::Window*> sheets;
     std::vector<CEGUI::Window*> startButtons;
-    std::vector<CEGUI::Window*> gameOverButtons;
+    std::vector<CEGUI::Window*> multiplayerButtons;
     std::vector<CEGUI::Window*> mPlayButtons;
+
+    /*Network */
+    NetManager mNetManager;
 };
 
 #endif
