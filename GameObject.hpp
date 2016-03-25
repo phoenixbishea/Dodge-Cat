@@ -8,6 +8,9 @@ public:
 			   SoundComponent* sound,
 			   GUIComponent* gui);
 	void send(int message);
+
+	Vector3 velocity;
+	Quaternion orientation;
 private:
 	InputComponent* mInput;
 	PhysicsComponent* mPhysics;
