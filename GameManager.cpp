@@ -1,5 +1,7 @@
 #include "GameManager.hpp"
 
+#include <stdexcept>
+
 //---------------------------------------------------------------------------
 GameManager::GameManager()
   : mRoot(0),
@@ -24,9 +26,7 @@ GameManager::GameManager()
     mTimeSinceLastCat(0),
 
     mState(MAIN_MENU),
-    mRenderer(0),
-    mClientSocket(0),
-    mServerSocket(0)
+    mRenderer(0)
 {
 }
 
@@ -318,10 +318,17 @@ void GameManager::initGUI()
 
 void GameManager::initServer()
 {
-    /* Net library didn't init correctly */
-    if(SDLNet_Init() < 0)
-    {   
-        std::cout << "Server had issues setting up" << std::endl;
+    if (mNetManager.initNetManager())
+    {
+      mNetManager.addNetworkInfo(PROTOCOL_UDP);
+      if (! mNetManager.startServer())
+        throw std::runtime_error("***** Could not startServer() *****");
+      if (! mNetManager.multiPlayerInit(32))
+        throw std::runtime_error("***** Could not multiPlayerInit() *****");
+    }
+    else
+    {
+      throw std::runtime_error("***** Could not start the NetManager *****");
     }
 }
 
@@ -546,7 +553,19 @@ bool GameManager::setupServer(const CEGUI::EventArgs&)
 
 bool GameManager::connectServer(const CEGUI::EventArgs&)
 {
-    std::cout << "IP SAY WHATTTTTT: " << multiplayerButtons.at(2)->getText() << std::endl;
+  mState = CLIENT;
+
+  if (! mNetManager.initNetManager())
+    throw std::runtime_error("Could not start the NetManager " +
+                             std::string(__FILE__) +
+                             " line " +
+                             std::to_string(__LINE__));
+  mNetManager.addNetworkInfo(PROTOCOL_UDP);
+  if (! mNetManager.startClient())
+    throw std::runtime_error("Could not start the NetManager " +
+                             std::string(__FILE__) +
+                             " line " +
+                             std::to_string(__LINE__));
 }
 
 /* Calls menuChange that will change the menu based on the game state */
@@ -614,7 +633,37 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
     if (mState == MAIN_MENU) 
     {
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(0));
-        return true;
+        // return true;
+    }
+    else if (mState == LOADING)
+    {
+      if (mNetManager.getClients() != 2)
+      {
+        mNetManager.broadcastUDPInvitation();
+      }
+    }
+    else if (mState == CLIENT)
+    {
+      static bool connected = false;
+      // Found activity, connect to the server
+      if (mNetManager.scanForActivity())
+      {
+        if (! connected)
+        {
+          if (mNetManager.udpServerData[0].updated)
+          {
+            std::string invite(mNetManager.udpServerData[0].output);
+            if (std::string::npos != invite.find(STR_OPEN))
+            {
+              if (mNetManager.joinMultiPlayer(invite))
+              {
+                std::cout << "***** Connected to MultiPlayer *****" << std::endl;
+                mState = PLAY;
+              }
+            }
+          }
+        }
+      }
     }
     else
     {
@@ -765,7 +814,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
                 }
             }
         }
-   }
+    }
     return true;
 }
 

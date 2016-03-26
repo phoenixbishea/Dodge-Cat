@@ -34,11 +34,11 @@
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/Ogre/Renderer.h>
 
-#include <SDL_net.h>
+#include "NetManager.h"
 
 #define WALL_COLLIDE_ERROR 745
 
-enum GameState {MAIN_MENU = 0, PLAY = 1, NETWORK = 2, LOADING = 3};
+enum GameState {MAIN_MENU = 0, PLAY = 1, NETWORK = 2, LOADING = 3, CLIENT = 4};
 
 CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
 
@@ -122,10 +122,7 @@ private:
     std::vector<CEGUI::Window*> mPlayButtons;
 
     /*Network */
-
-    TCPsocket mClientSocket; /* Client Socket descriptor */
-    TCPsocket mServerSocket; /* Server Socket Descriptor */
-    IPaddress mIP;
+    NetManager mNetManager;
 };
 
 #endif
