@@ -24,9 +24,7 @@ GameManager::GameManager()
     mTimeSinceLastCat(0),
 
     mState(MAIN_MENU),
-    mRenderer(0),
-
-    mCats(0)
+    mRenderer(0)
 {
 }
 
@@ -89,6 +87,7 @@ bool GameManager::initOgre()
 
   // Create the camera
   mCamera = mSceneMgr->createCamera("MainCam");
+  mExCamera = new ExtendedCamera("ExtendedCamera", mSceneMgr, mCamera);
 
   initOgreViewports();
 
@@ -137,10 +136,7 @@ void GameManager::initScene()
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.25, 0.25, 0.25));
     mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
 
-    printf("Made it to create Player\n");
-    mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera);
-    printf("Made it to create Cat\n");
-    mCats = new Cat();
+    mPlayer = new Player("Player 1", mSceneMgr, mPhysicsEngine, mSound);
 
     // Add a point light
     Ogre::Light* light = mSceneMgr->createLight("MainLight");
@@ -320,9 +316,9 @@ void GameManager::initOgreViewports()
 void GameManager::spawnCat()
 {
     Cat cat(mPhysicsEngine, mSceneMgr, mPlayer);
-    cat.initCatPhysics();
+    cat.initCatPhysics(10.0f, 20.0f);
     cat.setVelocity();
-    cat.initCatOgre();
+    cat.initCatOgre("Cat.mesh");
 }
 
 // ---------------------Adjust mouse clipping area---------------------------
@@ -470,7 +466,6 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
         mTimeSinceLastCat += fe.timeSinceLastFrame;
         if (mTimeSinceLastCat > 1.0)
         {
-            printf("Made it to spawnCat\n");
             spawnCat();
             ++mScore;
             mPlayButtons.at(0)->setText("Score: " + Ogre::StringConverter::toString(mScore));
@@ -502,13 +497,144 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
             return true;
         }
 
-        printf("Made it to update\n");
-        if (!mPlayer->update(mPhysicsEngine, mKeyboard, mMouse, fe.timeSinceLastFrame))
+        if (mPlayer != NULL)
         {
-            return false;
+            mPlayer->update (fe.timeSinceLastFrame, mKeyboard, mMouse);
+
+            if (mExCamera)
+            {
+                mExCamera->update (fe.timeSinceLastFrame,
+                mPlayer->getCameraNode ()->_getDerivedPosition(),
+                mPlayer->getSightNode ()->_getDerivedPosition());
+            }
         }
-        mCats->update(mPhysicsEngine, mSound);
-    }
+
+        if (mPhysicsEngine != nullptr)
+        {
+            mPhysicsEngine->getDynamicsWorld()->stepSimulation(1.0f / 60.0f);
+
+            if (mPlayer != nullptr)
+            {
+                mPlayer->updateAction(mPhysicsEngine->getDynamicsWorld(), fe.timeSinceLastFrame);
+                btTransform& trans = mPlayer->getWorldTransform();
+
+                // Update player rendering position
+                mPlayer->setOgrePosition(Ogre::Vector3(trans.getOrigin().getX(),
+                trans.getOrigin().getY() - mPlayer->getCollisionObjectHalfHeight(),
+                trans.getOrigin().getZ()));
+
+                mPlayer->setOgreOrientation(Ogre::Quaternion(trans.getRotation().getW(),
+                trans.getRotation().getX(),
+                trans.getRotation().getY(),
+                trans.getRotation().getZ()));
+            }
+
+            for (int i = 0; i < mPhysicsEngine->getCollisionObjectCount(); i++)
+            {
+                // Get object from collision array and cast to rigidbody
+                btCollisionObject* obj = mPhysicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
+                btRigidBody* body = btRigidBody::upcast(obj);
+
+                // Update physics and graphics for nonplayer objects
+                if (body && body->getMotionState() && obj->getCollisionFlags() != btCollisionObject::CF_CHARACTER_OBJECT)
+                {
+                    btTransform trans;
+                    body->getMotionState()->getWorldTransform(trans);
+                    void *userPointer = body->getUserPointer();
+
+                    // Play cat sound on collision
+                    mSound->playSound("meow");
+
+                    // Convert rigidbody to OGRE scenenode and update position and orientation
+                    if (userPointer)
+                    {
+                        btQuaternion orientation = trans.getRotation();
+                        Ogre::SceneNode *sceneNode = static_cast<Ogre::SceneNode *>(userPointer);
+
+                        sceneNode->setPosition(Ogre::Vector3(trans.getOrigin().getX(),
+                            trans.getOrigin().getY(),
+                            trans.getOrigin().getZ()));
+
+                        sceneNode->setOrientation(Ogre::Quaternion(orientation.getW(),
+                            orientation.getX(),
+                            orientation.getY(),
+                            orientation.getZ()));
+                    }
+                }
+            }
+
+            // Check to see if the player was hit by a ball
+            if (mPlayer != nullptr)
+            {
+                btManifoldArray manifoldArray;
+                btPairCachingGhostObject* ghostObject = mPlayer->getGhostObject();
+                btBroadphasePairArray& pairArray =
+                ghostObject->getOverlappingPairCache()->getOverlappingPairArray();
+
+                int numPairs = pairArray.size();
+
+                for (int i = 0; i < numPairs; ++i)
+                {
+                    manifoldArray.clear();
+
+                    const btBroadphasePair& pair = pairArray[i];
+
+                    btBroadphasePair* collisionPair =
+                    mPhysicsEngine->getDynamicsWorld()->getPairCache()->findPair(
+                    pair.m_pProxy0,pair.m_pProxy1);
+
+                    if (!collisionPair) 
+                    {
+                        continue;
+                    }
+
+                    if (collisionPair->m_algorithm)
+                    {
+                        collisionPair->m_algorithm->getAllContactManifolds(manifoldArray);
+                    }
+
+                    for (int j=0;j<manifoldArray.size();j++)
+                    {
+                        btPersistentManifold* manifold = manifoldArray[j];
+
+                        bool isFirstBody = manifold->getBody0() == ghostObject;
+
+                        btScalar direction = isFirstBody ? btScalar(-1.0) : btScalar(1.0);
+
+                        for (int p = 0; p < manifold->getNumContacts(); ++p)
+                        {
+                            const btManifoldPoint& pt = manifold->getContactPoint(p);
+
+                            if (pt.getDistance() < 0.f)
+                            {
+                                const btVector3& ptA = pt.getPositionWorldOnA();
+                                const btVector3& ptB = pt.getPositionWorldOnB();
+                                const btVector3& normalOnB = pt.m_normalWorldOnB;
+
+                                // Exclude collisions with walls
+                                if (std::abs(ptA.x()) >= WALL_COLLIDE_ERROR || std::abs(ptB.x()) >= WALL_COLLIDE_ERROR)
+                                {
+                                    continue;
+                                }
+
+                                if (std::abs(ptA.z()) >= WALL_COLLIDE_ERROR || std::abs(ptB.z()) >= WALL_COLLIDE_ERROR)
+                                {
+                                    continue;
+                                }
+
+                                if (std::abs(ptA.y()) <= 0.0 || std::abs(ptB.y()) <= 0.0)
+                                {    
+                                    continue;
+                                }
+
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+   }
     return true;
 }
 

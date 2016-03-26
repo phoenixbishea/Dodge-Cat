@@ -1,11 +1,23 @@
 #ifndef PlayerInputComponent_hpp
 #define PlayerInputComponent_hpp
 
-class PlayerInputComponent : public InputComponent
+#include <cmath>
+#include "PlayerData.hpp"
+
+float clampf (float val, float min, float max)
+{
+	return std::max(min, std::min(val, max));
+}
+
+class PlayerInputComponent
 {
 public:
-	virtual void update(Player& obj, OIS::Keyboard* keyboard, OIS::Mouse* mouse, World& world)
+	~PlayerInputComponent()
 	{
+	}
+	void update(PlayerData& obj, OIS::Keyboard* keyboard, OIS::Mouse* mouse, float elapsedTime)
+	{
+		printf("Update input\n");
 		// KEYBOARD
 		bool forward = keyboard->isKeyDown(OIS::KC_W) || 
 					   keyboard->isKeyDown(OIS::KC_COMMA) || 
@@ -24,27 +36,33 @@ public:
 
 		if (forward)
 		{
+			printf("forward input\n");
 			// velocity should be a btVector3 that can be handled by bullet
-			obj.velocity = obj.orientation * Vector(0, 0, -WALK_SPEED);
+			obj.velocity = obj.orientation * Vector(0.0f, 0.0f, -WALK_SPEED);
+			printf("up velocity: %f, %f, %f\n", obj.velocity.x(), obj.velocity.y(), obj.velocity.z());
 		}
 		else if (down)
 		{
-			obj.velocity = obj.orientation * Vector(0, 0, WALK_SPEED);
+			printf("down input\n");
+			obj.velocity = obj.orientation * Vector(0.0f, 0.0f, WALK_SPEED);
+			printf("down velocity: %f, %f, %f\n", obj.velocity.x(), obj.velocity.y(), obj.velocity.z());
 		}
 		else
 		{
-			obj.velocity = Vector(0, 0, 0);
+			obj.velocity = Vector(0.0f, 0.0f, 0.0f);
 		}
 
 		if (left)
 		{
-			Quaternion rotation = Quaternion(0, ROTATION_SPEED * world->elapsedTime, 0);
-			obj.orientation = rotation * orientation;
+			printf("left input\n");
+			Quaternion rotation = Quaternion(0.0f, ROTATION_SPEED * elapsedTime, 0.0f, 1.0f);
+			obj.orientation *= rotation;
 		}
 		else if (right)
 		{
-			Quaternion rotation = Quaternion(0, -ROTATION_SPEED * world->elapsedTime, 0);
-			obj.orientation = rotation * orientation;
+			printf("right input\n");
+			Quaternion rotation = Quaternion(0.0f, -ROTATION_SPEED * elapsedTime, 0.0f, 1.0f);
+			obj.orientation *= rotation;
 		}
 
 		// MOUSE
@@ -66,24 +84,24 @@ public:
 			// Update sight's y if camera's y is below 300
 			if (cameraYPos <= MIDDLE_BOUND)
 			{
-				sightPosition.setY(sightYPos);
-				sightPosition.setZ(-200);
+				obj.sightPosition.setY(sightYPos);
+				obj.sightPosition.setZ(-200.0f);
 			}	
 
 			// Update camera's y if sight's y is below 300
 			if (sightYPos <= MIDDLE_BOUND)
 			{
-				cameraPosition.setY(cameraYPos);
-				cameraPosition.setZ(500);
+				obj.cameraPosition.setY(cameraYPos);
+				obj.cameraPosition.setZ(500.0f);
 			}
 			// Sight's y is above 300 and camera's y = 0
 			// Move camera along the player's z axis
 			else
 			{
-				float cameraZPos = cameraPosition.z();
+				float cameraZPos = obj.cameraPosition.z();
 				cameraZPos = clampf(cameraZPos + (moveAmount * DAMPING_FACTOR), 100, 500);
-				cameraPosition.setY(0);
-				cameraPosition.setZ(cameraZPos);
+				obj.cameraPosition.setY(0.0f);
+				obj.cameraPosition.setZ(cameraZPos);
 			}
 		}
 		else
@@ -98,7 +116,7 @@ private:
 	const float WALK_SPEED = 500.0f;
 
 	const float UPPER_CAM = 600.0f;
-	const float UPPER_SIGHT = 500.0f
+	const float UPPER_SIGHT = 500.0f;
 	const float MIDDLE_BOUND = 300.0f;
 	const float LOWER_BOUND = 0.0f;
 	const float DAMPING_FACTOR = 0.5f;

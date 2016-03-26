@@ -1,10 +1,14 @@
 #ifndef PlayerPhysicsComponent_hpp
 #define PlayerPhysicsComponent_hpp
 
-class PlayerPhysicsComponent : public PhysicsComponent
+#include "PlayerData.hpp"
+
+class PlayerPhysicsComponent
 {
 public:
-	PlayerPhysicsComponent(Player& obj, Physics& physics)
+	btKinematicCharacterController* charController;
+
+	PlayerPhysicsComponent(PlayerData& obj, BulletPhysics* physics)
 	{
 		// Create player shape
 		btBoxShape* playerShape = new btBoxShape(btVector3(40.0, 70.0, 40.0));
@@ -57,24 +61,26 @@ public:
 	    physics->getDynamicsWorld()->addRigidBody(paddleBody);
 	}
 
-	virtual ~PlayerPhysicsComponent() {}
-	virtual void update(Player& obj, BulletPhysics* physics, World& world)
+	~PlayerPhysicsComponent()
+	{
+	}
+	bool update(PlayerData& obj, BulletPhysics* physics, float elapsedTime)
 	{
 		// Move the player
-		charController->setVelocityForTimeInterval(obj.velocity, world.elapsedTime * FPS);
+		charController->setVelocityForTimeInterval(obj.velocity.toBullet(), btScalar(elapsedTime * FPS));
 
 		// Orient the player
         transform.setRotation(obj.orientation.toBullet());
         charController->getGhostObject()->setWorldTransform(transform);
 
         /// Orientation of paddle scaled by an offset
-        Vector direction = obj.cannonOrientation * Vector(0, 0, -PADDLE_OFFSET);
+        Vector direction = obj.cannonOrientation * Vector(0.0f, 0.0f, -PADDLE_OFFSET);
         // Player position + cannon offset pointing in cannon's direction
         btVector3 paddleOrigin = transform.getOrigin() + direction.toBullet();
         // Ensures paddle does not go through the floor
-        if (origin.y() < PADDLE_HEIGHT / 2.0f)
+        if (paddleOrigin.y() < PADDLE_HEIGHT / 2.0f)
         {
-        	origin.setY(PADDLE_HEIGHT / 2.0f);
+        	paddleOrigin.setY(PADDLE_HEIGHT / 2.0f);
         }
         // Update paddle transform
        	btTransform paddleTrans = transform;
@@ -83,16 +89,88 @@ public:
        	paddleBody->setWorldTransform(paddleTrans);
 
        	// Step character controller
-       	charController->step(physics->getDynamicsWorld(), world.timeSinceLastFrame);
+       	charController->playerStep(physics->getDynamicsWorld(), elapsedTime);
+
+       	return handleCollisions(obj, physics);
 	}
 private:
 	const float PADDLE_OFFSET = 110.0f;
 	const float PADDLE_HEIGHT = 350.0f;
 
-	btKinematicCharacterController* charController;
+	const float WALL_COLLIDE_ERROR = 745.0f;
+	const float FPS = 60.0f;
+
 	btTransform transform; // Initialize this to player's transform
 	btPairCachingGhostObject* ghostObject;
 	btRigidBody* paddleBody;
+
+	bool handleCollisions(PlayerData& obj, BulletPhysics* physics)
+	{
+
+	    btManifoldArray manifoldArray;
+	    btBroadphasePairArray& pairArray = ghostObject->getOverlappingPairCache()
+	    		->getOverlappingPairArray();
+
+	    for (int i = 0; i < pairArray.size(); i++)
+	    {
+	        manifoldArray.clear();
+
+	        const btBroadphasePair& pair = pairArray[i];
+
+	        btBroadphasePair* collisionPair = physics->getDynamicsWorld()
+	        		->getPairCache()->findPair(pair.m_pProxy0,pair.m_pProxy1);
+
+	        if (!collisionPair) 
+	        {
+	            continue;
+	        }
+
+	        if (collisionPair->m_algorithm)
+	        {
+	            collisionPair->m_algorithm->getAllContactManifolds(manifoldArray);
+	        }
+
+	        for (int j = 0;j < manifoldArray.size(); j++)
+	        {
+	            btPersistentManifold* manifold = manifoldArray[j];
+
+	            bool isFirstBody = manifold->getBody0() == ghostObject;
+
+	            btScalar direction = isFirstBody ? btScalar(-1.0) : btScalar(1.0);
+
+	            for (int p = 0; p < manifold->getNumContacts(); p++)
+	            {
+	                const btManifoldPoint& pt = manifold->getContactPoint(p);
+
+	                if (pt.getDistance() < 0.f)
+	                {
+	                    const btVector3& ptA = pt.getPositionWorldOnA();
+	                    const btVector3& ptB = pt.getPositionWorldOnB();
+	                    const btVector3& normalOnB = pt.m_normalWorldOnB;
+
+	                    // Exclude collisions with walls
+	                    if (std::abs(ptA.x()) >= WALL_COLLIDE_ERROR || std::abs(ptB.x()) >= WALL_COLLIDE_ERROR)
+	                    {
+	                        continue;
+	                    }
+
+	                    if (std::abs(ptA.z()) >= WALL_COLLIDE_ERROR || std::abs(ptB.z()) >= WALL_COLLIDE_ERROR)
+	                    {
+	                        continue;
+	                    }
+
+	                    if (std::abs(ptA.y()) <= 0.0 || std::abs(ptB.y()) <= 0.0)
+	                    {    
+	                        continue;
+	                    }
+
+	                    return false;
+	                }
+	            }
+	        }
+	    }
+	    return true;
+	}
 };
 
 #endif

@@ -1,10 +1,14 @@
 #ifndef PlayerGraphicsComponent_hpp
 #define PlayerGraphicsComponent_hpp
 
-class PlayerGraphicsComponent : public GraphicsComponent
+#include "PlayerData.hpp"
+
+class PlayerGraphicsComponent
 {
 public:
-	Player(Ogre::SceneManager* graphics)
+	Ogre::SceneNode* cannonNode;
+	
+	PlayerGraphicsComponent(PlayerData& data, Ogre::SceneManager* graphics)
 	{
 		// Create scene nodes
 		playerNode = graphics->getRootSceneNode()->createChildSceneNode("Player Node");
@@ -13,7 +17,6 @@ public:
 
 		Ogre::SceneNode* baseNode = playerNode->createChildSceneNode();
 		cannonNode = playerNode->createChildSceneNode();
-		
 
 		// Retrieve the meshes for the cannon and spray bottle
 	    Ogre::MeshManager::getSingleton().create("cannon/CannonBase.mesh",
@@ -42,20 +45,30 @@ public:
 
 	    // Scale the cannon
     	playerNode->scale(Ogre::Vector3(0.6, 0.6, 0.6));
-	}
-	virtual ~PlayerGraphicsComponent() {}
-	virtual void update(Player& obj)
-	{
-		// Camera and sight position
-		sightNode = obj.sightPosition.toOgre();
-		cameraNode = obj.cameraPostion.toOgre();
 
-		obj.sightPosition.setValue(sightNode->_getDerivedPosition());
-		obj.cameraPostion.setValue(cameraNode->_getDerivedPosition()); 
+    	data.orientation = playerNode->getOrientation();
+	}
+	~PlayerGraphicsComponent()
+	{
+	}
+	void update(PlayerData& obj)
+	{
+		printf("Player node: %f, %f, %f\n", playerNode->getPosition().x, playerNode->getPosition().y, playerNode->getPosition().z);
+		// Camera and sight position
+		sightNode->setPosition(obj.sightPosition.toOgre());
+		printf("Player update sightPosition: %f, %f, %f\n", obj.sightPosition.x(), obj.sightPosition.y(), obj.sightPosition.z());
+		cameraNode->setPosition(obj.cameraPosition.toOgre());
+
+		// obj.sightPosition.setValue(sightNode->_getDerivedPosition());
+		// printf("Player derived sightPosition: %f, %f, %f\n", obj.sightPosition.x(), obj.sightPosition.y(), obj.sightPosition.z());
+		// obj.cameraPosition.setValue(cameraNode->_getDerivedPosition()); 
 
 		// Player position/orientation
-		obj.velocity.setY(obj.velocity - PLAYER_OFFSET);
+		// obj.velocity.setY(obj.velocity.y() - PLAYER_OFFSET);
+		printf("Player velocity: %f, %f, %f\n", obj.velocity.x(), obj.velocity.y(), obj.velocity.z());
 
+		Ogre::Vector3 v = playerNode->_getDerivedPosition();
+		printf("Subtract: %f, %f, %f\n", v.x, v.y, v.z);
 		playerNode->translate(obj.velocity.toOgre() - playerNode->_getDerivedPosition());
 		playerNode->setOrientation(obj.orientation.toOgre());
 
@@ -70,14 +83,12 @@ public:
         }
 
         // Need to add a setValue() to Quaternion
-        obj.cannonOrientation.setValue(cannonNode->_getDerivedPosition());
+        obj.cannonOrientation = cannonNode->_getDerivedOrientation();
 	}
 private:
 	Ogre::SceneNode* playerNode;
 	Ogre::SceneNode* sightNode;
 	Ogre::SceneNode* cameraNode;
-
-	Ogre::SceneNode* cannonNode;
 
 	const float PLAYER_OFFSET = 70.0f;
 };

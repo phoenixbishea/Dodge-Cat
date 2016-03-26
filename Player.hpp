@@ -1,46 +1,66 @@
 #ifndef Player_hpp
 #define Player_hpp
 
-class Player : GameObject
+#include <OgreEntity.h>
+#include <OISInputManager.h>
+#include <OISKeyboard.h>
+#include <OISMouse.h>
+#include <OgreSceneManager.h>
+#include <OgreSubMesh.h>
+#include <OgreMeshManager.h>
+#include <btBulletDynamicsCommon.h>
+#include <BulletDynamics/Character/btKinematicCharacterController.h>
+#include <BulletCollision/CollisionDispatch/btGhostObject.h>
+
+#include "BulletPhysics.hpp"
+
+#include "PlayerInputComponent.hpp"
+#include "PlayerPhysicsComponent.hpp"
+#include "PlayerGraphicsComponent.hpp"
+#include "PlayerCameraComponent.hpp"
+
+#include "PlayerData.hpp"
+
+class Player
 {
 public:
-    Vector velocity;
-    Quaternion orientation;
-
-    Vector sightPosition;
-    Vector cameraPositon;
-
-    float cannonPitch;
-    Quaternion cannonOrientation;
-
-    Player(InputComponent* input, PhysicsComponent* physics,
-           GraphicsComponent* graphics, CameraComponent* camera,
-           SoundComponent* sound, GUIComponent* gui)
-    : mInput(input),
-    mPhysics(physics),
-    mGraphics(graphics),
-    mCamera(camera),
-    mSound(sound),
-    mGUI(gui)
-    {}
-
-    void update(BulletPhysics* physics, OIS::Keyboard* keyboard, OIS::Mouse* mouse, World& world)
+    Player(Ogre::SceneManager* graphics, BulletPhysics* physics, Ogre::Camera* camera)
+        : mInput(new PlayerInputComponent()),
+        mPhysics(new PlayerPhysicsComponent(data, physics)),
+        mGraphics(new PlayerGraphicsComponent(data, graphics)),
+        mCamera(new PlayerCameraComponent(graphics, camera))
     {
-        mInput->update(*this, keyboard, mouse, world);
-        mPhysics->update(*this, physics, world);
-        mGraphics->update(*this);
-        mCamera->update(*this);
+    }
+
+    bool update(BulletPhysics* physics, OIS::Keyboard* keyboard, OIS::Mouse* mouse, float elapsedTime)
+    {
+        mInput->update(data, keyboard, mouse, elapsedTime);
+        if(!mPhysics->update(data, physics, elapsedTime))
+        {
+            return false;
+        }
+        mGraphics->update(data);
+        mCamera->update(data);
+
+        return true;
+    }
+
+    btTransform getWorldTransform()
+    {
+        return mPhysics->charController->getGhostObject()->getWorldTransform();
+    }
+
+    Vector getCannonDirection()
+    {
+        return Vector(mGraphics->cannonNode->_getDerivedOrientation() * Ogre::Vector3(0, 0, -1));
     }
 private:
-    InputComponent* mInput;
-    PhysicsComponent* mPhysics;
-    GraphicsComponent* mGraphics;
-    CameraComponent* mCamera;
-    SoundComponent* mSound;
-    GUIComponent* mGUI;
+    PlayerInputComponent* mInput;
+    PlayerPhysicsComponent* mPhysics;
+    PlayerGraphicsComponent* mGraphics;
+    PlayerCameraComponent* mCamera;
 
-    static const int MAX_COMPONENTS = 6;
-    Component* mComponents[MAX_COMPONENTS];
+    PlayerData data;
 };
 
 #endif

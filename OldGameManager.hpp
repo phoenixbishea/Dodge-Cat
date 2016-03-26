@@ -34,6 +34,8 @@
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/Ogre/Renderer.h>
 
+#define WALL_COLLIDE_ERROR 745
+
 enum GameState {MAIN_MENU = 0, PLAY = 1};
 
 CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
@@ -101,8 +103,6 @@ private:
 
     double mTimeSinceLastPhysicsStep;
     double mTimeSinceLastCat;
-
-    Cat* mCats;
 
     GameState mState;
     CEGUI::OgreRenderer* mRenderer;

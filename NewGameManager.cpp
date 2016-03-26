@@ -137,9 +137,7 @@ void GameManager::initScene()
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.25, 0.25, 0.25));
     mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
 
-    printf("Made it to create Player\n");
     mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera);
-    printf("Made it to create Cat\n");
     mCats = new Cat();
 
     // Add a point light
@@ -470,7 +468,6 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
         mTimeSinceLastCat += fe.timeSinceLastFrame;
         if (mTimeSinceLastCat > 1.0)
         {
-            printf("Made it to spawnCat\n");
             spawnCat();
             ++mScore;
             mPlayButtons.at(0)->setText("Score: " + Ogre::StringConverter::toString(mScore));
@@ -502,11 +499,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
             return true;
         }
 
-        printf("Made it to update\n");
-        if (!mPlayer->update(mPhysicsEngine, mKeyboard, mMouse, fe.timeSinceLastFrame))
-        {
-            return false;
-        }
+        mPlayer->update(mPhysicsEngine, mKeyboard, mMouse, fe.timeSinceLastFrame);
         mCats->update(mPhysicsEngine, mSound);
     }
     return true;
