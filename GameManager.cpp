@@ -637,7 +637,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
     }
     else if (mState == LOADING)
     {
-      if (mNetManager.getClients() != 2)
+      if (mNetManager.getClients() != 1)
       {
         mNetManager.broadcastUDPInvitation();
       }
