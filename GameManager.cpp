@@ -561,7 +561,7 @@ bool GameManager::connectServer(const CEGUI::EventArgs&)
                              " line " +
                              std::to_string(__LINE__));
   mNetManager.addNetworkInfo(PROTOCOL_UDP);
-  if (! mNetManager.startClient())
+  if (! mNetManager.startServer())
     throw std::runtime_error("Could not start the NetManager " +
                              std::string(__FILE__) +
                              " line " +
@@ -650,15 +650,18 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
       {
         if (! connected)
         {
+          std::cout << "Checking for invitation" << std::endl;
           if (mNetManager.udpServerData[0].updated)
           {
             std::string invite(mNetManager.udpServerData[0].output);
+            std::cout << "Invitation: " << invite << std::endl;
             if (std::string::npos != invite.find(STR_OPEN))
             {
               if (mNetManager.joinMultiPlayer(invite))
               {
                 std::cout << "***** Connected to MultiPlayer *****" << std::endl;
                 mState = PLAY;
+                connected = true;
               }
             }
           }
