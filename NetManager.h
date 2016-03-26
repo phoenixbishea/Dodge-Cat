@@ -75,6 +75,7 @@ static const std::string STR_ACPT("TG_SERVER_JOIN");
 static const std::string STR_BEGIN("TG_GAME_BEGIN");
 static const std::string STR_NXLVL("TG_NEXT_LEVEL");
 static const std::string STR_TLHIT("TG_TILE_HIT");
+static const std::string STR_PLYRS("TG_NUM_PLYRS");
 static const std::string STR_TIMST("FG_TIMER_STOP");
 static const std::string STR_ISROG("FG_IS_ROGUE");
 static const std::string STR_RSHRD("FG_RESET_HERD");
