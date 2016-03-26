@@ -323,7 +323,7 @@ void GameManager::initServer()
       mNetManager.addNetworkInfo(PROTOCOL_UDP);
       if (! mNetManager.startServer())
         throw std::runtime_error("***** Could not startServer() *****");
-      if (! mNetManager.multiPlayerInit(32))
+      if (! mNetManager.multiPlayerInit(16))
         throw std::runtime_error("***** Could not multiPlayerInit() *****");
     }
     else
@@ -639,17 +639,33 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
     {
       if (mNetManager.getClients() != 1)
       {
-        mNetManager.broadcastUDPInvitation();
+        static float timeSinceBroadcast = 0.0f;
+        timeSinceBroadcast += .5;
+        if (timeSinceBroadcast > 8000.0)
+        {
+            timeSinceBroadcast -= 8000.0f;
+            mNetManager.broadcastUDPInvitation(16);
+        }
       }
+        std::cout << "number of clients: " << mNetManager.getUDPClients() << std::endl;
+        for(int i = 0; i < mNetManager.getClients(); ++i)
+        {
+            std::string test("TG_NUM_PLYRS");
+            std::ostringstream oss;
+            oss << test << mNetManager.getClients() << i+1;
+            mNetManager.messageClient(PROTOCOL_UDP,i, oss.str().c_str(), oss.str().length());
+        }
     }
     else if (mState == CLIENT)
     {
       static bool connected = false;
       // Found activity, connect to the server
+      std::cout << "Scanning activity: " <<mNetManager.scanForActivity() << std::endl;
       if (mNetManager.scanForActivity())
       {
         if (! connected)
         {
+
           std::cout << "Checking for invitation" << std::endl;
           if (mNetManager.udpServerData[0].updated)
           {
@@ -666,6 +682,11 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
             }
           }
         }
+      }
+      else
+      {
+    
+
       }
     }
     else
