@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <ctime>
 
+std::string serverIP;
+
 //---------------------------------------------------------------------------
 GameManager::GameManager()
   : mRoot(0),
@@ -325,12 +327,14 @@ void GameManager::initServer()
       mNetManager.addNetworkInfo(PROTOCOL_UDP);
       if (! mNetManager.startServer())
           throw std::runtime_error("***** Could not startServer() *****");
-      if (! mNetManager.multiPlayerInit(16))
-          throw std::runtime_error("***** Could not multiPlayerInit() *****");
+      serverIP = mNetManager.getIPstring();
+      std::cout << "IP Address: " << serverIP << std::endl;
+      // if (! mNetManager.multiPlayerInit(16))
+      //     throw std::runtime_error("***** Could not multiPlayerInit() *****");
     }
     else
     {
-      throw std::runtime_error("***** Could not initNetManager() *****");
+        throw std::runtime_error("***** Could not initNetManager() *****");
     }
 }
 
@@ -562,17 +566,17 @@ bool GameManager::connectServer(const CEGUI::EventArgs&)
                              std::string(__FILE__) +
                              " line " +
                              std::to_string(__LINE__));
-  mNetManager.addNetworkInfo(PROTOCOL_UDP);
-  if (! mNetManager.startServer())
-    throw std::runtime_error("Could not startServer() " +
+  mNetManager.addNetworkInfo(PROTOCOL_TCP, multiplayerButtons.at(2)->getText().c_str());
+  if (! mNetManager.startClient())
+    throw std::runtime_error("Could not startClient() " +
                              std::string(__FILE__) +
                              " line " +
                              std::to_string(__LINE__));
-  if (! mNetManager.multiPlayerInit(16))
-      throw std::runtime_error("Could not startServer() " +
-                               std::string(__FILE__) +
-                               " line " +
-                               std::to_string(__LINE__));
+//   if (! mNetManager.multiPlayerInit(16))
+//       throw std::runtime_error("Could not startServer() " +
+//                                std::string(__FILE__) +
+//                                " line " +
+//                                std::to_string(__LINE__));
 }
 
 /* Calls menuChange that will change the menu based on the game state */
@@ -644,10 +648,30 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
     }
     else if (mState == LOADING)
     {
-      if (mNetManager.getClients() != 1)
-      {
-        mNetManager.broadcastUDPInvitation(16);
-      }
+        if (mNetManager.getClients() != 1)
+        {
+            static float timeSinceBroadcast = 0.0f;
+            timeSinceBroadcast += fe.timeSinceLastFrame;
+            if (timeSinceBroadcast > 8000.0)
+            {
+                timeSinceBroadcast -= 8000.0f;
+                if (!mNetManager.broadcastUDPInvitation(16))
+                {
+                    std::cout << "Failed to send broadcast." << std::endl;
+                }
+            }
+        }
+        if (mNetManager.scanForActivity())
+        {
+            std::cout << "number of clients: " << mNetManager.getUDPClients() << std::endl;
+            for(int i = 0; i < mNetManager.getClients(); ++i)
+            {
+                std::string test("TG_NUM_PLYRS");
+                std::ostringstream oss;
+                oss << test << mNetManager.getClients() << i+1;
+                mNetManager.messageClient(PROTOCOL_UDP,i, oss.str().c_str(), oss.str().length());
+            }
+        }
     }
     else if (mState == CLIENT)
     {

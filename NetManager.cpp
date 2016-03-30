@@ -676,6 +676,10 @@ int NetManager::getClients() {
   return netClients.size();
 }
 
+int NetManager::getUDPClients()
+{
+  return udpClientData.size();
+}
 /**
  * @brief Accept new clients.
  */
