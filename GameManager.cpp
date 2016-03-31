@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 
+std::string serverIP;
 //---------------------------------------------------------------------------
 GameManager::GameManager()
   : mRoot(0),
@@ -269,9 +270,9 @@ void GameManager::initGUI()
     back->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
     back->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,200)));
 
-    loading->setText("Waiting for connection");
-    loading->setSize(CEGUI::USize(CEGUI::UDim(0.2,0), CEGUI::UDim(0.1,0)));
-    loading->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,0)));
+    loading->setText("Waiting for connection...");
+    loading->setSize(CEGUI::USize(CEGUI::UDim(0.5,0), CEGUI::UDim(0.2,0)));
+    loading->setPosition(CEGUI::UVector2(CEGUI::UDim(0.25f,0),CEGUI::UDim(0.4f,0)));
    
 
     start->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::start, this));
@@ -294,6 +295,8 @@ void GameManager::initGUI()
     multiplayerButtons.push_back(connect);
     multiplayerButtons.push_back(connectIn);
     multiplayerButtons.push_back(back);
+
+    loadingButtons.push_back(loading);
 
     mainSheet->addChild(start);
     mainSheet->addChild(multiplayer);
@@ -320,11 +323,14 @@ void GameManager::initServer()
 {
     if (mNetManager.initNetManager())
     {
-      mNetManager.addNetworkInfo(PROTOCOL_UDP);
+      mNetManager.addNetworkInfo(PROTOCOL_TCP);
       if (! mNetManager.startServer())
         throw std::runtime_error("***** Could not startServer() *****");
-      if (! mNetManager.multiPlayerInit(16))
-        throw std::runtime_error("***** Could not multiPlayerInit() *****");
+      serverIP = mNetManager.getIPstring();
+      mNetManager.acceptConnections();
+      std::cout << "IP Address: " << serverIP << std::endl;
+      // if (! mNetManager.multiPlayerInit(16))
+      //   throw std::runtime_error("***** Could not multiPlayerInit() *****");
     }
     else
     {
@@ -545,9 +551,12 @@ bool GameManager::setupServer(const CEGUI::EventArgs&)
 {
     mState = LOADING;
 
+    initServer();
+        std::string temp("Waiting for connection " + serverIP);
+    std::cout << "Temp is " << serverIP << std::endl;
+    loadingButtons.at(0)->setText(temp);
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(4));
 
-    initServer();
 }
 
 
@@ -560,8 +569,8 @@ bool GameManager::connectServer(const CEGUI::EventArgs&)
                              std::string(__FILE__) +
                              " line " +
                              std::to_string(__LINE__));
-  mNetManager.addNetworkInfo(PROTOCOL_UDP);
-  if (! mNetManager.startServer())
+  mNetManager.addNetworkInfo(PROTOCOL_TCP, multiplayerButtons.at(2)->getText().c_str());
+  if (! mNetManager.startClient())
     throw std::runtime_error("Could not start the NetManager " +
                              std::string(__FILE__) +
                              " line " +
@@ -637,24 +646,27 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
     }
     else if (mState == LOADING)
     {
-      if (mNetManager.getClients() != 1)
-      {
-        static float timeSinceBroadcast = 0.0f;
-        timeSinceBroadcast += .5;
-        if (timeSinceBroadcast > 8000.0)
+        if(mNetManager.scanForActivity())
+            std::cout << "something is happennnninnngggg" << std::endl;
+
+        static float timeSinceLastPlayerInfo = 0.0f;
+
+        timeSinceLastPlayerInfo += .05;        
+
+        if(timeSinceLastPlayerInfo > 1000.0)
         {
-            timeSinceBroadcast -= 8000.0f;
-            mNetManager.broadcastUDPInvitation(16);
+
+            std::cout << "number of clients: " << mNetManager.getClients() << std::endl;
+            for(int i = 0; i < mNetManager.getClients(); ++i)
+            {
+                std::string test("TG_NUM_PLYRS");
+                std::ostringstream oss;
+                oss << test << mNetManager.getClients() << i+1;
+                mNetManager.messageClient(PROTOCOL_TCP,i, oss.str().c_str(), oss.str().length());
+            }
+            timeSinceLastPlayerInfo -= 1000.0;
         }
-      }
-        std::cout << "number of clients: " << mNetManager.getUDPClients() << std::endl;
-        for(int i = 0; i < mNetManager.getClients(); ++i)
-        {
-            std::string test("TG_NUM_PLYRS");
-            std::ostringstream oss;
-            oss << test << mNetManager.getClients() << i+1;
-            mNetManager.messageClient(PROTOCOL_UDP,i, oss.str().c_str(), oss.str().length());
-        }
+        
     }
     else if (mState == CLIENT)
     {
