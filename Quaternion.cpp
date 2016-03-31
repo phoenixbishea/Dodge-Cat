@@ -77,3 +77,16 @@ Vector Quaternion::operator * (const Vector&& other) const {
     Ogre::Quaternion temp = this->toOgre();
     return Vector(temp * other.toOgre());
 }
+
+Quaternion& Quaternion::operator *= (const Quaternion& other)
+{
+    this->value *= other.value;
+    return *this;
+}
+
+Quaternion& Quaternion::operator = (const Ogre::Quaternion& other)
+{
+    btQuaternion rhs(other.x, other.y, other.z, other.w);
+    this->value.setValue(rhs.x(), rhs.y(), rhs.z(), rhs.w());
+    return *this;
+}

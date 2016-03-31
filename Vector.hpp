@@ -73,6 +73,8 @@ public:
     Vector& operator += (const Ogre::Vector3&);
     Vector& operator -= (const Ogre::Vector3&);
 
+    Vector& operator=(const Vector&);
+
     float dot(const Vector&) const;
 
     Vector& normalize();

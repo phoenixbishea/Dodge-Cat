@@ -1,4 +1,3 @@
-
 #ifndef Player_hpp
 #define Player_hpp
 
@@ -14,51 +13,80 @@
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 
 #include "BulletPhysics.hpp"
-#include "Sound.hpp"
+#include "NetManager.h"
+
+#include "PlayerInputComponent.hpp"
+#include "PlayerPhysicsComponent.hpp"
+#include "PlayerGraphicsComponent.hpp"
+#include "PlayerCameraComponent.hpp"
+
+#include "PlayerData.hpp"
 
 class Player
 {
 public:
-    Player (Ogre::String name, Ogre::SceneManager* sceneMgr, BulletPhysics* physicsEngine, Sound* sound);
+    Player(Ogre::SceneManager* graphics, BulletPhysics* physics, Ogre::Camera* camera)
+        : mInput(new PlayerInputComponent()),
+        mPhysics(new PlayerPhysicsComponent(data, physics)),
+        mGraphics(new PlayerGraphicsComponent(data, graphics)),
+        mCamera(new PlayerCameraComponent(graphics, camera))
+    {
+    }
 
-    ~Player ();
+    bool update(BulletPhysics* physics, OIS::Keyboard* keyboard, OIS::Mouse* mouse, float elapsedTime)
+    {
+        mInput->update(data, keyboard, mouse, elapsedTime);
+        if(!mPhysics->update(data, physics, elapsedTime))
+        {
+            return false;
+        }
+        mGraphics->update(data);
+        mCamera->update(data);
 
-    // Updates the Player (movement...)
-    void update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* mouse);
+        return true;
+    }
 
-    // The three methods below returns the two camera-related nodes, 
-    // and the current position of the Player (for the 1st person camera)
-    Ogre::SceneNode* getSightNode ();
+    btTransform getWorldTransform()
+    {
+        return mPhysics->getTransform();
+    }
 
-    Ogre::SceneNode* getCameraNode ();
+    Vector getCannonDirection()
+    {
+        return Vector(mGraphics->cannonNode->_getDerivedOrientation() * Ogre::Vector3(0, 0, -1));
+    }
 
-    void updateAction(btCollisionWorld* world, btScalar dt);
+    void serializeData(char* buf, int playerNum)
+    {
+        // Put DC_PINFO at the start of the string
+        memcpy(buf, STR_PINFO.c_str(), STR_PINFO.length());
 
-    btPairCachingGhostObject* getGhostObject();
-    btTransform& getWorldTransform();
+        int* buf_int = (int*) (buf + 8);
 
-    void setOgrePosition(Ogre::Vector3 vec);
-    void setOgreOrientation(Ogre::Quaternion q);
-    Ogre::Vector3 getOgrePosition();
-    Ogre::Vector3 getOgreLookDirection();
+        // Put the player number in the string
+        *buf_int++ = playerNum;
 
-    float getCollisionObjectHalfHeight();
+        // Put the player's x, y, and z
+        btVector3 position = this->getWorldTransform().getOrigin();
+        *buf_int++ = position.x();
+        *buf_int++ = position.y();
+        *buf_int++ = position.z();
 
-    void serializeData(char* buf, int playerNum);
+        // Put the player's rotation with respect to 0, 1, 0
+        btQuaternion orientation = this->getWorldTransform().getRotation();
+        *buf_int++ = orientation.w();
 
-protected:
-    Ogre::String mName;
-    btPairCachingGhostObject* ghost;
-    btKinematicCharacterController* player;
-    btRigidBody* paddleBody;
-    Ogre::SceneNode* mMainNode;
-    Ogre::SceneNode* mCannonNode;
-    Ogre::SceneNode* mSightNode; // "Sight" node - The Player is supposed to be looking here
-    Ogre::SceneNode* mCameraNode; // Node for the chase camera
-    Ogre::Entity* mEntity; // Player entity
-    Ogre::SceneManager* mSceneMgr;
+        // Put the player's horizontal pitch
+        Ogre::Real pitch = mGraphics->cannonNode->getOrientation().getPitch().valueDegrees();
+        *((float*)buf_int) = pitch;
+    }
+private:
+    PlayerInputComponent* mInput;
+    PlayerPhysicsComponent* mPhysics;
+    PlayerGraphicsComponent* mGraphics;
+    PlayerCameraComponent* mCamera;
 
-    Sound* mSound;
+	PlayerData data;	 
 };
 
 #endif

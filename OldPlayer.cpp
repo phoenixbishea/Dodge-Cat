@@ -1,10 +1,7 @@
 #include "Player.hpp"
-#include "NetManager.h"
 
 #include <iostream>
 #include <cmath>
-#include <string>
-
 
 #define WALK_SPEED 500
 #define MAX_ROTATION 2
@@ -113,13 +110,13 @@ Player::~Player ()
 void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* mouse) 
 {
     const OIS::MouseState& me = mouse->getMouseState();
-
+    
     // Forward movement
     if (input->isKeyDown (OIS::KC_W) || input->isKeyDown(OIS::KC_COMMA) || input->isKeyDown(OIS::KC_UP))
     {
         Ogre::Quaternion orientation = mMainNode->getOrientation();
         Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, -WALK_SPEED); // * elapsedTime);
-
+        
         // Create bullet vector 3 where it will be moving
         btVector3 move(direction.x, direction.y, direction.z);
 
@@ -226,14 +223,19 @@ void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* m
 
     Ogre::Quaternion orientation = mCannonNode->_getDerivedOrientation();
 
+    // Orientation of cannon, scaled by an offset
     Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, -PADDLE_OFFSET);
 
     btVector3 move(direction.x, direction.y, direction.z);
 
     btTransform trans = ghost->getWorldTransform();
+    // Player position + cannon offset pointing in right direction
     btVector3 origin = trans.getOrigin() + move;
+    // Stop paddle from going through floor
     if (origin.y() < PADDLE_HEIGHT / 2)
       origin.setY(PADDLE_HEIGHT / 2);
+
+    // Update transform received from player and set paddle equal to this
     trans.setOrigin(origin);
     trans.setRotation(btQuaternion(orientation.x,
                                    orientation.y,
@@ -289,30 +291,5 @@ void Player::setOgreOrientation(Ogre::Quaternion q) {
 
 float Player::getCollisionObjectHalfHeight() {
     return 70.0;
-}
-
-void Player::serializeData(char* buf, int playerNum)
-{
-    // Put DC_PINFO at the start of the string
-    memcpy(buf, STR_PINFO.c_str(), STR_PINFO.length());
-
-    int* buf_int = (int*) (buf + 8);
-
-    // Put the player number in the string
-    *buf_int++ = playerNum;
-
-    // Put the player's x, y, and z
-    btVector3 position = this->player->getGhostObject()->getWorldTransform().getOrigin();
-    *buf_int++ = position.x();
-    *buf_int++ = position.y();
-    *buf_int++ = position.z();
-
-    // Put the player's rotation with respect to 0, 1, 0
-    btQuaternion orientation = this->player->getGhostObject()->getWorldTransform().getRotation();
-    *buf_int++ = orientation.w();
-
-    // Put the player's horizontal pitch
-    Ogre::Real pitch = mCannonNode->getOrientation().getPitch().valueDegrees();
-    *((float*)buf_int) = pitch;
 }
 

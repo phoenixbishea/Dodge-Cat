@@ -3,8 +3,6 @@
 
 #include "BulletPhysics.hpp"
 #include "Player.hpp"
-#include "Sound.hpp"
-#include "Vector.hpp"
 
 #include <OgreEntity.h>
 #include <OgreSceneManager.h>
@@ -17,7 +15,7 @@ public:
     Cat();
     Cat(BulletPhysics*, Ogre::SceneManager*, Player* player);
 
-    void update(BulletPhysics* physics, Sound* sound);
+    void update(BulletPhysics* physics);
 
     void initCatPhysics();
     void setVelocity();
@@ -34,9 +32,11 @@ private:
 	btVector3 mVector;
 	btTransform mTransform;
 
-    const float CAT_SPEED = 1500.0f;
+    const float CAT_SPEED = 2000.0f;
     const float CAT_MASS = 10.0f;
     const float SPHERE_SIZE = 20.0f;
+
+    static bool meshCreated = false;
 
     const Ogre::Real CAT_SCALE = 100.0f;
     const float SPAWN_DISTANCE = 150.0f;
@@ -59,7 +59,7 @@ Cat::Cat(BulletPhysics* physics, Ogre::SceneManager* scnMgr, Player* player)
 }
 
 //---------------------------------------------------------------------------
-void Cat::update(BulletPhysics* physics, Sound* sound)
+void update(BulletPhysics* physics, Sound* sound)
 {
     for (int i = 0; i < physics->getCollisionObjectCount(); i++)
     {
@@ -123,7 +123,7 @@ void Cat::initCatPhysics()
 void Cat::setVelocity()
 {
 	 // Set the velocity of the Cat based on sight and camera nodes attached to the player
-    mPhysLookDir = mPlayer->getCannonDirection().toBullet();
+    mPhysLookDir = player->getCannonDirection().toBullet();
     mPhysLookDir.normalize();
 
     mBody->setLinearVelocity(mPhysLookDir * CAT_SPEED);
@@ -131,8 +131,7 @@ void Cat::setVelocity()
 
 //---------------------------------------------------------------------------
 void Cat::initCatOgre()
-{   
-    static bool meshCreated = false;
+{
     if (!meshCreated)
     {
       Ogre::MeshManager::getSingleton().create("Cat.mesh",

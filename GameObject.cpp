@@ -1,12 +1,24 @@
+#include GameObject.hpp
 
-class GameObject
+GameObject::GameObject(InputComponent* input,
+         PhysicsComponent* physics,
+         GraphicsComponent* graphics,
+         SoundComponent* sound,
+         GUIComponent* gui)
+: mInput(input),
+  mPhysics(physics),
+  mGraphics(graphics),
+  mSound(sound),
+  mGUI(gui)
+{}
+
+void GameObject::send(int message)
 {
-public:
-
-private:
-	InputComponent* mInput;
-	PhysicsComponent* mPhysics;
-	GraphicsComponent* mGraphics;
-	SoundComponent* mSound;
-	GUIComponent* mGUI;
+    for (int i = 0; i < MAX_COMPONENTS; i++)
+    {
+        if (mComponents[i] != NULL)
+        {
+            mComponents[i]->receive(message);
+        }
+    }
 }

@@ -34,11 +34,9 @@
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/Ogre/Renderer.h>
 
-#include "NetManager.h"
-
 #define WALL_COLLIDE_ERROR 745
 
-enum GameState {MAIN_MENU = 0, PLAY = 1, NETWORK = 2, LOADING = 3, CLIENT = 4};
+enum GameState {MAIN_MENU = 0, PLAY = 1};
 
 CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
 
@@ -60,9 +58,8 @@ private:
     void initInput();
     void initScene();
     void initListener(); 
-
+    
     void initGUI();
-    void initServer();
 
     void initOgreResources();
     bool initOgreWindow();
@@ -81,22 +78,10 @@ private:
     bool mouseReleased(const OIS::MouseEvent& me, OIS::MouseButtonID id);
 
     bool quit(const CEGUI::EventArgs&);
-    void startScene();
     bool start(const CEGUI::EventArgs&);
-    bool mpSheet(const CEGUI::EventArgs&);
-    bool handleText(const CEGUI::EventArgs&);
-    bool setupServer(const CEGUI::EventArgs&);
-    bool connectServer(const CEGUI::EventArgs&);
-    bool back(const CEGUI::EventArgs&);
-
-    void menuChange();
 
     bool frameRenderingQueued(const Ogre::FrameEvent& fe);
-
-    bool frameStartedClient(const Ogre::FrameEvent& fe);
-    bool frameStartedServer(const Ogre::FrameEvent& fe);
     bool frameStarted(const Ogre::FrameEvent& fe);
-    bool frameEnded(const Ogre::FrameEvent& fe);
 
     Ogre::Root* mRoot;
     Ogre::RenderWindow* mWindow;
@@ -119,20 +104,12 @@ private:
     double mTimeSinceLastPhysicsStep;
     double mTimeSinceLastCat;
 
-    Cat* mCats;
-
     GameState mState;
     CEGUI::OgreRenderer* mRenderer;
     std::vector<CEGUI::Window*> sheets;
     std::vector<CEGUI::Window*> startButtons;
-    std::vector<CEGUI::Window*> multiplayerButtons;
+    std::vector<CEGUI::Window*> gameOverButtons;
     std::vector<CEGUI::Window*> mPlayButtons;
-    std::vector<CEGUI::Window*> loadingButtons;
-
-    /*Network */
-    NetManager mNetManager;
-    bool connected;
-    int playerNumber;
 };
 
 #endif
