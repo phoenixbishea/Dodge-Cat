@@ -62,7 +62,7 @@ private:
     void initListener(); 
 
     void initGUI();
-    void initServer();
+    bool initServer();
 
     void initOgreResources();
     bool initOgreWindow();
@@ -102,8 +102,8 @@ private:
     Ogre::RenderWindow* mWindow;
     Ogre::SceneManager* mSceneMgr;
     Ogre::Camera* mCamera;
-    ExtendedCamera* mExCamera;
     Player* mPlayer;
+    Player* mPlayer2;
 
     BulletPhysics* mPhysicsEngine;
 

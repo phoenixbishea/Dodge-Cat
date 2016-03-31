@@ -8,7 +8,7 @@ class PlayerPhysicsComponent
 public:
 	btKinematicCharacterController* charController;
 
-	PlayerPhysicsComponent(PlayerData& obj, BulletPhysics* physics)
+    PlayerPhysicsComponent(PlayerData& obj, BulletPhysics* physics, const Vector& initialPosition)
 	{
 		// Create player shape
 		btBoxShape* playerShape = new btBoxShape(btVector3(50.0, 70.0, 50.0));
@@ -16,7 +16,7 @@ public:
 		// Init player ghost object
 		ghostObject = new btPairCachingGhostObject();
 		transform = ghostObject->getWorldTransform();
-		transform.setOrigin(btVector3(0.0, 0.0, 0.0));
+		transform.setOrigin(initialPosition.toBullet());
 		ghostObject->setWorldTransform(transform);
 
 		// Set the shape and collision object type

@@ -11,7 +11,6 @@ GameManager::GameManager()
     mWindow(0),
     mSceneMgr(0),
     mCamera(0),
-    mExCamera(0),
     mPlayer(0),
 
     mPhysicsEngine(0),
@@ -41,7 +40,17 @@ GameManager::~GameManager()
   // Remove ourself as a Window listener
   Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
   windowClosed(mWindow);
-  delete mRoot;
+  if (mRoot) delete mRoot;
+  if (mWindow) delete mWindow;
+  if (mSceneMgr) delete mSceneMgr;
+  if (mCamera) delete mCamera;
+  if (mPlayer) delete mPlayer;
+  if (mPlayer2) delete mPlayer2;
+  if (mPhysicsEngine) delete mPhysicsEngine;
+  if (mKeyboard) delete mKeyboard;
+  if (mMouse) delete mMouse;
+  if (mSound) delete mSound;
+  if (mCats) delete mCats;
 }
 
 //---------------------------------------------------------------------------
@@ -137,7 +146,16 @@ void GameManager::initScene()
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.25, 0.25, 0.25));
     mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
 
-    mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera);
+    // If we are playing in multiplayer mode, then we need to spawn two Players
+    if (connected)
+    {
+        mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera);
+    }
+    else
+    {
+        mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Vector(-600, 0, -600));
+        mPlayer2 = new Player(mSceneMgr, mPhysicsEngine, nullptr, Vector(600, 0, 600));
+    }
     mCats = new Cat();
 
     // Add a point light
@@ -532,55 +550,54 @@ bool GameManager::mpSheet(const CEGUI::EventArgs&)
 
 bool GameManager::setupServer(const CEGUI::EventArgs&)
 {
-    mState = LOADING;
-
-    initServer();
-        std::string temp("Waiting for connection " + serverIP);
+    // Only switch to the server state if we were able to start the server
+    if (initServer())
+        mState = LOADING;
+    std::string temp("Waiting for connection " + serverIP);
     loadingButtons.at(0)->setText(temp);
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(4));
 
 }
 
-void GameManager::initServer()
+bool GameManager::initServer()
 {
     if (mNetManager.initNetManager())
     {
         mNetManager.addNetworkInfo(PROTOCOL_TCP);
-        if (! mNetManager.startServer())
-            throw std::runtime_error("***** Could not startServer() *****");
-        mNetManager.acceptConnections();
-        serverIP = mNetManager.getIPstring();
-        std::cout << "IP Address: " << serverIP << std::endl;
-        // if (! mNetManager.multiPlayerInit(16))
-        //     throw std::runtime_error("***** Could not multiPlayerInit() *****");
+        if (mNetManager.startServer())
+        {
+            mNetManager.acceptConnections();
+            serverIP = mNetManager.getIPstring();
+            std::cout << "IP Address: " << serverIP << std::endl;
+
+            return true;
+        }
     }
-    else
-    {
-        throw std::runtime_error("***** Could not initNetManager() *****");
-    }
+
+    return false;
 }
 
 bool GameManager::connectServer(const CEGUI::EventArgs&)
 {
-    mState = CLIENT;
-
-    // If we are trying to connect to a different server, then we want
-    // to restart the client
-    mNetManager.close();
-
     if (! mNetManager.initNetManager())
         throw std::runtime_error("Could not start the NetManager " +
                                  std::string(__FILE__) +
                                  " line " +
                                  std::to_string(__LINE__));
-    std::cout << "Connecting to :" << multiplayerButtons.at(2)->getText() << std::endl;
+    std::cout << "Attempting to connecting to IP address: "
+              << multiplayerButtons.at(2)->getText()
+              << std::endl;
     mNetManager.addNetworkInfo(PROTOCOL_TCP, multiplayerButtons.at(2)->getText().c_str());
     connected = mNetManager.startClient();
-    if (! connected)
-        throw std::runtime_error("Could not startClient() " +
-                                 std::string(__FILE__) +
-                                 " line " +
-                                 std::to_string(__LINE__));
+    if (connected)
+        mState = CLIENT;
+    else
+    {
+        std::cout << "Could not connect to the server: "
+                  << multiplayerButtons.at(2)->getText()
+                  << ". Did you enter the correct IP?"
+                  << std::endl;
+    }
 }
 
 /* Calls menuChange that will change the menu based on the game state */
@@ -699,7 +716,7 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
                 std::string test(STR_PLYRS);
                 std::ostringstream oss;
                 oss << test << mNetManager.getClients() << i+1;
-                mNetManager.messageClient(PROTOCOL_TCP,i, oss.str().c_str(), oss.str().length());
+                mNetManager.messageClient(PROTOCOL_TCP, i, oss.str().c_str(), oss.str().length());
             }
             timeSinceLastPlayerInfo -= 1000.0;
             if(mNetManager.getClients() == 2)
@@ -713,7 +730,7 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
 //---------------------------------------------------------------------------
 bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
 {
-    if (mState == MAIN_MENU) 
+    if (mState == MAIN_MENU)
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(0));
     else if (mState == LOADING)
         frameStartedServer(fe);
@@ -750,9 +767,19 @@ bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
 {
     if (mState == PLAY && connected)
     {
-        char buf[256];
-        mPlayer->serializeData(buf, this->playerNumber);
-        std::cout << buf << std::endl;
+        static float timeSinceLastServerUpdate = 0.0f;
+
+        if (timeSinceLastServerUpdate >= 1.0f)
+        {
+            char buf[224];
+            mPlayer->serializeData(buf, this->playerNumber);
+            std::cout << buf << std::endl;
+            mNetManager.messageServer(PROTOCOL_TCP, buf, 224);
+
+            timeSinceLastServerUpdate -= 1.0f;
+        }
+
+        timeSinceLastServerUpdate += fe.timeSinceLastFrame;
     }
 
     return true;
@@ -771,33 +798,33 @@ extern "C"
 #endif
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-  INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT )
+    INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT )
 #else
-  int main(int argc, char *argv[])
+    int main(int argc, char *argv[])
 #endif
-  {
-    GameManager app;
+    {
+        GameManager app;
 
-    try
-    {
-      app.go();
-    }
-    catch(Ogre::Exception& e)
-    {
+        try
+        {
+            app.go();
+        }
+        catch(Ogre::Exception& e)
+        {
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-      MessageBox(
-    NULL,
-    e.getFullDescription().c_str(),
-    "An exception has occured!",
-    MB_OK | MB_ICONERROR | MB_TASKMODAL);
+            MessageBox(
+                NULL,
+                e.getFullDescription().c_str(),
+                "An exception has occured!",
+                MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else
-      std::cerr << "An exception has occured: " <<
-    e.getFullDescription().c_str() << std::endl;
+            std::cerr << "An exception has occured: " <<
+                e.getFullDescription().c_str() << std::endl;
 #endif
-    }
+        }
 
-    return 0;
-  }
+        return 0;
+    }
 #ifdef __cplusplus
 }
 #endif

@@ -25,13 +25,12 @@
 class Player
 {
 public:
-    Player(Ogre::SceneManager* graphics, BulletPhysics* physics, Ogre::Camera* camera)
+    Player(Ogre::SceneManager* graphics, BulletPhysics* physics, Ogre::Camera* camera, const Vector& initialPosition = Vector(0.0f, 0.0f, 0.0f))
         : mInput(new PlayerInputComponent()),
-        mPhysics(new PlayerPhysicsComponent(data, physics)),
-        mGraphics(new PlayerGraphicsComponent(data, graphics)),
-        mCamera(new PlayerCameraComponent(graphics, camera))
-    {
-    }
+          mPhysics(new PlayerPhysicsComponent(data, physics, initialPosition)),
+          mGraphics(new PlayerGraphicsComponent(data, graphics, initialPosition)),
+          mCamera(new PlayerCameraComponent(graphics, camera))
+    {}
 
     bool update(BulletPhysics* physics, OIS::Keyboard* keyboard, OIS::Mouse* mouse, float elapsedTime)
     {
@@ -61,7 +60,7 @@ public:
         // Put DC_PINFO at the start of the string
         memcpy(buf, STR_PINFO.c_str(), STR_PINFO.length());
 
-        int* buf_int = (int*) (buf + 8);
+        int* buf_int = (int*) (buf + 4);
 
         // Put the player number in the string
         *buf_int++ = playerNum;
@@ -78,7 +77,7 @@ public:
 
         // Put the player's horizontal pitch
         Ogre::Real pitch = mGraphics->cannonNode->getOrientation().getPitch().valueDegrees();
-        *((float*)buf_int) = pitch;
+        *buf_int = pitch;
     }
 private:
     PlayerInputComponent* mInput;
