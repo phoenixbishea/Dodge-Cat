@@ -273,9 +273,9 @@ void GameManager::initGUI()
     back->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
     back->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,200)));
 
-    loading->setText("Waiting for connection");
-    loading->setSize(CEGUI::USize(CEGUI::UDim(0.2,0), CEGUI::UDim(0.1,0)));
-    loading->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,0)));
+    loading->setText("Waiting for connection...");
+    loading->setSize(CEGUI::USize(CEGUI::UDim(0.5,0), CEGUI::UDim(0.2,0)));
+    loading->setPosition(CEGUI::UVector2(CEGUI::UDim(0.25f,0),CEGUI::UDim(0.4f,0)));
    
 
     start->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::start, this));
@@ -298,6 +298,8 @@ void GameManager::initGUI()
     multiplayerButtons.push_back(connect);
     multiplayerButtons.push_back(connectIn);
     multiplayerButtons.push_back(back);
+
+    loadingButtons.push_back(loading);
 
     mainSheet->addChild(start);
     mainSheet->addChild(multiplayer);
@@ -540,9 +542,12 @@ bool GameManager::setupServer(const CEGUI::EventArgs&)
 {
     mState = LOADING;
 
+    initServer();
+        std::string temp("Waiting for connection " + serverIP);
+    std::cout << "Temp is " << serverIP << std::endl;
+    loadingButtons.at(0)->setText(temp);
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(4));
 
-    initServer();
 }
 
 void GameManager::initServer()
@@ -694,23 +699,26 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
     {
         static float timeSinceBroadcast = 0.0f;
         timeSinceBroadcast += fe.timeSinceLastFrame;
-        if (timeSinceBroadcast > 8000.0)
+
+        if(mNetManager.scanForActivity())
+            std::cout << "something is happennnninnngggg" << std::endl;
+
+        static float timeSinceLastPlayerInfo = 0.0f;
+
+        timeSinceLastPlayerInfo += .05;
+
+        if(timeSinceLastPlayerInfo > 1000.0)
         {
-            timeSinceBroadcast -= 8000.0f;
-            if (!mNetManager.broadcastUDPInvitation(16))
+
+            std::cout << "number of clients: " << mNetManager.getClients() << std::endl;
+            for(int i = 0; i < mNetManager.getClients(); ++i)
             {
-                std::cout << "Failed to send broadcast." << std::endl;
+                std::string test("TG_NUM_PLYRS");
+                std::ostringstream oss;
+                oss << test << mNetManager.getClients() << i+1;
+                mNetManager.messageClient(PROTOCOL_TCP,i, oss.str().c_str(), oss.str().length());
             }
-        }
-    }
-    if (mNetManager.scanForActivity())
-    {
-        std::cout << "number of clients: " << mNetManager.getUDPClients() << std::endl;
-        for(int i = 0; i < mNetManager.getClients(); ++i)
-        {
-            std::ostringstream oss;
-            oss << STR_PLYRS << mNetManager.getClients() << i+1;
-            mNetManager.messageClient(PROTOCOL_UDP,i, oss.str().c_str(), oss.str().length());
+            timeSinceLastPlayerInfo -= 1000.0;
         }
     }
 
@@ -745,8 +753,8 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
             if (mExCamera)
             {
                 mExCamera->update (fe.timeSinceLastFrame,
-                mPlayer->getCameraNode ()->_getDerivedPosition(),
-                mPlayer->getSightNode ()->_getDerivedPosition());
+                                   mPlayer->getCameraNode ()->_getDerivedPosition(),
+                                   mPlayer->getSightNode ()->_getDerivedPosition());
             }
         }
 
@@ -878,6 +886,21 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
     }
     return true;
 }
+
+//---------------------------------------------------------------------------
+
+bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
+{
+    if (mState == PLAY && connected)
+    {
+        char buf[256];
+        mPlayer->serializeData(buf, this->playerNumber);
+        std::cout << buf << std::endl;
+    }
+
+    return true;
+}
+
 
 //---------------------------------------------------------------------------
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32

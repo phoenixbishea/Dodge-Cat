@@ -44,13 +44,15 @@ public:
 
     float getCollisionObjectHalfHeight();
 
+    void serializeData(char* buf, int playerNum);
+
 protected:
     Ogre::String mName;
     btPairCachingGhostObject* ghost;
     btKinematicCharacterController* player;
     btRigidBody* paddleBody;
     Ogre::SceneNode* mMainNode;
-  Ogre::SceneNode* mCannonNode;
+    Ogre::SceneNode* mCannonNode;
     Ogre::SceneNode* mSightNode; // "Sight" node - The Player is supposed to be looking here
     Ogre::SceneNode* mCameraNode; // Node for the chase camera
     Ogre::Entity* mEntity; // Player entity

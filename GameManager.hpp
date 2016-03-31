@@ -125,6 +125,7 @@ private:
     std::vector<CEGUI::Window*> startButtons;
     std::vector<CEGUI::Window*> multiplayerButtons;
     std::vector<CEGUI::Window*> mPlayButtons;
+    std::vector<CEGUI::Window*> loadingButtons;
 
     /*Network */
     NetManager mNetManager;

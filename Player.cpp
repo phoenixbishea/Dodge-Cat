@@ -1,4 +1,5 @@
 #include "Player.hpp"
+#include "NetManager.h"
 
 #include <iostream>
 #include <cmath>
@@ -289,7 +290,28 @@ float Player::getCollisionObjectHalfHeight() {
     return 70.0;
 }
 
-std::string Player::serializeData() {
-    return std::string();
+void Player::serializeData(char* buf, int playerNum)
+{
+    // Put DC_PINFO at the start of the string
+    memcpy(buf, STR_PINFO.c_str(), STR_PINFO.length());
+
+    int* buf_int = (int*) (buf + 8);
+
+    // Put the player number in the string
+    *buf_int++ = playerNum;
+
+    // Put the player's x, y, and z
+    btVector3 position = this->player->getGhostObject()->getWorldTransform().getOrigin();
+    *buf_int++ = position.x();
+    *buf_int++ = position.y();
+    *buf_int++ = position.z();
+
+    // Put the player's rotation with respect to 0, 1, 0
+    btQuaternion orientation = this->player->getGhostObject()->getWorldTransform().getRotation();
+    *buf_int++ = orientation.w();
+
+    // Put the player's horizontal pitch
+    Ogre::Real pitch = mCannonNode->getOrientation().getPitch().valueDegrees();
+    *((float*)buf_int) = pitch;
 }
 
