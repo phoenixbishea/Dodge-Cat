@@ -31,8 +31,13 @@ GameManager::GameManager()
     mState(MAIN_MENU),
     mRenderer(0),
 	connected(false),
-    mCats(0)
+    mCatSim(0),
+    mCatIndex(0)
 {
+    for (int i = 0; i < CATS_ON_SCREEN; i++)
+    {
+        mCats[i] = nullptr;
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -138,7 +143,7 @@ void GameManager::initScene()
     mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
 
     mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera);
-    mCats = new Cat();
+    mCatSim = new Cat();
 
     // Add a point light
     Ogre::Light* light = mSceneMgr->createLight("MainLight");
@@ -378,11 +383,28 @@ void GameManager::initOgreViewports()
 //---------------------------------------------------------------------------
 void GameManager::spawnCat()
 {
+    // Reset the cat counter
+    if (mCatIndex == CATS_ON_SCREEN)
+    {
+        mCatIndex = 0;
+    }
+
 	// @TODO: save each cat so we can delete later
-    Cat* cat = new Cat(mPhysicsEngine, mSceneMgr, mPlayer);
-    cat->initCatPhysics();
-    cat->setVelocity();
-    cat->initCatOgre();
+    if (!mCats[mCatIndex])
+    {
+        mCats[mCatIndex] = new Cat(mPhysicsEngine, mSceneMgr, mPlayer);   
+    }
+    else
+    {
+        delete mCats[mCatIndex];
+        mCats[mCatIndex] = new Cat(mPhysicsEngine, mSceneMgr, mPlayer);
+    }
+
+    mCats[mCatIndex]->initCatPhysics();
+    mCats[mCatIndex]->setVelocity();
+    mCats[mCatIndex]->initCatOgre();
+
+    ++mCatIndex;
 }
 
 // ---------------------Adjust mouse clipping area---------------------------
@@ -739,7 +761,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         {
             return false;
         }
-        mCats->update(mPhysicsEngine, mSound);
+        mCatSim->update(mPhysicsEngine, mSound);
     }
     return true;
 }

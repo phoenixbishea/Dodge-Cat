@@ -19,6 +19,7 @@
 #include "PlayerPhysicsComponent.hpp"
 #include "PlayerGraphicsComponent.hpp"
 #include "PlayerCameraComponent.hpp"
+#include "PlayerNetworkComponent.hpp"
 
 #include "PlayerData.hpp"
 
@@ -29,19 +30,21 @@ public:
         : mInput(new PlayerInputComponent()),
         mPhysics(new PlayerPhysicsComponent(data, physics)),
         mGraphics(new PlayerGraphicsComponent(data, graphics)),
-        mCamera(new PlayerCameraComponent(graphics, camera))
+        mCamera(new PlayerCameraComponent(graphics, camera)),
+        mNetwork(new PlayerNetworkComponent())
     {
     }
 
     bool update(BulletPhysics* physics, OIS::Keyboard* keyboard, OIS::Mouse* mouse, float elapsedTime)
     {
-        mInput->update(data, keyboard, mouse, elapsedTime);
-        if(!mPhysics->update(data, physics, elapsedTime))
-        {
-            return false;
-        }
+        if (mInput) mInput->update(data, keyboard, mouse, elapsedTime);
+        else if (mNetwork) mNetwork->update(data);
+
+        if(!mPhysics->update(data, physics, elapsedTime)) return false;
+
         mGraphics->update(data);
-        mCamera->update(data);
+        
+        if (mCamera) mCamera->update(data);
 
         return true;
     }
@@ -85,6 +88,7 @@ private:
     PlayerPhysicsComponent* mPhysics;
     PlayerGraphicsComponent* mGraphics;
     PlayerCameraComponent* mCamera;
+    PlayerNetworkComponent* mNetwork;
 
 	PlayerData data;	 
 };

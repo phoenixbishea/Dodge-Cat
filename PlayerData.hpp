@@ -25,10 +25,13 @@ struct PlayerData
 	    : position(0.0f, 0.0f, 0.0f),
 	    velocity(0.0f, 0.0f, 0.0f),
 	    orientation(0.0f, 0.0f, 0.0f, 1.0f),
+
 	    sightPosition(0.0f, 0.0f, -200.0f),
 	    cameraPosition(0.0f, 300.0f, 500.0f),
+
 	    derivedSight(0.0f, 0.0f, -200.0f),
 	    derivedCamera(0.0f, 300.0f, 500.0f),
+        
 	    cannonPitch(0.0f),
 	    cannonOrientation(0.0f, 0.0f, 0.0f, 1.0f)
     {
