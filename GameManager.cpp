@@ -695,14 +695,13 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
 
 bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
 {
-    if (mNetManager.getClients() != 2)
+    static bool gameStarted = false;
+
+    if(mNetManager.scanForActivity())
+        std::cout << "something is happennnninnngggg" << std::endl;
+
+    if(!gameStarted)
     {
-        static float timeSinceBroadcast = 0.0f;
-        timeSinceBroadcast += fe.timeSinceLastFrame;
-
-        if(mNetManager.scanForActivity())
-            std::cout << "something is happennnninnngggg" << std::endl;
-
         static float timeSinceLastPlayerInfo = 0.0f;
 
         timeSinceLastPlayerInfo += .05;
@@ -713,12 +712,14 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
             std::cout << "number of clients: " << mNetManager.getClients() << std::endl;
             for(int i = 0; i < mNetManager.getClients(); ++i)
             {
-                std::string test("TG_NUM_PLYRS");
+                std::string test(STR_PLYRS);
                 std::ostringstream oss;
                 oss << test << mNetManager.getClients() << i+1;
                 mNetManager.messageClient(PROTOCOL_TCP,i, oss.str().c_str(), oss.str().length());
             }
             timeSinceLastPlayerInfo -= 1000.0;
+            if(mNetManager.getClients() == 2)
+                gameStarted = true;
         }
     }
 
