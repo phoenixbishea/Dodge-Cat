@@ -17,7 +17,6 @@ public:
 	}
 	void update(PlayerData& obj, OIS::Keyboard* keyboard, OIS::Mouse* mouse, float elapsedTime)
 	{
-		printf("Update input\n");
 		// KEYBOARD
 		bool forward = keyboard->isKeyDown(OIS::KC_W) || 
 					   keyboard->isKeyDown(OIS::KC_COMMA) || 
@@ -36,16 +35,12 @@ public:
 
 		if (forward)
 		{
-			printf("forward input\n");
 			// velocity should be a btVector3 that can be handled by bullet
 			obj.velocity = obj.orientation * Vector(0.0f, 0.0f, -WALK_SPEED);
-			printf("up velocity: %f, %f, %f\n", obj.velocity.x(), obj.velocity.y(), obj.velocity.z());
 		}
 		else if (down)
 		{
-			printf("down input\n");
 			obj.velocity = obj.orientation * Vector(0.0f, 0.0f, WALK_SPEED);
-			printf("down velocity: %f, %f, %f\n", obj.velocity.x(), obj.velocity.y(), obj.velocity.z());
 		}
 		else
 		{
@@ -54,13 +49,11 @@ public:
 
 		if (left)
 		{
-			printf("left input\n");
 			Quaternion rotation = Quaternion(0.0f, ROTATION_SPEED * elapsedTime, 0.0f, 1.0f);
 			obj.orientation *= rotation;
 		}
 		else if (right)
 		{
-			printf("right input\n");
 			Quaternion rotation = Quaternion(0.0f, -ROTATION_SPEED * elapsedTime, 0.0f, 1.0f);
 			obj.orientation *= rotation;
 		}

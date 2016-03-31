@@ -34,7 +34,7 @@ private:
 	btVector3 mVector;
 	btTransform mTransform;
 
-    const float CAT_SPEED = 2000.0f;
+    const float CAT_SPEED = 1500.0f;
     const float CAT_MASS = 10.0f;
     const float SPHERE_SIZE = 20.0f;
 

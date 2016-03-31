@@ -52,13 +52,8 @@ bool GameManager::go()
     initInput();
     initListener();
 
-    // initScene();
-
     mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
     initGUI();
-
-    // mSound = new Sound();
-    // mSound->initSound();
 
     // This starts the rendering loop
     // We don't need any special handling of the loop since we can
@@ -137,9 +132,7 @@ void GameManager::initScene()
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.25, 0.25, 0.25));
     mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
 
-    printf("Made it to create Player\n");
     mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera);
-    printf("Made it to create Cat\n");
     mCats = new Cat();
 
     // Add a point light
@@ -319,10 +312,10 @@ void GameManager::initOgreViewports()
 //---------------------------------------------------------------------------
 void GameManager::spawnCat()
 {
-    Cat cat(mPhysicsEngine, mSceneMgr, mPlayer);
-    cat.initCatPhysics();
-    cat.setVelocity();
-    cat.initCatOgre();
+    Cat* cat = new Cat(mPhysicsEngine, mSceneMgr, mPlayer);
+    cat->initCatPhysics();
+    cat->setVelocity();
+    cat->initCatOgre();
 }
 
 // ---------------------Adjust mouse clipping area---------------------------
@@ -470,7 +463,6 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
         mTimeSinceLastCat += fe.timeSinceLastFrame;
         if (mTimeSinceLastCat > 1.0)
         {
-            printf("Made it to spawnCat\n");
             spawnCat();
             ++mScore;
             mPlayButtons.at(0)->setText("Score: " + Ogre::StringConverter::toString(mScore));
@@ -502,7 +494,8 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
             return true;
         }
 
-        printf("Made it to update\n");
+        mPhysicsEngine->getDynamicsWorld()->stepSimulation(1.0f / 60.0f);
+
         if (!mPlayer->update(mPhysicsEngine, mKeyboard, mMouse, fe.timeSinceLastFrame))
         {
             return false;

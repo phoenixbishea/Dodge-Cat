@@ -70,13 +70,11 @@ bool Quaternion::operator != (const Ogre::Quaternion&& other) const {
 
 Vector Quaternion::operator * (const Vector& other) const {
     Ogre::Quaternion temp = this->toOgre();
-    printf("Quaternion values: %f, %f, %f, %f  %f, %f, %f, %f\n", temp.x, temp.y, temp.z, temp.w, value.x(), value.y(), value.z(), value.w());
     return Vector(temp * other.toOgre());
 }
 
 Vector Quaternion::operator * (const Vector&& other) const {
     Ogre::Quaternion temp = this->toOgre();
-    printf("Quaternion values&&: %f, %f, %f, %f  %f, %f, %f, %f\n", temp.x, temp.y, temp.z, temp.w, value.x(), value.y(), value.z(), value.w());
     return Vector(temp * other.toOgre());
 }
 
@@ -88,6 +86,7 @@ Quaternion& Quaternion::operator *= (const Quaternion& other)
 
 Quaternion& Quaternion::operator = (const Ogre::Quaternion& other)
 {
-    this->value = btQuaternion(other.x, other.y, other.z, other.w);
+    btQuaternion rhs(other.x, other.y, other.z, other.w);
+    this->value.setValue(rhs.x(), rhs.y(), rhs.z(), rhs.w());
     return *this;
 }

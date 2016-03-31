@@ -53,23 +53,19 @@ public:
 	}
 	void update(PlayerData& obj)
 	{
-		printf("Player node: %f, %f, %f\n", playerNode->getPosition().x, playerNode->getPosition().y, playerNode->getPosition().z);
 		// Camera and sight position
 		sightNode->setPosition(obj.sightPosition.toOgre());
-		printf("Player update sightPosition: %f, %f, %f\n", obj.sightPosition.x(), obj.sightPosition.y(), obj.sightPosition.z());
 		cameraNode->setPosition(obj.cameraPosition.toOgre());
 
-		// obj.sightPosition.setValue(sightNode->_getDerivedPosition());
-		// printf("Player derived sightPosition: %f, %f, %f\n", obj.sightPosition.x(), obj.sightPosition.y(), obj.sightPosition.z());
-		// obj.cameraPosition.setValue(cameraNode->_getDerivedPosition()); 
+		// Update sight and camera node positions derived from the player node
+		// for camera update
+		obj.derivedSight.setValue(sightNode->_getDerivedPosition());
+		obj.derivedCamera.setValue(cameraNode->_getDerivedPosition()); 
 
 		// Player position/orientation
-		// obj.velocity.setY(obj.velocity.y() - PLAYER_OFFSET);
-		printf("Player velocity: %f, %f, %f\n", obj.velocity.x(), obj.velocity.y(), obj.velocity.z());
+		obj.position.setY(obj.position.y() - PLAYER_OFFSET);
 
-		Ogre::Vector3 v = playerNode->_getDerivedPosition();
-		printf("Subtract: %f, %f, %f\n", v.x, v.y, v.z);
-		playerNode->translate(obj.velocity.toOgre() - playerNode->_getDerivedPosition());
+		playerNode->translate(obj.position.toOgre() - playerNode->_getDerivedPosition());
 		playerNode->setOrientation(obj.orientation.toOgre());
 
 		// Rotate the cannon and spray bottle

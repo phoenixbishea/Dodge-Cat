@@ -25,14 +25,12 @@ public:
 	}
 	void update(PlayerData& obj)
 	{
-		printf("Updating camera, sightPos %f, %f, %f\n", obj.sightPosition.x(), obj.sightPosition.y(), obj.sightPosition.z());
-		Ogre::Vector3 sightPos = obj.sightPosition.toOgre();
-		printf("Ogre sightPos %f, %f, %f\n", sightPos.x, sightPos.y, sightPos.z);
-		Ogre::Vector3 camPos = obj.cameraPosition.toOgre();
+		Ogre::Vector3 sightPos = obj.derivedSight.toOgre();
+		// printf("Camera sightPosition: %f, %f, %f\n", sightPos.x, sightPos.y, sightPos.z);
+		Ogre::Vector3 camPos = obj.derivedCamera.toOgre();
 
 		Ogre::Vector3 displacement = TIGHTNESS * (sightPos - sightNode->getPosition());
 		sightNode->translate(displacement);
-		printf("Ogre translated sightPos %f, %f, %f\n", sightPos.x, sightPos.y, sightPos.z);
 		displacement = TIGHTNESS * (camPos - cameraNode->getPosition());
 		cameraNode->translate(displacement);
 	}

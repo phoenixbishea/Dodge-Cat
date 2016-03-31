@@ -193,18 +193,18 @@ Vector& Vector::operator -= (const btVector3& other) {
 
 /* Ogre::Vector3 operations */
 Vector& Vector::operator += (const Ogre::Vector3& other) {
-    this->value = btVector3(value.x() + other.x, value.y() + other.y, value.z() + other.z);
+    this->value += btVector3(other.x, other.y, other.z);
     return *this;
 }
 
 Vector& Vector::operator -= (const Ogre::Vector3& other) {
-    this->value = btVector3(value.x() - other.x, value.y() - other.y, value.z() - other.z);
+    this->value -= btVector3(other.x, other.y, other.z);
     return *this;
 }
 
 Vector& Vector::operator=(const Vector& other)
 {
-    this->value = other.value;
+    this->value.setValue(other.value.x(), other.value.y(), other.value.z());
     return *this;
 }
 

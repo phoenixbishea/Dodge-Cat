@@ -47,7 +47,7 @@ public:
 
     btTransform getWorldTransform()
     {
-        return mPhysics->charController->getGhostObject()->getWorldTransform();
+        return mPhysics->getTransform();
     }
 
     Vector getCannonDirection()

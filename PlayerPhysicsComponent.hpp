@@ -11,7 +11,7 @@ public:
 	PlayerPhysicsComponent(PlayerData& obj, BulletPhysics* physics)
 	{
 		// Create player shape
-		btBoxShape* playerShape = new btBoxShape(btVector3(40.0, 70.0, 40.0));
+		btBoxShape* playerShape = new btBoxShape(btVector3(50.0, 70.0, 50.0));
 
 		// Init player ghost object
 		ghostObject = new btPairCachingGhostObject();
@@ -44,7 +44,7 @@ public:
     	btVector3 localPaddleInertia(0, 0, 0);
 
     	// Create and set paddle shape and motion state
-    	btBoxShape* paddleShape = new btBoxShape(btVector3(PADDLE_HEIGHT, PADDLE_HEIGHT, 2));
+    	btBoxShape* paddleShape = new btBoxShape(btVector3(PADDLE_HEIGHT, PADDLE_HEIGHT, 5));
 	    physics->getCollisionShapes().push_back(paddleShape);
 	    btDefaultMotionState* paddleMotionState = new btDefaultMotionState(paddleTrans);
 
@@ -66,8 +66,14 @@ public:
 	}
 	bool update(PlayerData& obj, BulletPhysics* physics, float elapsedTime)
 	{
-		// Move the player
+		// Move the player and update positon
 		charController->setVelocityForTimeInterval(obj.velocity.toBullet(), btScalar(elapsedTime * FPS));
+
+		btVector3 position = charController->getGhostObject()->getWorldTransform().getOrigin();
+		transform.setOrigin(position);
+
+		// Update player position for graphics update
+		obj.position = Vector(transform.getOrigin());
 
 		// Orient the player
         transform.setRotation(obj.orientation.toBullet());
@@ -93,9 +99,13 @@ public:
 
        	return handleCollisions(obj, physics);
 	}
+	btTransform getTransform()
+	{
+		return transform;
+	}
 private:
 	const float PADDLE_OFFSET = 110.0f;
-	const float PADDLE_HEIGHT = 350.0f;
+	const float PADDLE_HEIGHT = 100.0f;
 
 	const float WALL_COLLIDE_ERROR = 745.0f;
 	const float FPS = 60.0f;
