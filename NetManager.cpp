@@ -1768,15 +1768,15 @@ void NetManager::resetManager() {
   int i;
 
   for (i = tcpClientData.size() - 1; i >= 0; i--) {
-    delete tcpClientData[i];
+      delete tcpClientData.at(i);
     tcpClientData.pop_back();
   }
   for (i = udpClientData.size() - 1; i >= 0; i--) {
-    delete udpClientData[i];
+      delete udpClientData.at(i);
     udpClientData.pop_back();
   }
   for (i = netClients.size() - 1; i >= 0; i--) {
-    delete netClients[i];
+      delete netClients.at(i);
     netClients.pop_back();
   }
   SDLNet_FreeSocketSet(socketNursery);

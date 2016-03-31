@@ -124,6 +124,8 @@ private:
 
     /*Network */
     NetManager mNetManager;
+    bool connected;
+    int playerNumber;
 };
 
 #endif
