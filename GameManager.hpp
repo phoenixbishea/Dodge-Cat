@@ -60,7 +60,7 @@ private:
     void initInput();
     void initScene();
     void initListener(); 
-    
+
     void initGUI();
     void initServer();
 
@@ -81,6 +81,7 @@ private:
     bool mouseReleased(const OIS::MouseEvent& me, OIS::MouseButtonID id);
 
     bool quit(const CEGUI::EventArgs&);
+    void startScene();
     bool start(const CEGUI::EventArgs&);
     bool mpSheet(const CEGUI::EventArgs&);
     bool handleText(const CEGUI::EventArgs&);
@@ -91,7 +92,11 @@ private:
     void menuChange();
 
     bool frameRenderingQueued(const Ogre::FrameEvent& fe);
+
+    bool frameStartedClient(const Ogre::FrameEvent& fe);
+    bool frameStartedServer(const Ogre::FrameEvent& fe);
     bool frameStarted(const Ogre::FrameEvent& fe);
+    bool frameEnded(const Ogre::FrameEvent& fe);
 
     Ogre::Root* mRoot;
     Ogre::RenderWindow* mWindow;

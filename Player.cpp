@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <string>
 
 #define WALK_SPEED 500
 #define MAX_ROTATION 2
@@ -110,13 +111,13 @@ Player::~Player ()
 void Player::update (Ogre::Real elapsedTime, OIS::Keyboard* input, OIS::Mouse* mouse) 
 {
     const OIS::MouseState& me = mouse->getMouseState();
-    
+
     // Forward movement
     if (input->isKeyDown (OIS::KC_W) || input->isKeyDown(OIS::KC_COMMA) || input->isKeyDown(OIS::KC_UP))
     {
         Ogre::Quaternion orientation = mMainNode->getOrientation();
         Ogre::Vector3 direction = orientation * Ogre::Vector3(0, 0, -WALK_SPEED); // * elapsedTime);
-        
+
         // Create bullet vector 3 where it will be moving
         btVector3 move(direction.x, direction.y, direction.z);
 
@@ -286,5 +287,9 @@ void Player::setOgreOrientation(Ogre::Quaternion q) {
 
 float Player::getCollisionObjectHalfHeight() {
     return 70.0;
+}
+
+std::string Player::serializeData() {
+    return std::string();
 }
 
