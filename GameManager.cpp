@@ -695,7 +695,7 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
 
 bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
 {
-    if (mNetManager.getClients() != 1)
+    if (mNetManager.getClients() != 2)
     {
         static float timeSinceBroadcast = 0.0f;
         timeSinceBroadcast += fe.timeSinceLastFrame;
