@@ -153,11 +153,11 @@ void GameManager::initScene()
         {
         case 1 :
             mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Vector(600, 0, 600));
-            mPlayer2 = new Player(mSceneMgr, mPhysicsEngine, nullptr, Vector(-600, 0, -600));
+            mPlayer2 = new Player(mSceneMgr, mPhysicsEngine, nullptr, Vector(-600, 0, -600), true);
             break;
         case 2 :
             mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Vector(-600, 0, -600));
-            mPlayer2 = new Player(mSceneMgr, mPhysicsEngine, nullptr, Vector(600, 0, 600));
+            mPlayer2 = new Player(mSceneMgr, mPhysicsEngine, nullptr, Vector(600, 0, 600), true);
             break;
         }
     }
