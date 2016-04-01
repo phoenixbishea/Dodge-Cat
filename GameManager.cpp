@@ -46,15 +46,25 @@ GameManager::~GameManager()
     Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
     windowClosed(mWindow);
     
+    // Cleanup player and sound objects
     if (mPlayer) delete mPlayer;
     if (mPlayerDummy) delete mPlayerDummy;
     if (mSound) delete mSound;
 
+    // Delete cats in scene
     for (int i = 0; i < CATS_ON_SCREEN; i++)
     {
         if(mCats[i]) delete mCats[i];
     }
 
+    // Delete scene walls
+    for (int i = 0; i < 6; ++i)
+    {
+        delete walls.back();
+        walls.pop_back();
+    }
+
+    // Delete Ogre and Bullet
     if (mRoot) delete mRoot;
     if (mPhysicsEngine) delete mPhysicsEngine;
 }
@@ -178,7 +188,6 @@ void GameManager::initScene()
     light->setDirection(Ogre::Vector3(0.0, -1.0, 0.0));
     light->setType(Ogre::Light::LT_DIRECTIONAL);
 
-    std::vector<Wall*> walls;
     for (int i = 0; i < 6; ++i)
     {
         walls.push_back(new Wall(mPhysicsEngine, mSceneMgr));
@@ -406,7 +415,7 @@ void GameManager::initOgreViewports()
 }
 
 //---------------------------------------------------------------------------
-void GameManager::spawnCat()
+void GameManager::spawnCat(Player* player)
 {
     // Reset the cat counter
     if (mCatIndex == CATS_ON_SCREEN)
@@ -417,12 +426,12 @@ void GameManager::spawnCat()
 	// @TODO: save each cat so we can delete later
     if (!mCats[mCatIndex])
     {
-        mCats[mCatIndex] = new Cat(mPhysicsEngine, mSceneMgr, mPlayer);
+        mCats[mCatIndex] = new Cat(mPhysicsEngine, mSceneMgr, player);
     }
     else
     {
         delete mCats[mCatIndex];
-        mCats[mCatIndex] = new Cat(mPhysicsEngine, mSceneMgr, mPlayer);
+        mCats[mCatIndex] = new Cat(mPhysicsEngine, mSceneMgr, player);
     }
 
     mCats[mCatIndex]->initCatPhysics();
@@ -677,7 +686,13 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
         mTimeSinceLastCat += fe.timeSinceLastFrame;
         if (mTimeSinceLastCat > 1.0)
         {
-            //spawnCat();
+            if (connected && mPlayerDummy)
+            {
+                spawnCat(mPlayerDummy);
+                ++mScore;
+            }  
+            
+            spawnCat(mPlayer); 
             ++mScore;
             mPlayButtons.at(0)->setText("Score: " + Ogre::StringConverter::toString(mScore));
 

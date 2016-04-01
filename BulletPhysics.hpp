@@ -21,6 +21,7 @@ private:
   std::map<std::string, btRigidBody *> physicsAccessors;
 public:
   BulletPhysics();
+  ~BulletPhysics();
   void initObjects();
   btDiscreteDynamicsWorld* getDynamicsWorld();
   std::vector<btCollisionShape *>& getCollisionShapes();

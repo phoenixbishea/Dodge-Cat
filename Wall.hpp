@@ -14,6 +14,7 @@ class Wall
 {
 public:
     Wall(BulletPhysics*, Ogre::SceneManager*);
+    ~Wall();
 
     void createWall(std::string, const float, const float, const float, const float, const float, 
     	Ogre::Vector3, Ogre::Vector3);
@@ -26,6 +27,9 @@ public:
 private:
 	BulletPhysics* mPhysicsEngine;
 	Ogre::SceneManager* mSceneMgr;
+
+    Ogre::SceneNode* wallNode;
+    btRigidBody* body;
 };
 
 //---------------------------------------------------------------------------
@@ -33,6 +37,12 @@ Wall::Wall(BulletPhysics* physics, Ogre::SceneManager* scnMgr)
 	: mPhysicsEngine(physics),
 	mSceneMgr(scnMgr)
 {	
+}
+
+Wall::~Wall()
+{
+    mSceneMgr->destroySceneNode(wallNode);
+    mPhysicsEngine->getDynamicsWorld()->removeRigidBody(body);
 }
 
 //---------------------------------------------------------------------------
@@ -55,7 +65,7 @@ void Wall::createWall(std::string str, const float x, const float y, const float
     wallEntity->setCastShadows(false);
     wallEntity->setMaterialName("Examples/Rockwall");
 
-    Ogre::SceneNode* wallNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+    wallNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
     wallNode->attachObject(wallEntity);
     wallNode->setPosition(Ogre::Vector3(x, y, z)); ////////////////////////////////////////////
 }
@@ -78,7 +88,7 @@ void Wall::createWallPhysics(const float x, const float y, const float z,
     shape->calculateLocalInertia(mass, localInertia);
 
     btRigidBody::btRigidBodyConstructionInfo rigidBodyInfo(mass, motionState, shape, localInertia);
-    btRigidBody* body = new btRigidBody(rigidBodyInfo);
+    body = new btRigidBody(rigidBodyInfo);
     body->setRestitution(0.9);
 
     //add the body to the dynamics world
@@ -102,7 +112,7 @@ void Wall::createGroundPhysics(const float x, const float y, const float z)
     shape->calculateLocalInertia(mass, localInertia);
 
     btRigidBody::btRigidBodyConstructionInfo rigidBodyInfo(mass, motionState, shape, localInertia);
-    btRigidBody* body = new btRigidBody(rigidBodyInfo);
+    body = new btRigidBody(rigidBodyInfo);
     body->setRestitution(0.9);
 
     // Add the body to the physics world
