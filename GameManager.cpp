@@ -782,7 +782,7 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
                 oss << test << mNetManager.getClients() << i+1;
                 mNetManager.messageClient(PROTOCOL_TCP, i, oss.str().c_str(), oss.str().length());
             }
-            timeSinceLastPlayerInfo -= 1.0;
+            timeSinceLastPlayerInfo -= 0.1;
             if(mNetManager.getClients() == 2)
                 gameStarted = true;
         }
