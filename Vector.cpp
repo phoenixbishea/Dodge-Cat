@@ -1,5 +1,11 @@
 #include "Vector.hpp"
 
+std::ostream& operator << (std::ostream& out, const Vector& val)
+{
+    out << "(" << val.x() << ", " << val.y() << ", " << val.z() << ")";
+    return out;
+}
+
 Vector::Vector() : value(0.0, 0.0, 0.0) {}
 
 Vector::Vector(float x, float y, float z) : value(x, y, z) {}

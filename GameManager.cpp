@@ -701,6 +701,7 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                 if (std::string::npos != message.find(STR_PLYRS))
                 {
                     mNetManager.tcpServerData.updated = false;
+
                     int numPlayers = std::stoi(message.substr(STR_PLYRS.length(), 1));
                     this->playerNumber = std::stoi(message.substr(STR_PLYRS.length() + 1, 1));
                     std::cout << "Player number:     " << this->playerNumber << std::endl;
@@ -713,6 +714,8 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                 // Handle Player information from the server
                 else if (std::string::npos != message.find(STR_PINFO))
                 {
+                    mNetManager.tcpServerData.updated = false;
+
                     Vector playerPosition;
                     int playerNumber;
                     Quaternion orientation;
@@ -720,13 +723,27 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                     //Player movement update
                     if(!Player::unSerializeData(mNetManager.tcpServerData.output,
                                                 playerNumber, playerPosition, orientation, pitch))
+                    {
                         std::cout << "Message was not populated with player information" << std::endl;
+                    }
 
-                    std::cout << std::endl <<  "playerPosition x: " << playerPosition.x() << " y: "
-                              << playerPosition.y() << " z: " << playerPosition.z() << std::endl;
-                    std::cout << "Orientation: " << orientation.y() << " " << orientation.w() << std::endl;
+                    std::cout << std::endl
+                              <<  "playerPosition: "
+                              << playerPosition
+                              << std::endl;
+                    std::cout << "Orientation: "
+                              << orientation
+                              << std::endl;
                     std::cout << "Pitch: " << pitch << std::endl << std::endl;
-                    // mPlayerDummy->readDummyData(playerPosition, orientation, pitch);
+
+                    memcpy(playerData[0].buf, mNetManager.tcpServerData.output, PLAYERDATA_LENGTH);
+                    playerData[0].playerNum = playerNumber;
+
+                    playerData[0].position.setX(playerPosition.x());
+                    playerData[0].position.setY(playerPosition.y());
+                    playerData[0].position.setZ(playerPosition.z());
+                    playerData[0].orientation = orientation;
+                    playerData[0].cannonPitch = pitch;
                 }
                 else if (std::string::npos != message.find(STR_PWIN))
                 {
@@ -883,7 +900,6 @@ void GameManager::parseMessage(char* buf)
              << playerPosition.y() << " z: " << playerPosition.z() << std::endl;
 
         playerData[playerNumber-1].orientation = orientation;
-
 
         playerData[playerNumber-1].cannonPitch = pitch;
 

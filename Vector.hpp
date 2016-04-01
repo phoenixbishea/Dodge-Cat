@@ -3,11 +3,14 @@
 
 #include <btBulletDynamicsCommon.h>
 #include <OgreVector3.h>
+#include <iostream>
 
 class Vector {
 private:
     btVector3 value;
 public:
+    friend std::ostream& operator << (std::ostream&, const Vector&);
+
     Vector();
     Vector(float, float, float);
     Vector(const btVector3&);

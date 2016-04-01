@@ -3,6 +3,7 @@
 std::ostream& operator << (std::ostream& out, const Quaternion& val)
 {
     out << "(" << val.x() << ", " << val.y() << ", " << val.z() << ", " << val.w() << ")";
+    return out;
 }
 
 Quaternion::Quaternion() : value(0.0, 0.0, 0.0, 0.0) {}
