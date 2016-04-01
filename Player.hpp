@@ -29,21 +29,26 @@ public:
     Player(Ogre::SceneManager* graphics,
            BulletPhysics* physics,
            Ogre::Camera* camera,
-           const Vector& initialPosition = Vector(0.0f, 0.0f, 0.0f))
-        : mInput(new PlayerInputComponent()),
-          mPhysics(new PlayerPhysicsComponent(data, physics, initialPosition)),
-          mGraphics(new PlayerGraphicsComponent(data, graphics, initialPosition))
+           const Vector& initialPosition = Vector(0.0f, 0.0f, 0.0f),
+		   bool networkedPlayer)
+        : mPhysics(new PlayerPhysicsComponent(data, physics, initialPosition)),
+          mGraphics(new PlayerGraphicsComponent(data, graphics, initialPosition)),
+		  mNetworkedPlayer(networkedPlayer)
         {
-            if (camera)
+            if (!networkedPlayer)
+            {
                 mCamera = new PlayerCameraComponent(graphics, camera);
+			    mInput = new PlayerInputComponent();
+                mNetwork = new PlayerNetworkComponent();
+            }
         }
 
     bool update(BulletPhysics* physics, OIS::Keyboard* keyboard, OIS::Mouse* mouse, float elapsedTime)
     {
         if (mInput) mInput->update(data, keyboard, mouse, elapsedTime);
-        else if (mNetwork) mNetwork->update(data);
+        else if (mNetwork) mNetwork->update(data, mGraphics->cannonNode);
 
-        if(!mPhysics->update(data, physics, elapsedTime)) return false;
+        if(!mPhysics->update(data, physics, elapsedTime, mNetworkedPlayer)) return false;
 
         mGraphics->update(data);
 
@@ -122,7 +127,9 @@ private:
     PlayerCameraComponent* mCamera;
     PlayerNetworkComponent* mNetwork;
 
-	PlayerData data;	 
+	PlayerData data;
+
+    bool mNetworkedPlayer; 
 };
 
 #endif
