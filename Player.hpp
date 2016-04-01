@@ -100,7 +100,6 @@ public:
         //Check to make sure PLIN is in the message
         if(temp.substr(0,STR_PINFO.length())!=STR_PINFO)
             return false;
-       
 
         int* buf_int = (int*) (buf + 4);
 
