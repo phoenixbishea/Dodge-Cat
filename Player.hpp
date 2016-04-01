@@ -38,7 +38,7 @@ public:
             if (!networkedPlayer)
             {
                 mCamera = new PlayerCameraComponent(graphics, camera);
-			    mInput = new PlayerInputComponent();
+                mInput = new PlayerInputComponent();
                 mNetwork = new PlayerNetworkComponent();
             }
         }
@@ -104,13 +104,13 @@ public:
         int* buf_int = (int*) (buf + 4);
 
         // Put the player number in the string
-         playerNum = *buf_int++;
+        playerNum = *buf_int++;
         float* buf_float = (float *)buf_int;
 
         // Put the player's x, y, and z
-          playerPosition.setX(*buf_float++);
-          playerPosition.setY(*buf_float++);
-          playerPosition.setZ(*buf_float++);
+        playerPosition.setX(*buf_float++);
+        playerPosition.setY(*buf_float++);
+        playerPosition.setZ(*buf_float++);
 
         // Put the player's rotation with respect to 0, 1, 0
         orientation = *buf_float++;

@@ -10,7 +10,7 @@ struct ServerPlayerData
 {
     int playerNum;
 
-	Vector position;
+    Vector position;
     btScalar orientation;
 
     Ogre::Real cannonPitch;
