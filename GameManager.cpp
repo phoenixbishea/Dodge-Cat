@@ -29,7 +29,7 @@ GameManager::GameManager()
 
     mState(MAIN_MENU),
     mRenderer(0),
-	connected(false),
+    connected(false),
     mCatSim(0),
     mCatIndex(0)
 {
@@ -47,7 +47,7 @@ GameManager::~GameManager()
   windowClosed(mWindow);
   if (mRoot) delete mRoot;
   if (mPlayer) delete mPlayer;
-  if (mPlayer2) delete mPlayer2;
+  if (mPlayerDummy) delete mPlayerDummy;
   if (mPhysicsEngine) delete mPhysicsEngine;
   if (mKeyboard) delete mKeyboard;
   if (mMouse) delete mMouse;
@@ -153,11 +153,11 @@ void GameManager::initScene()
         {
         case 1 :
             mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Vector(600, 0, 600));
-            mPlayer2 = new Player(mSceneMgr, mPhysicsEngine, nullptr, Vector(-600, 0, -600), true);
+            mPlayerDummy = new Player(mSceneMgr, mPhysicsEngine, nullptr, Vector(-600, 0, -600), true);
             break;
         case 2 :
             mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Vector(-600, 0, -600));
-            mPlayer2 = new Player(mSceneMgr, mPhysicsEngine, nullptr, Vector(600, 0, 600), true);
+            mPlayerDummy = new Player(mSceneMgr, mPhysicsEngine, nullptr, Vector(600, 0, 600), true);
             break;
         }
     }
@@ -710,6 +710,28 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                         startScene();
                     }
                 }
+                // Handle Player information from the server
+                else if (std::string::npos != message.find(STR_PINFO))
+                {
+                    Vector playerPosition;
+                    int playerNumber;
+                    float orientation;
+                    float pitch;
+                    //Player movement update
+                    if(!Player::unSerializeData(mNetManager.tcpServerData.output,
+                                                playerNumber, playerPosition, orientation, pitch))
+                        std::cout << "Message was not populated with player information" << std::endl;
+
+                    std::cout << std::endl <<  "playerPosition x: " << playerPosition.x() << " y: "
+                              << playerPosition.y() << " z: " << playerPosition.z() << std::endl;
+                    std::cout << "Orientation: " << orientation << std::endl;
+                    std::cout << "Pitch: " << pitch << std::endl << std::endl;
+                    // mPlayerDummy->readDummyData(playerPosition, orientation, pitch);
+                }
+                else if (std::string::npos != message.find(STR_PWIN))
+                {
+                    // Player won
+                }
             }
         }
     }
@@ -765,6 +787,9 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         return true;
     else
     {
+        if (connected)
+            frameStartedClient(fe);
+
         mTimeSinceLastPhysicsStep += fe.timeSinceLastFrame;
         if (mTimeSinceLastPhysicsStep > 1.0 / 60.0)
         {
@@ -817,7 +842,6 @@ bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
                     std::cout << "Server got sent message: " << mNetManager.tcpClientData.at(n)->output << std::endl;
                     mNetManager.tcpClientData.at(n)->updated = false;
                     parseMessage(mNetManager.tcpClientData.at(n)->output);
-
                 }
             }
             for(int j = 0; j < 2; ++j)
@@ -866,7 +890,6 @@ void GameManager::parseMessage(char* buf)
         std::cout << "Orientation: " << orientation << std::endl;
         std::cout << "Pitch: " << pitch << std::endl;
     }
-
 }
 
 //---------------------------------------------------------------------------

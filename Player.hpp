@@ -54,6 +54,9 @@ public:
 
         if (mCamera) mCamera->update(data);
 
+        printf("Data1: %f %f %f %f\n", data.orientation.x(), data.orientation.y(), data.orientation.z(), data.orientation.w());
+        printf("Data2: %f %f %f %f\n", data.cannonOrientation.x(), data.cannonOrientation.y(), data.cannonOrientation.z(), data.cannonOrientation.w());
+
         return true;
     }
 
@@ -94,7 +97,7 @@ public:
         *buf_float = pitch;
     }
 
-    static bool unSerializeData(char* buf, int& playerNum, Vector& playerPosition, float& orientation, float& pitch)
+    static bool unSerializeData(const char* buf, int& playerNum, Vector& playerPosition, float& orientation, float& pitch)
     {
         std::string temp(buf);
         //Check to make sure PLIN is in the message
