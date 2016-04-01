@@ -788,7 +788,6 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
     static bool gameStarted = false;
 
     if(mNetManager.scanForActivity())
-        std::cout << "something is happennnninnngggg" << std::endl;
 
     if(!gameStarted)
     {
@@ -798,13 +797,12 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
 
         if(timeSinceLastPlayerInfo > 1.0f / 60.0f)
         {
-
             std::cout << "number of clients: " << mNetManager.getClients() << std::endl;
             for(int i = 0; i < mNetManager.getClients(); ++i)
             {
                 std::string test(STR_PLYRS);
                 std::ostringstream oss;
-                oss << test << mNetManager.getClients() << i+1;
+                oss << test << mNetManager.getClients() << i + 1;
                 mNetManager.messageClient(PROTOCOL_TCP, i, oss.str().c_str(), oss.str().length());
             }
 
@@ -828,6 +826,8 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         frameStartedClient(fe);
     else if (mState == NETWORK)
         return true;
+    else if (mState == GAME_OVER)
+        return true;
     else
     {
         if (connected)
@@ -847,10 +847,12 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
 
         if (!mPlayer->update(mPhysicsEngine, mKeyboard, mMouse, fe.timeSinceLastFrame))
         {
+            mState = GAME_OVER;
             return false;
         }
         if (mPlayerDummy && !mPlayerDummy->update(mPhysicsEngine, nullptr, nullptr, fe.timeSinceLastFrame))
         {
+            mState = GAME_OVER;
             return false;
         }
         // This updates all of the cats in the physics world
