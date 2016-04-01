@@ -94,7 +94,7 @@ public:
         *buf_float++ = orientation.w();
 
         // Put the player's horizontal pitch
-        Ogre::Real pitch = mGraphics->cannonNode->getOrientation().getPitch().valueDegrees();
+        Ogre::Real pitch = mGraphics->cannonNode->getOrientation().getPitch().valueRadians();
         *buf_float = pitch;
     }
 

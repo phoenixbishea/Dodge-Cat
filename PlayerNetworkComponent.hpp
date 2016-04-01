@@ -18,14 +18,14 @@ public:
 	}
 	void update(PlayerData& obj, Ogre::SceneNode* cannonNode)
 	{
-		// Set player position and orientation
-		obj.position = playerData[0].position;
-		obj.orientation = playerData[0].orientation;
-        
-        // Set cannon pitch amount for the graphics module to update
-        float newPitch = playerData[0].cannonPitch;
-        float oldPitch = cannonNode->getOrientation().getPitch();
-        obj.cannonPitch = newPitch - oldPitch;
+      // Set player position and orientation
+      obj.position = playerData[0].position;
+      obj.orientation = playerData[0].orientation;
+
+      // Set cannon pitch amount for the graphics module to update
+      float newPitch = playerData[0].cannonPitch;
+      float oldPitch = cannonNode->getOrientation().getPitch().valueRadians();
+      obj.cannonPitch = newPitch - oldPitch;
 	}
 };
 
