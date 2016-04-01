@@ -771,7 +771,7 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
 
         timeSinceLastPlayerInfo += fe.timeSinceLastFrame;
 
-        if(timeSinceLastPlayerInfo > 0.1)
+        if(timeSinceLastPlayerInfo > 1.0f / 60.0f)
         {
 
             std::cout << "number of clients: " << mNetManager.getClients() << std::endl;
@@ -782,7 +782,8 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
                 oss << test << mNetManager.getClients() << i+1;
                 mNetManager.messageClient(PROTOCOL_TCP, i, oss.str().c_str(), oss.str().length());
             }
-            timeSinceLastPlayerInfo -= 0.1;
+
+            timeSinceLastPlayerInfo -= 1.0f / 60.0f;
             if(mNetManager.getClients() == 2)
                 gameStarted = true;
         }
@@ -840,14 +841,14 @@ bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
     {
         static float timeSinceLastServerUpdate = 0.0f;
 
-        if (timeSinceLastServerUpdate >= 0.1f)
+        if (timeSinceLastServerUpdate >= 1.0f / 60.0f)
         {
             char buf[PLAYERDATA_LENGTH];
             mPlayer->serializeData(buf, this->playerNumber);
             std::cout << buf << std::endl;
             mNetManager.messageServer(PROTOCOL_TCP, buf, PLAYERDATA_LENGTH);
 
-            timeSinceLastServerUpdate -= 0.1f;
+            timeSinceLastServerUpdate -= 1.0f / 60.0f;
         }
 
         timeSinceLastServerUpdate += fe.timeSinceLastFrame;
