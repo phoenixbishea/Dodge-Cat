@@ -20,6 +20,22 @@ btQuaternion Quaternion::toBullet() const {
     return this->value;
 }
 
+float Quaternion::x() const {
+    return this->value.x();
+}
+
+float Quaternion::y() const {
+    return this->value.y();
+}
+
+float Quaternion::z() const {
+    return this->value.z();
+}
+
+float Quaternion::w() const {
+    return this->value.w();
+}
+
 bool Quaternion::operator == (const Quaternion& other) const {
     return this->value == other.value;
 }

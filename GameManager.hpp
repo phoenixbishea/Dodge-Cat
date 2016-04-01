@@ -107,7 +107,7 @@ private:
     Ogre::SceneManager* mSceneMgr;
     Ogre::Camera* mCamera;
     Player* mPlayer;
-    Player* mPlayer2;
+    Player* mPlayerDummy; // Used when we have a 2-player networked game
 
     BulletPhysics* mPhysicsEngine;
 

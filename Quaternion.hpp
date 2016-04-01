@@ -19,7 +19,12 @@ public:
 	Quaternion(const Ogre::Quaternion&&);
 
 	Ogre::Quaternion toOgre() const;
-	btQuaternion toBullet() const;
+    btQuaternion toBullet() const;
+ 
+    float x() const;
+    float y() const;
+    float z() const;
+    float w() const;
 
 	bool operator == (const Quaternion&) const;
 	bool operator == (const Quaternion&&) const;
