@@ -64,7 +64,7 @@ public:
 
 		if (mouseMovement)
 		{
-			obj.cannonPitch = me.Y.rel * 0.03f;
+			obj.cannonPitch = me.Y.rel * PITCH_SPEED;
 
 			float moveAmount = me.Y.rel * DAMPING_FACTOR;
 
@@ -105,7 +105,7 @@ public:
 
 private:
 	const float DEAD_ZONE = 0.1f;
-	const float ROTATION_SPEED = 2.0f;
+	const float ROTATION_SPEED = 4.0f;
 	const float WALK_SPEED = 500.0f;
 
 	const float UPPER_CAM = 600.0f;
@@ -113,6 +113,8 @@ private:
 	const float MIDDLE_BOUND = 300.0f;
 	const float LOWER_BOUND = 0.0f;
 	const float DAMPING_FACTOR = 0.5f;
+
+	const float PITCH_SPEED = 0.03f;
 };
 
 #endif

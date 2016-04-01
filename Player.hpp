@@ -19,28 +19,40 @@
 #include "PlayerPhysicsComponent.hpp"
 #include "PlayerGraphicsComponent.hpp"
 #include "PlayerCameraComponent.hpp"
+#include "PlayerNetworkComponent.hpp"
 
 #include "PlayerData.hpp"
 
 class Player
 {
 public:
-    Player(Ogre::SceneManager* graphics, BulletPhysics* physics, Ogre::Camera* camera, const Vector& initialPosition = Vector(0.0f, 0.0f, 0.0f))
-        : mInput(new PlayerInputComponent()),
-          mPhysics(new PlayerPhysicsComponent(data, physics, initialPosition)),
+    Player(Ogre::SceneManager* graphics,
+           BulletPhysics* physics,
+           Ogre::Camera* camera,
+           const Vector& initialPosition = Vector(0.0f, 0.0f, 0.0f),
+		   bool networkedPlayer)
+        : mPhysics(new PlayerPhysicsComponent(data, physics, initialPosition)),
           mGraphics(new PlayerGraphicsComponent(data, graphics, initialPosition)),
-          mCamera(new PlayerCameraComponent(graphics, camera))
-    {}
+		  mNetworkedPlayer(networkedPlayer)
+        {
+            if (!networkedPlayer)
+            {
+                mCamera = new PlayerCameraComponent(graphics, camera);
+			    mInput = new PlayerInputComponent();
+                mNetwork = new PlayerNetworkComponent();
+            }
+        }
 
     bool update(BulletPhysics* physics, OIS::Keyboard* keyboard, OIS::Mouse* mouse, float elapsedTime)
     {
-        mInput->update(data, keyboard, mouse, elapsedTime);
-        if(!mPhysics->update(data, physics, elapsedTime))
-        {
-            return false;
-        }
+        if (mInput) mInput->update(data, keyboard, mouse, elapsedTime);
+        else if (mNetwork) mNetwork->update(data, mGraphics->cannonNode);
+
+        if(!mPhysics->update(data, physics, elapsedTime, mNetworkedPlayer)) return false;
+
         mGraphics->update(data);
-        mCamera->update(data);
+
+        if (mCamera) mCamera->update(data);
 
         return true;
     }
@@ -65,19 +77,21 @@ public:
         // Put the player number in the string
         *buf_int++ = playerNum;
 
+        float* buf_float = (float*) buf_int;
+
         // Put the player's x, y, and z
         btVector3 position = this->getWorldTransform().getOrigin();
-        *buf_int++ = position.x();
-        *buf_int++ = position.y();
-        *buf_int++ = position.z();
+        *buf_float++ = position.x();
+        *buf_float++ = position.y();
+        *buf_float++ = position.z();
 
         // Put the player's rotation with respect to 0, 1, 0
         btQuaternion orientation = this->getWorldTransform().getRotation();
-        *buf_int++ = orientation.w();
+        *buf_float++ = orientation.w();
 
         // Put the player's horizontal pitch
         Ogre::Real pitch = mGraphics->cannonNode->getOrientation().getPitch().valueDegrees();
-        *buf_int = pitch;
+        *buf_float = pitch;
     }
 
     static bool unSerializeData(char* buf, int& playerNum, Vector& playerPosition, float& orientation, float& pitch)
@@ -86,7 +100,6 @@ public:
         //Check to make sure PLIN is in the message
         if(temp.substr(0,STR_PINFO.length())!=STR_PINFO)
             return false;
-       
 
         int* buf_int = (int*) (buf + 4);
 
@@ -111,8 +124,11 @@ private:
     PlayerPhysicsComponent* mPhysics;
     PlayerGraphicsComponent* mGraphics;
     PlayerCameraComponent* mCamera;
+    PlayerNetworkComponent* mNetwork;
 
-	PlayerData data;	 
+	PlayerData data;
+
+    bool mNetworkedPlayer; 
 };
 
 #endif

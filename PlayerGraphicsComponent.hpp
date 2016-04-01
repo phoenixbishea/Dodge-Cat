@@ -11,10 +11,10 @@ public:
     PlayerGraphicsComponent(PlayerData& data, Ogre::SceneManager* graphics, const Vector& initialPosition)
         {
             // Create scene nodes
-            playerNode = graphics->getRootSceneNode()->createChildSceneNode("Player Node");
+            playerNode = graphics->getRootSceneNode()->createChildSceneNode();
             playerNode->setPosition(initialPosition.toOgre());
-            sightNode = playerNode->createChildSceneNode("Player Sight Node", Ogre::Vector3(0, 0, -200));
-            cameraNode = playerNode->createChildSceneNode("Player Camera Node", Ogre::Vector3(0, 300, 500));
+            sightNode = playerNode->createChildSceneNode(Ogre::Vector3(0, 0, -200));
+            cameraNode = playerNode->createChildSceneNode(Ogre::Vector3(0, 300, 500));
 
             Ogre::SceneNode* baseNode = playerNode->createChildSceneNode();
             cannonNode = playerNode->createChildSceneNode();

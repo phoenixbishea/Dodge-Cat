@@ -30,8 +30,13 @@ GameManager::GameManager()
     mState(MAIN_MENU),
     mRenderer(0),
 	connected(false),
-    mCats(0)
+    mCatSim(0),
+    mCatIndex(0)
 {
+    for (int i = 0; i < CATS_ON_SCREEN; i++)
+    {
+        mCats[i] = nullptr;
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -41,16 +46,12 @@ GameManager::~GameManager()
   Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
   windowClosed(mWindow);
   if (mRoot) delete mRoot;
-  if (mWindow) delete mWindow;
-  if (mSceneMgr) delete mSceneMgr;
-  if (mCamera) delete mCamera;
   if (mPlayer) delete mPlayer;
   if (mPlayer2) delete mPlayer2;
   if (mPhysicsEngine) delete mPhysicsEngine;
   if (mKeyboard) delete mKeyboard;
   if (mMouse) delete mMouse;
   if (mSound) delete mSound;
-  if (mCats) delete mCats;
 }
 
 //---------------------------------------------------------------------------
@@ -146,17 +147,25 @@ void GameManager::initScene()
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.25, 0.25, 0.25));
     mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
 
-    // If we are playing in multiplayer mode, then we need to spawn two Players
     if (connected)
     {
-        mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera);
+        switch (playerNumber)
+        {
+        case 1 :
+            mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Vector(600, 0, 600));
+            mPlayer2 = new Player(mSceneMgr, mPhysicsEngine, nullptr, Vector(-600, 0, -600));
+            break;
+        case 2 :
+            mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Vector(-600, 0, -600));
+            mPlayer2 = new Player(mSceneMgr, mPhysicsEngine, nullptr, Vector(600, 0, 600));
+            break;
+        }
     }
     else
     {
-        mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Vector(-600, 0, -600));
-        mPlayer2 = new Player(mSceneMgr, mPhysicsEngine, nullptr, Vector(600, 0, 600));
+        mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera);
     }
-    mCats = new Cat();
+    mCatSim = new Cat();
 
     // Add a point light
     Ogre::Light* light = mSceneMgr->createLight("MainLight");
@@ -289,8 +298,7 @@ void GameManager::initGUI()
 
     loading->setText("Waiting for connection...");
     loading->setSize(CEGUI::USize(CEGUI::UDim(0.5,0), CEGUI::UDim(0.2,0)));
-    loading->setPosition(CEGUI::UVector2(CEGUI::UDim(0.25f,0),CEGUI::UDim(0.4f,0)));
-   
+    loading->setPosition(CEGUI::UVector2(CEGUI::UDim(0.25f,0), CEGUI::UDim(0.4f,0)));
 
     start->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::start, this));
     multiplayer->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::mpSheet, this));
@@ -396,11 +404,28 @@ void GameManager::initOgreViewports()
 //---------------------------------------------------------------------------
 void GameManager::spawnCat()
 {
+    // Reset the cat counter
+    if (mCatIndex == CATS_ON_SCREEN)
+    {
+        mCatIndex = 0;
+    }
+
 	// @TODO: save each cat so we can delete later
-    Cat* cat = new Cat(mPhysicsEngine, mSceneMgr, mPlayer);
-    cat->initCatPhysics();
-    cat->setVelocity();
-    cat->initCatOgre();
+    if (!mCats[mCatIndex])
+    {
+        mCats[mCatIndex] = new Cat(mPhysicsEngine, mSceneMgr, mPlayer);
+    }
+    else
+    {
+        delete mCats[mCatIndex];
+        mCats[mCatIndex] = new Cat(mPhysicsEngine, mSceneMgr, mPlayer);
+    }
+
+    mCats[mCatIndex]->initCatPhysics();
+    mCats[mCatIndex]->setVelocity();
+    mCats[mCatIndex]->initCatOgre();
+
+    ++mCatIndex;
 }
 
 // ---------------------Adjust mouse clipping area---------------------------
@@ -648,7 +673,7 @@ bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
         mTimeSinceLastCat += fe.timeSinceLastFrame;
         if (mTimeSinceLastCat > 1.0)
         {
-            spawnCat();
+            //spawnCat();
             ++mScore;
             mPlayButtons.at(0)->setText("Score: " + Ogre::StringConverter::toString(mScore));
 
@@ -756,7 +781,7 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         {
             return false;
         }
-        mCats->update(mPhysicsEngine, mSound);
+        mCatSim->update(mPhysicsEngine, mSound);
     }
     return true;
 }

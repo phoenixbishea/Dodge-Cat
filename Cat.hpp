@@ -16,6 +16,7 @@ class Cat
 public:
     Cat();
     Cat(BulletPhysics*, Ogre::SceneManager*, Player* player);
+    ~Cat();
 
     void update(BulletPhysics* physics, Sound* sound);
 
@@ -56,6 +57,15 @@ Cat::Cat(BulletPhysics* physics, Ogre::SceneManager* scnMgr, Player* player)
 	mPlayer(player),
 	mBody(0)
 {
+}
+
+//---------------------------------------------------------------------------
+Cat::~Cat()
+{
+    void* userPtr = mBody->getUserPointer();
+    Ogre::SceneNode* node = static_cast<Ogre::SceneNode* >(userPtr);
+    mSceneMgr->destroySceneNode(node);
+    mPhysicsEngine->getDynamicsWorld()->removeRigidBody(mBody);
 }
 
 //---------------------------------------------------------------------------

@@ -69,7 +69,16 @@ public:
 		// Move the player and update positon
 		charController->setVelocityForTimeInterval(obj.velocity.toBullet(), btScalar(elapsedTime * FPS));
 
-		btVector3 position = charController->getGhostObject()->getWorldTransform().getOrigin();
+		btVector3 position;
+		// If there is a network component we should set the player's position with it here
+		if (networkedPlayer)
+		{
+			position = obj.position;
+		}
+		else
+		{
+			position = charController->getGhostObject()->getWorldTransform().getOrigin();
+		}
 		transform.setOrigin(position);
 
 		// Update player position for graphics update
