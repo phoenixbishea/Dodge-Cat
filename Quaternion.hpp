@@ -4,12 +4,16 @@
 #include <btBulletDynamicsCommon.h>
 #include <OgreQuaternion.h>
 
+#include <iostream>
+
 #include "Vector.hpp"
 
 class Quaternion {
 private:
 	btQuaternion value;
 public:
+    friend std::ostream& operator << (std::ostream&, const Quaternion&);
+
 	Quaternion();
 	Quaternion(float, float, float, float);
 	Quaternion(Vector, float);
@@ -25,6 +29,11 @@ public:
     float y() const;
     float z() const;
     float w() const;
+
+    void setX(float);
+    void setY(float);
+    void setZ(float);
+    void setW(float);
 
 	bool operator == (const Quaternion&) const;
 	bool operator == (const Quaternion&&) const;
@@ -45,7 +54,7 @@ public:
 	Vector operator * (const Vector&&) const;
 
 	Quaternion& operator *= (const Quaternion&);
-	Quaternion& operator = (const Ogre::Quaternion&);
+    Quaternion& operator = (const Ogre::Quaternion&);
 };
 
 #endif

@@ -18,19 +18,19 @@ public:
 	void update(PlayerData& obj, OIS::Keyboard* keyboard, OIS::Mouse* mouse, float elapsedTime)
 	{
 		// KEYBOARD
-		bool forward = keyboard->isKeyDown(OIS::KC_W) || 
-					   keyboard->isKeyDown(OIS::KC_COMMA) || 
+		bool forward = keyboard->isKeyDown(OIS::KC_W) ||
+					   keyboard->isKeyDown(OIS::KC_COMMA) ||
 					   keyboard->isKeyDown(OIS::KC_UP);
 
-		bool down = keyboard->isKeyDown (OIS::KC_S) || 
-					keyboard->isKeyDown(OIS::KC_O) || 
+		bool down = keyboard->isKeyDown (OIS::KC_S) ||
+					keyboard->isKeyDown(OIS::KC_O) ||
 					keyboard->isKeyDown(OIS::KC_DOWN);
 
-		bool left = keyboard->isKeyDown (OIS::KC_A) || 
+		bool left = keyboard->isKeyDown (OIS::KC_A) ||
 					keyboard->isKeyDown(OIS::KC_LEFT);
 
-		bool right = keyboard->isKeyDown(OIS::KC_D) || 
-					 keyboard->isKeyDown(OIS::KC_E) || 
+		bool right = keyboard->isKeyDown(OIS::KC_D) ||
+					 keyboard->isKeyDown(OIS::KC_E) ||
 					 keyboard->isKeyDown(OIS::KC_RIGHT);
 
 		if (forward)
@@ -49,13 +49,13 @@ public:
 
 		if (left)
 		{
-			Quaternion rotation = Quaternion(0.0f, ROTATION_SPEED * elapsedTime, 0.0f, 1.0f);
-			obj.orientation *= rotation;
+        Quaternion rotation = Quaternion(0.0f, ROTATION_SPEED * elapsedTime, 0.0f, 1.0f);
+        obj.orientation *= rotation;
 		}
 		else if (right)
 		{
-			Quaternion rotation = Quaternion(0.0f, -ROTATION_SPEED * elapsedTime, 0.0f, 1.0f);
-			obj.orientation *= rotation;
+        Quaternion rotation = Quaternion(0.0f, -ROTATION_SPEED * elapsedTime, 0.0f, 1.0f);
+        obj.orientation *= rotation;
 		}
 
 		// MOUSE
@@ -70,7 +70,7 @@ public:
 
 			float sightYPos = obj.sightPosition.y();
 			float cameraYPos = obj.cameraPosition.y();
-			
+
 			sightYPos = clampf(sightYPos - moveAmount, LOWER_BOUND, UPPER_SIGHT);
 			cameraYPos = clampf(cameraYPos + moveAmount, LOWER_BOUND, UPPER_CAM);
 
@@ -79,7 +79,7 @@ public:
 			{
 				obj.sightPosition.setY(sightYPos);
 				obj.sightPosition.setZ(-200.0f);
-			}	
+			}
 
 			// Update camera's y if sight's y is below 300
 			if (sightYPos <= MIDDLE_BOUND)

@@ -2,6 +2,8 @@
 #define ServerPlayerData_hpp
 
 #include "Vector.hpp"
+#include "Quaternion.hpp"
+
 #define PLAYERDATA_LENGTH 224
 
 struct ServerPlayerData
@@ -9,7 +11,7 @@ struct ServerPlayerData
     int playerNum;
 
     Vector position;
-    float orientation;
+    Quaternion orientation;
 
     float cannonPitch;
 

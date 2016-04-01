@@ -715,7 +715,7 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                 {
                     Vector playerPosition;
                     int playerNumber;
-                    float orientation;
+                    Quaternion orientation;
                     float pitch;
                     //Player movement update
                     if(!Player::unSerializeData(mNetManager.tcpServerData.output,
@@ -724,7 +724,7 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
 
                     std::cout << std::endl <<  "playerPosition x: " << playerPosition.x() << " y: "
                               << playerPosition.y() << " z: " << playerPosition.z() << std::endl;
-                    std::cout << "Orientation: " << orientation << std::endl;
+                    std::cout << "Orientation: " << orientation.y() << " " << orientation.w() << std::endl;
                     std::cout << "Pitch: " << pitch << std::endl << std::endl;
                     // mPlayerDummy->readDummyData(playerPosition, orientation, pitch);
                 }
@@ -858,7 +858,7 @@ void GameManager::parseMessage(char* buf)
 {
     Vector playerPosition;
     int playerNumber;
-    float orientation;
+    Quaternion orientation;
     float pitch;
     //Player movement update
     if(!Player::unSerializeData(buf, playerNumber, playerPosition, orientation, pitch))

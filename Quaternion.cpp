@@ -1,5 +1,10 @@
 #include "Quaternion.hpp"
 
+std::ostream& operator << (std::ostream& out, const Quaternion& val)
+{
+    out << "(" << val.x() << ", " << val.y() << ", " << val.z() << ", " << val.w() << ")";
+}
+
 Quaternion::Quaternion() : value(0.0, 0.0, 0.0, 0.0) {}
 
 Quaternion::Quaternion(float x, float y, float z, float w) : value(x, y, z, w) {}
@@ -34,6 +39,22 @@ float Quaternion::z() const {
 
 float Quaternion::w() const {
     return this->value.w();
+}
+
+void Quaternion::setX(float x) {
+    this->value.setX(x);
+}
+
+void Quaternion::setY(float y) {
+    this->value.setY(y);
+}
+
+void Quaternion::setZ(float z) {
+    this->value.setZ(z);
+}
+
+void Quaternion::setW(float w) {
+    this->value.setW(w);
 }
 
 bool Quaternion::operator == (const Quaternion& other) const {

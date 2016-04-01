@@ -66,47 +66,47 @@ public:
 	}
 	bool update(PlayerData& obj, BulletPhysics* physics, float elapsedTime, bool networkedPlayer)
 	{
-		// Move the player and update positon
-		charController->setVelocityForTimeInterval(obj.velocity.toBullet(), btScalar(elapsedTime * FPS));
+      // Move the player and update positon
+      charController->setVelocityForTimeInterval(obj.velocity.toBullet(), btScalar(elapsedTime * FPS));
 
-		btVector3 position;
-		// If there is a network component we should set the player's position with it here
-		if (networkedPlayer)
-		{
-			position.setValue(obj.position.x(), obj.position.y(), obj.position.z());
-		}
-		else
-		{
-			position = charController->getGhostObject()->getWorldTransform().getOrigin();
-		}
-		transform.setOrigin(position);
+      btVector3 position;
+      // If there is a network component we should set the player's position with it here
+      if (networkedPlayer)
+      {
+          position.setValue(obj.position.x(), obj.position.y(), obj.position.z());
+      }
+      else
+      {
+          position = charController->getGhostObject()->getWorldTransform().getOrigin();
+      }
+      transform.setOrigin(position);
 
-		// Update player position for graphics update
-		obj.position = Vector(transform.getOrigin());
+      // Update player position for graphics update
+      obj.position = Vector(transform.getOrigin());
 
-		// Orient the player
-        transform.setRotation(obj.orientation.toBullet());
-        charController->getGhostObject()->setWorldTransform(transform);
+      // Orient the player
+      transform.setRotation(obj.orientation.toBullet());
+      charController->getGhostObject()->setWorldTransform(transform);
 
-        /// Orientation of paddle scaled by an offset
-        Vector direction = obj.cannonOrientation * Vector(0.0f, 0.0f, -PADDLE_OFFSET);
-        // Player position + cannon offset pointing in cannon's direction
-        btVector3 paddleOrigin = transform.getOrigin() + direction.toBullet();
-        // Ensures paddle does not go through the floor
-        if (paddleOrigin.y() < PADDLE_HEIGHT / 2.0f)
-        {
+      /// Orientation of paddle scaled by an offset
+      Vector direction = obj.cannonOrientation * Vector(0.0f, 0.0f, -PADDLE_OFFSET);
+      // Player position + cannon offset pointing in cannon's direction
+      btVector3 paddleOrigin = transform.getOrigin() + direction.toBullet();
+      // Ensures paddle does not go through the floor
+      if (paddleOrigin.y() < PADDLE_HEIGHT / 2.0f)
+      {
         	paddleOrigin.setY(PADDLE_HEIGHT / 2.0f);
-        }
-        // Update paddle transform
-       	btTransform paddleTrans = transform;
-       	paddleTrans.setOrigin(paddleOrigin);
-       	paddleTrans.setRotation(obj.cannonOrientation.toBullet());
-       	paddleBody->setWorldTransform(paddleTrans);
+      }
+      // Update paddle transform
+      btTransform paddleTrans = transform;
+      paddleTrans.setOrigin(paddleOrigin);
+      paddleTrans.setRotation(obj.cannonOrientation.toBullet());
+      paddleBody->setWorldTransform(paddleTrans);
 
-       	// Step character controller
-       	charController->playerStep(physics->getDynamicsWorld(), elapsedTime);
+      // Step character controller
+      charController->playerStep(physics->getDynamicsWorld(), elapsedTime);
 
-       	return handleCollisions(obj, physics);
+      return handleCollisions(obj, physics);
 	}
 	btTransform getTransform()
 	{

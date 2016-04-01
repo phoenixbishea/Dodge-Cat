@@ -54,8 +54,8 @@ public:
 
         if (mCamera) mCamera->update(data);
 
-        printf("Data1: %f %f %f %f\n", data.orientation.x(), data.orientation.y(), data.orientation.z(), data.orientation.w());
-        printf("Data2: %f %f %f %f\n", data.cannonOrientation.x(), data.cannonOrientation.y(), data.cannonOrientation.z(), data.cannonOrientation.w());
+        std::cout << data.orientation << std::endl;
+        std::cout << data.cannonOrientation << std::endl;
 
         return true;
     }
@@ -90,6 +90,7 @@ public:
 
         // Put the player's rotation with respect to 0, 1, 0
         btQuaternion orientation = this->getWorldTransform().getRotation();
+        *buf_float++ = orientation.y();
         *buf_float++ = orientation.w();
 
         // Put the player's horizontal pitch
@@ -97,7 +98,7 @@ public:
         *buf_float = pitch;
     }
 
-    static bool unSerializeData(const char* buf, int& playerNum, Vector& playerPosition, float& orientation, float& pitch)
+    static bool unSerializeData(const char* buf, int& playerNum, Vector& playerPosition, Quaternion& orientation, float& pitch)
     {
         std::string temp(buf);
         //Check to make sure PLIN is in the message
@@ -115,8 +116,8 @@ public:
         playerPosition.setY(*buf_float++);
         playerPosition.setZ(*buf_float++);
 
-        // Put the player's rotation with respect to 0, 1, 0
-        orientation = *buf_float++;
+        orientation.setY(*buf_float++);
+        orientation.setW(*buf_float++);
 
         // Put the player's horizontal pitch
         pitch = *buf_float;
