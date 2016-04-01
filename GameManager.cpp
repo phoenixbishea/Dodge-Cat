@@ -31,7 +31,6 @@ GameManager::GameManager()
     mState(MAIN_MENU),
     mRenderer(0),
     connected(false),
-    mCatSim(0),
     mCatIndex(0)
 {
     for (int i = 0; i < CATS_ON_SCREEN; i++)
@@ -43,14 +42,21 @@ GameManager::GameManager()
 //---------------------------------------------------------------------------
 GameManager::~GameManager()
 {
-  // Remove ourself as a Window listener
-  Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
-  windowClosed(mWindow);
-  if (mRoot) delete mRoot;
-  if (mPlayer) delete mPlayer;
-  if (mPlayerDummy) delete mPlayerDummy;
-  if (mPhysicsEngine) delete mPhysicsEngine;
-  if (mSound) delete mSound;
+    // Remove ourself as a Window listener
+    Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
+    windowClosed(mWindow);
+    
+    if (mPlayer) delete mPlayer;
+    if (mPlayerDummy) delete mPlayerDummy;
+    if (mSound) delete mSound;
+
+    for (int i = 0; i < CATS_ON_SCREEN; i++)
+    {
+        if(mCats[i]) delete mCats[i];
+    }
+
+    if (mRoot) delete mRoot;
+    if (mPhysicsEngine) delete mPhysicsEngine;
 }
 
 //---------------------------------------------------------------------------
@@ -164,7 +170,6 @@ void GameManager::initScene()
     {
         mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera);
     }
-    mCatSim = new Cat();
 
     // Add a point light
     Ogre::Light* light = mSceneMgr->createLight("MainLight");
@@ -833,7 +838,11 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         {
             return false;
         }
-        mCatSim->update(mPhysicsEngine, mSound);
+        // This updates all of the cats in the physics world
+        if (mCats[0])
+        {
+            mCats[0]->update(mPhysicsEngine, mSound);
+        }
     }
     return true;
 }

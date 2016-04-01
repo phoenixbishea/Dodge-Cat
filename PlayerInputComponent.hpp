@@ -14,7 +14,9 @@ class PlayerInputComponent
 public:
 	~PlayerInputComponent()
 	{
+
 	}
+	
 	void update(PlayerData& obj, OIS::Keyboard* keyboard, OIS::Mouse* mouse, float elapsedTime)
 	{
 		// KEYBOARD
@@ -49,13 +51,13 @@ public:
 
 		if (left)
 		{
-        Quaternion rotation = Quaternion(0.0f, ROTATION_SPEED * elapsedTime, 0.0f, 1.0f);
-        obj.orientation *= rotation;
+	        Quaternion rotation = Quaternion(0.0f, ROTATION_SPEED * elapsedTime, 0.0f, 1.0f);
+	        obj.orientation *= rotation;
 		}
 		else if (right)
 		{
-        Quaternion rotation = Quaternion(0.0f, -ROTATION_SPEED * elapsedTime, 0.0f, 1.0f);
-        obj.orientation *= rotation;
+	        Quaternion rotation = Quaternion(0.0f, -ROTATION_SPEED * elapsedTime, 0.0f, 1.0f);
+	        obj.orientation *= rotation;
 		}
 
 		// MOUSE

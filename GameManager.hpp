@@ -123,7 +123,6 @@ private:
     double mTimeSinceLastPhysicsStep;
     double mTimeSinceLastCat;
 
-    Cat* mCatSim;
     Cat* mCats[CATS_ON_SCREEN];
     int mCatIndex;
 

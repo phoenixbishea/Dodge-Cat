@@ -34,20 +34,36 @@ public:
         : mPhysics(new PlayerPhysicsComponent(data, physics, initialPosition)),
           mGraphics(new PlayerGraphicsComponent(data, graphics, initialPosition)),
           mNetworkedPlayer(networkedPlayer)
+    {
+        if (!networkedPlayer)
         {
-            if (!networkedPlayer)
-            {
-                mCamera = new PlayerCameraComponent(graphics, camera);
-                mInput = new PlayerInputComponent();
-                mNetwork = nullptr;
-            }
-            else
-            {
-                mCamera = nullptr;
-                mInput = nullptr;
-                mNetwork = new PlayerNetworkComponent();
-            }
+            mCamera = new PlayerCameraComponent(graphics, camera);
+            mInput = new PlayerInputComponent();
+            mNetwork = nullptr;
         }
+        else
+        {
+            mCamera = nullptr;
+            mInput = nullptr;
+            mNetwork = new PlayerNetworkComponent();
+        }
+    }
+
+    ~Player()
+    {
+        if (mNetworkedPlayer)
+        {
+            delete mNetwork;
+        }
+        else
+        {
+            delete mCamera;
+            delete mInput;
+        }
+        
+        delete mPhysics;
+        delete mGraphics;
+    }
 
     bool update(BulletPhysics* physics, OIS::Keyboard* keyboard, OIS::Mouse* mouse, float elapsedTime)
     {

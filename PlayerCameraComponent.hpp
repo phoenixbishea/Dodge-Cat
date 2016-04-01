@@ -7,7 +7,8 @@ class PlayerCameraComponent
 {
 public:
 	PlayerCameraComponent(Ogre::SceneManager* graphics, Ogre::Camera* camera)
-		: ogreCamera(camera)
+		: ogreCamera(camera),
+		mSceneMgr(graphics)
 	{
 		ogreCamera->setPosition(0.0,0.0,0.0);
 
@@ -20,9 +21,13 @@ public:
 		cameraNode->attachObject(ogreCamera);
 		cameraNode->setPosition(Ogre::Vector3(0.0, 1000.0, 0.0));
 	}
+
 	~PlayerCameraComponent()
 	{
+		mSceneMgr->destroySceneNode(sightNode);
+		mSceneMgr->destroySceneNode(cameraNode);
 	}
+
 	void update(PlayerData& obj)
 	{
 		Ogre::Vector3 sightPos = obj.derivedSight.toOgre();
@@ -38,6 +43,8 @@ private:
 	Ogre::SceneNode* sightNode;
 	Ogre::SceneNode* cameraNode;
 	Ogre::Camera* ogreCamera;
+
+	Ogre::SceneManager* mSceneMgr;
 
 	const Ogre::Real TIGHTNESS = 0.08f;
 };
