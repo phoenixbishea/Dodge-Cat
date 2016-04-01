@@ -11,11 +11,12 @@ class PlayerNetworkComponent
 public:
 	PlayerNetworkComponent()
 	{
-
 	}
+
 	~PlayerNetworkComponent()
 	{
 	}
+	
 	void update(PlayerData& obj, Ogre::SceneNode* cannonNode)
 	{
       // Set player position and orientation

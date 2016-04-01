@@ -9,6 +9,7 @@ public:
 	btKinematicCharacterController* charController;
 
     PlayerPhysicsComponent(PlayerData& obj, BulletPhysics* physics, const Vector& initialPosition)
+    	: mPhysicsEngine(physics)
 	{
 		// Create player shape
 		btBoxShape* playerShape = new btBoxShape(btVector3(50.0, 70.0, 50.0));
@@ -63,7 +64,11 @@ public:
 
 	~PlayerPhysicsComponent()
 	{
+	    mPhysicsEngine->getDynamicsWorld()->removeRigidBody(paddleBody);
+	    mPhysicsEngine->getDynamicsWorld()->removeAction(charController);
+	    mPhysicsEngine->getDynamicsWorld()->removeCollisionObject(ghostObject);
 	}
+
 	bool update(PlayerData& obj, BulletPhysics* physics, float elapsedTime, bool networkedPlayer)
 	{
       // Move the player and update positon
@@ -122,6 +127,8 @@ private:
 	btTransform transform; // Initialize this to player's transform
 	btPairCachingGhostObject* ghostObject;
 	btRigidBody* paddleBody;
+
+	BulletPhysics* mPhysicsEngine;
 
 	bool handleCollisions(PlayerData& obj, BulletPhysics* physics)
 	{
