@@ -49,8 +49,6 @@ GameManager::~GameManager()
   if (mPlayer) delete mPlayer;
   if (mPlayerDummy) delete mPlayerDummy;
   if (mPhysicsEngine) delete mPhysicsEngine;
-  if (mKeyboard) delete mKeyboard;
-  if (mMouse) delete mMouse;
   if (mSound) delete mSound;
 }
 

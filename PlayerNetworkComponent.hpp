@@ -25,7 +25,7 @@ public:
       // Set cannon pitch amount for the graphics module to update
       float newPitch = playerData[0].cannonPitch;
       float oldPitch = cannonNode->getOrientation().getPitch().valueRadians();
-      obj.cannonPitch = newPitch - oldPitch;
+      obj.cannonPitch = oldPitch - newPitch;
 	}
 };
 
