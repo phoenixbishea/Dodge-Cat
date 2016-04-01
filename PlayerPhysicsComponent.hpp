@@ -64,7 +64,7 @@ public:
 	~PlayerPhysicsComponent()
 	{
 	}
-	bool update(PlayerData& obj, BulletPhysics* physics, float elapsedTime)
+	bool update(PlayerData& obj, BulletPhysics* physics, float elapsedTime, bool networkedPlayer)
 	{
 		// Move the player and update positon
 		charController->setVelocityForTimeInterval(obj.velocity.toBullet(), btScalar(elapsedTime * FPS));
@@ -73,7 +73,7 @@ public:
 		// If there is a network component we should set the player's position with it here
 		if (networkedPlayer)
 		{
-			position = obj.position;
+			position.setValue(obj.position.x(), obj.position.y(), obj.position.z());
 		}
 		else
 		{

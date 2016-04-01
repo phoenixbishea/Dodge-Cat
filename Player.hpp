@@ -30,7 +30,7 @@ public:
            BulletPhysics* physics,
            Ogre::Camera* camera,
            const Vector& initialPosition = Vector(0.0f, 0.0f, 0.0f),
-		   bool networkedPlayer)
+		   bool networkedPlayer = false)
         : mPhysics(new PlayerPhysicsComponent(data, physics, initialPosition)),
           mGraphics(new PlayerGraphicsComponent(data, graphics, initialPosition)),
 		  mNetworkedPlayer(networkedPlayer)

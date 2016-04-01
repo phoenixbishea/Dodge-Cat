@@ -838,17 +838,26 @@ void GameManager::parseMessage(char* buf)
     //Will be used for player death
     else if(true)
     {
+
+        playerData[playerNumber - 1].playerNum = playerNumber;
+
         std::cout << "playerNum: " << playerNumber << std::endl;
+
+        playerData[playerNumber-1].position.setX(playerPosition.x());
+        playerData[playerNumber-1].position.setY(playerPosition.y());
+        playerData[playerNumber-1].position.setZ(playerPosition.z());
+
+
         std::cout << "playerPosition x: " << playerPosition.x() << " y: "
              << playerPosition.y() << " z: " << playerPosition.z() << std::endl;
+
+        playerData[playerNumber-1].orientation = orientation;
+
+
+        playerData[playerNumber-1].cannonPitch = pitch;
+
         std::cout << "Orientation: " << orientation << std::endl;
         std::cout << "Pitch: " << pitch << std::endl;
-    }
-
-    else
-    {
-        
-
     }
 
 }

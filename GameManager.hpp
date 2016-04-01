@@ -36,6 +36,7 @@
 #include <CEGUI/RendererModules/Ogre/Renderer.h>
 
 #include "NetManager.h"
+#include "ServerPlayerData.hpp"
 
 #define CATS_ON_SCREEN 30
 

@@ -1,9 +1,6 @@
 #ifndef ServerPlayerData_hpp
 #define ServerPlayerData_hpp
 
-#include <OgreMath.h>
-#include <btBulletDynamicsCommon.h>
-
 #include "Vector.hpp"
 
 struct ServerPlayerData
@@ -11,9 +8,11 @@ struct ServerPlayerData
     int playerNum;
 
     Vector position;
-    btScalar orientation;
+    float orientation;
 
-    Ogre::Real cannonPitch;
+    float cannonPitch;
 };
+
+ServerPlayerData playerData[2];
 
 #endif
