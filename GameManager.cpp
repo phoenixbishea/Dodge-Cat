@@ -846,6 +846,7 @@ bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
             }
             for(int j = 0; j < 2; ++j)
             {
+                std::cout << "Sending message to clients! " << std::endl;
                 mNetManager.messageClient(PROTOCOL_TCP, j, playerData[1-j].buf, PLAYERDATA_LENGTH);
             }
         }
@@ -868,6 +869,8 @@ void GameManager::parseMessage(char* buf)
     {
         memcpy(playerData[playerNumber-1].buf, buf, PLAYERDATA_LENGTH);
         playerData[playerNumber - 1].playerNum = playerNumber;
+
+        std::cout << "player buffer: " << playerData[playerNumber-1].buf << std::endl;
 
         std::cout << "playerNum: " << playerNumber << std::endl;
 
