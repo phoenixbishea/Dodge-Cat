@@ -79,6 +79,33 @@ public:
         Ogre::Real pitch = mGraphics->cannonNode->getOrientation().getPitch().valueDegrees();
         *buf_int = pitch;
     }
+
+    static bool unSerializeData(char* buf, int& playerNum, Vector& playerPosition, float& orientation, float& pitch)
+    {
+        std::string temp(buf);
+        //Check to make sure PLIN is in the message
+        if(temp.substr(0,STR_PINFO.length())!=STR_PINFO)
+            return false;
+       
+
+        int* buf_int = (int*) (buf + 4);
+
+        // Put the player number in the string
+         playerNum = *buf_int++;
+        float* buf_float = (float *)buf_int;
+
+        // Put the player's x, y, and z
+          playerPosition.setX(*buf_float++);
+          playerPosition.setY(*buf_float++);
+          playerPosition.setZ(*buf_float++);
+
+        // Put the player's rotation with respect to 0, 1, 0
+        orientation = *buf_float++;
+
+        // Put the player's horizontal pitch
+        pitch = *buf_float;
+        return true;
+    }
 private:
     PlayerInputComponent* mInput;
     PlayerPhysicsComponent* mPhysics;

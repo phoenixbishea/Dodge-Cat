@@ -1,3 +1,4 @@
+
 #ifndef GameManager_hpp
 #define GameManager_hpp
 
@@ -97,6 +98,7 @@ private:
     bool frameStartedServer(const Ogre::FrameEvent& fe);
     bool frameStarted(const Ogre::FrameEvent& fe);
     bool frameEnded(const Ogre::FrameEvent& fe);
+    void parseMessage(char* buf);
 
     Ogre::Root* mRoot;
     Ogre::RenderWindow* mWindow;
