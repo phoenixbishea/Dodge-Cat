@@ -39,6 +39,12 @@ public:
             {
                 mCamera = new PlayerCameraComponent(graphics, camera);
                 mInput = new PlayerInputComponent();
+                mNetwork = nullptr;
+            }
+            else
+            {
+                mCamera = nullptr;
+                mInput = nullptr;
                 mNetwork = new PlayerNetworkComponent();
             }
         }
@@ -54,8 +60,8 @@ public:
 
         if (mCamera) mCamera->update(data);
 
-        std::cout << data.orientation << std::endl;
-        std::cout << data.cannonOrientation << std::endl;
+        // std::cout << data.orientation << std::endl;
+        // std::cout << data.cannonOrientation << std::endl;
 
         return true;
     }

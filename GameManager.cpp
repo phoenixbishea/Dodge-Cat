@@ -771,7 +771,7 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
 
         timeSinceLastPlayerInfo += fe.timeSinceLastFrame;
 
-        if(timeSinceLastPlayerInfo > 1.0)
+        if(timeSinceLastPlayerInfo > 0.1)
         {
 
             std::cout << "number of clients: " << mNetManager.getClients() << std::endl;
@@ -820,6 +820,10 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         mPhysicsEngine->getDynamicsWorld()->stepSimulation(1.0f / 60.0f);
 
         if (!mPlayer->update(mPhysicsEngine, mKeyboard, mMouse, fe.timeSinceLastFrame))
+        {
+            return false;
+        }
+        if (mPlayerDummy && !mPlayerDummy->update(mPhysicsEngine, nullptr, nullptr, fe.timeSinceLastFrame))
         {
             return false;
         }
