@@ -71,7 +71,7 @@ private:
     bool initOgreWindow();
     void initOgreViewports();
 
-    void spawnCat();
+    void spawnCat(Player* player);
 
     void windowResized(Ogre::RenderWindow* rw);
     void windowClosed(Ogre::RenderWindow* rw);
@@ -116,6 +116,8 @@ private:
     OIS::Mouse* mMouse;
 
     Sound* mSound;
+
+    std::vector<Wall*> walls;
 
     bool mShutDown;
     int mScore;

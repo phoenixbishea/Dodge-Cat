@@ -6,7 +6,23 @@ std::ostream& operator << (std::ostream& out, const btVector3& vec)
   out << "(" << vec.x() << ", " << vec.y() << ", " << vec.z() << ")";
 }
 
-BulletPhysics::BulletPhysics() {}
+BulletPhysics::BulletPhysics()
+    : collisionConfiguration(0),
+    dispatcher(0),
+    overlappingPairCache(0),
+    solver(0),
+    dynamicsWorld(0) 
+{
+}
+
+BulletPhysics::~BulletPhysics() 
+{
+    if (collisionConfiguration) delete collisionConfiguration;
+    if (dispatcher) delete dispatcher;
+    if (overlappingPairCache) delete overlappingPairCache;
+    if (solver) delete solver;
+    if (dynamicsWorld) delete dynamicsWorld;
+}
 
 void BulletPhysics::initObjects()
 {
