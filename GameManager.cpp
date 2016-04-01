@@ -840,14 +840,14 @@ bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
     {
         static float timeSinceLastServerUpdate = 0.0f;
 
-        if (timeSinceLastServerUpdate >= 1.0f)
+        if (timeSinceLastServerUpdate >= 0.1f)
         {
             char buf[PLAYERDATA_LENGTH];
             mPlayer->serializeData(buf, this->playerNumber);
             std::cout << buf << std::endl;
             mNetManager.messageServer(PROTOCOL_TCP, buf, PLAYERDATA_LENGTH);
 
-            timeSinceLastServerUpdate -= 1.0f;
+            timeSinceLastServerUpdate -= 0.1f;
         }
 
         timeSinceLastServerUpdate += fe.timeSinceLastFrame;
