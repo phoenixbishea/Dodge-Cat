@@ -4,7 +4,7 @@
 #include "Vector.hpp"
 #include "Quaternion.hpp"
 
-#define PLAYERDATA_LENGTH 224
+#define PLAYERDATA_LENGTH 40
 
 struct ServerPlayerData
 {

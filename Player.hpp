@@ -123,14 +123,6 @@ public:
         pitch = *buf_float;
         return true;
     }
-
-    void readDummyData(const Vector& position, float orientation, float pitch)
-    {
-        data.position = position;
-        // update player obj.position
-        // update the player obj.orientation
-        // update playerGraphicsComponent->cannonNode from graphics component with proper pitch
-    }
 private:
     PlayerInputComponent* mInput;
     PlayerPhysicsComponent* mPhysics;
