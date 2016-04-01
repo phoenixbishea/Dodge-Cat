@@ -61,7 +61,7 @@ public:
         // Put DC_PINFO at the start of the string
         memcpy(buf, STR_PINFO.c_str(), STR_PINFO.length());
 
-        int* buf_int = (int*) (buf + 8);
+        int* buf_int = (int*) (buf + 4);
 
         // Put the player number in the string
         *buf_int++ = playerNum;
@@ -79,6 +79,33 @@ public:
         // Put the player's horizontal pitch
         Ogre::Real pitch = mGraphics->cannonNode->getOrientation().getPitch().valueDegrees();
         *((float*)buf_int) = pitch;
+    }
+
+    static bool unSerializeData(char* buf, int& playerNum, Vector& playerPosition, float& orientation, float& pitch)
+    {
+        std::string temp(buf);
+        //Check to make sure PLIN is in the message
+        if(temp.substr(0,STR_PINFO.length())!=STR_PINFO)
+            return false;
+       
+
+        int* buf_int = (int*) (buf + 4);
+
+        // Put the player number in the string
+         playerNum = *buf_int++;
+        float* buf_float = (float *)buf_int;
+
+        // Put the player's x, y, and z
+          playerPosition.setX(*buf_float++);
+          playerPosition.setY(*buf_float++);
+          playerPosition.setZ(*buf_float++);
+
+        // Put the player's rotation with respect to 0, 1, 0
+        orientation = *buf_float++;
+
+        // Put the player's horizontal pitch
+        pitch = *buf_float;
+        return true;
     }
 private:
     PlayerInputComponent* mInput;

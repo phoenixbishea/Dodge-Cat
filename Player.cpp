@@ -315,4 +315,3 @@ void Player::serializeData(char* buf, int playerNum)
     Ogre::Real pitch = mCannonNode->getOrientation().getPitch().valueDegrees();
     *((float*)buf_int) = pitch;
 }
-
