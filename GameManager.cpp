@@ -730,9 +730,9 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
     {
         static float timeSinceLastPlayerInfo = 0.0f;
 
-        timeSinceLastPlayerInfo += .05;
+        timeSinceLastPlayerInfo += fe.timeSinceLastFrame;
 
-        if(timeSinceLastPlayerInfo > 1000.0)
+        if(timeSinceLastPlayerInfo > 1.0)
         {
 
             std::cout << "number of clients: " << mNetManager.getClients() << std::endl;
@@ -743,7 +743,7 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
                 oss << test << mNetManager.getClients() << i+1;
                 mNetManager.messageClient(PROTOCOL_TCP, i, oss.str().c_str(), oss.str().length());
             }
-            timeSinceLastPlayerInfo -= 1000.0;
+            timeSinceLastPlayerInfo -= 1.0;
             if(mNetManager.getClients() == 2)
                 gameStarted = true;
         }
@@ -806,10 +806,52 @@ bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
 
         timeSinceLastServerUpdate += fe.timeSinceLastFrame;
     }
+    else if (mState == LOADING && mNetManager.getClients()==2)
+    {
+        if(mNetManager.scanForActivity())
+        {
+            for(int n = 0; n < mNetManager.tcpClientData.size(); ++n)
+            {
+                if(mNetManager.tcpClientData.at(n)->updated)
+                {
+                    std::cout << "Server got sent message: " << mNetManager.tcpClientData.at(n)->output << std::endl;
+                    mNetManager.tcpClientData.at(n)->updated = false;
+                    parseMessage(mNetManager.tcpClientData.at(n)->output);
+
+                }
+            }
+        }
+    }
 
     return true;
 }
 
+void GameManager::parseMessage(char* buf)
+{
+    Vector playerPosition;
+    int playerNumber;
+    float orientation;
+    float pitch;
+    //Player movement update
+    if(!Player::unSerializeData(buf, playerNumber, playerPosition, orientation, pitch))
+        std::cout << "Message was not populated with player information" << std::endl;
+    //Will be used for player death
+    else if(true)
+    {
+        std::cout << "playerNum: " << playerNumber << std::endl;
+        std::cout << "playerPosition x: " << playerPosition.x() << " y: "
+             << playerPosition.y() << " z: " << playerPosition.z() << std::endl;
+        std::cout << "Orientation: " << orientation << std::endl;
+        std::cout << "Pitch: " << pitch << std::endl;
+    }
+
+    else
+    {
+        
+
+    }
+
+}
 
 //---------------------------------------------------------------------------
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
