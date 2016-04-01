@@ -31,6 +31,7 @@
 #include <string>
 #include <iostream>
 #include <cmath>
+#include <cstring>
 
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/Ogre/Renderer.h>

@@ -796,10 +796,10 @@ bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
 
         if (timeSinceLastServerUpdate >= 1.0f)
         {
-            char buf[224];
+            char buf[PLAYERDATA_LENGTH];
             mPlayer->serializeData(buf, this->playerNumber);
             std::cout << buf << std::endl;
-            mNetManager.messageServer(PROTOCOL_TCP, buf, 224);
+            mNetManager.messageServer(PROTOCOL_TCP, buf, PLAYERDATA_LENGTH);
 
             timeSinceLastServerUpdate -= 1.0f;
         }
@@ -820,6 +820,10 @@ bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
 
                 }
             }
+            for(int j = 0; j < 2; ++j)
+            {
+                mNetManager.messageClient(PROTOCOL_TCP, j, playerData[1-j].buf, PLAYERDATA_LENGTH);
+            }
         }
     }
 
@@ -838,7 +842,7 @@ void GameManager::parseMessage(char* buf)
     //Will be used for player death
     else if(true)
     {
-
+        memcpy(playerData[playerNumber-1].buf, buf, PLAYERDATA_LENGTH);
         playerData[playerNumber - 1].playerNum = playerNumber;
 
         std::cout << "playerNum: " << playerNumber << std::endl;

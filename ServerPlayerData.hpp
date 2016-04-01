@@ -2,6 +2,7 @@
 #define ServerPlayerData_hpp
 
 #include "Vector.hpp"
+#define PLAYERDATA_LENGTH 224
 
 struct ServerPlayerData
 {
@@ -11,7 +12,10 @@ struct ServerPlayerData
     float orientation;
 
     float cannonPitch;
+
+    char buf[PLAYERDATA_LENGTH];
 };
+
 
 ServerPlayerData playerData[2];
 
