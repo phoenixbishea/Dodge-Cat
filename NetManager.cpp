@@ -562,6 +562,7 @@ void NetManager::setProtocol(Protocol protocol) {
     return;
   }
 
+  netStatus |= NET_WAITING;
   netProtocol = protocol;
 }
 

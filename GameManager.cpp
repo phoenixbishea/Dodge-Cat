@@ -12,6 +12,7 @@ GameManager::GameManager()
     mSceneMgr(0),
     mCamera(0),
     mPlayer(0),
+    mPlayerDummy(0),
 
     mPhysicsEngine(0),
 
@@ -616,9 +617,15 @@ bool GameManager::connectServer(const CEGUI::EventArgs&)
         mState = CLIENT;
     else
     {
-        std::cout << "Could not connect to the server: "
+        std::cout << "[ " << __FILE__ << " : " << __LINE__ << " ] ******************************************************"
+                  << std::endl << std::endl
+                  << "Could not connect to the server: "
                   << multiplayerButtons.at(2)->getText()
                   << ". Did you enter the correct IP?"
+                  << std::endl
+                  << "Please restart the program because NetManager sucks and won't let you try again"
+                  << std::endl << std::endl
+                  << "********************************************************************************"
                   << std::endl;
     }
 }
