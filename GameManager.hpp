@@ -36,7 +36,7 @@
 
 #include "NetManager.h"
 
-#define WALL_COLLIDE_ERROR 745
+#define CATS_ON_SCREEN 30
 
 enum GameState {MAIN_MENU = 0, PLAY = 1, NETWORK = 2, LOADING = 3, CLIENT = 4};
 
@@ -119,7 +119,9 @@ private:
     double mTimeSinceLastPhysicsStep;
     double mTimeSinceLastCat;
 
-    Cat* mCats;
+    Cat* mCatSim;
+    Cat* mCats[CATS_ON_SCREEN];
+    int mCatIndex;
 
     GameState mState;
     CEGUI::OgreRenderer* mRenderer;

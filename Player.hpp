@@ -19,28 +19,35 @@
 #include "PlayerPhysicsComponent.hpp"
 #include "PlayerGraphicsComponent.hpp"
 #include "PlayerCameraComponent.hpp"
+#include "PlayerNetworkComponent.hpp"
 
 #include "PlayerData.hpp"
 
 class Player
 {
 public:
-    Player(Ogre::SceneManager* graphics, BulletPhysics* physics, Ogre::Camera* camera, const Vector& initialPosition = Vector(0.0f, 0.0f, 0.0f))
+    Player(Ogre::SceneManager* graphics,
+           BulletPhysics* physics,
+           Ogre::Camera* camera,
+           const Vector& initialPosition = Vector(0.0f, 0.0f, 0.0f))
         : mInput(new PlayerInputComponent()),
           mPhysics(new PlayerPhysicsComponent(data, physics, initialPosition)),
-          mGraphics(new PlayerGraphicsComponent(data, graphics, initialPosition)),
-          mCamera(new PlayerCameraComponent(graphics, camera))
-    {}
+          mGraphics(new PlayerGraphicsComponent(data, graphics, initialPosition))
+        {
+            if (camera)
+                mCamera = new PlayerCameraComponent(graphics, camera);
+        }
 
     bool update(BulletPhysics* physics, OIS::Keyboard* keyboard, OIS::Mouse* mouse, float elapsedTime)
     {
-        mInput->update(data, keyboard, mouse, elapsedTime);
-        if(!mPhysics->update(data, physics, elapsedTime))
-        {
-            return false;
-        }
+        if (mInput) mInput->update(data, keyboard, mouse, elapsedTime);
+        else if (mNetwork) mNetwork->update(data);
+
+        if(!mPhysics->update(data, physics, elapsedTime)) return false;
+
         mGraphics->update(data);
-        mCamera->update(data);
+
+        if (mCamera) mCamera->update(data);
 
         return true;
     }
@@ -65,25 +72,28 @@ public:
         // Put the player number in the string
         *buf_int++ = playerNum;
 
+        float* buf_float = (float*) buf_int;
+
         // Put the player's x, y, and z
         btVector3 position = this->getWorldTransform().getOrigin();
-        *buf_int++ = position.x();
-        *buf_int++ = position.y();
-        *buf_int++ = position.z();
+        *buf_float++ = position.x();
+        *buf_float++ = position.y();
+        *buf_float++ = position.z();
 
         // Put the player's rotation with respect to 0, 1, 0
         btQuaternion orientation = this->getWorldTransform().getRotation();
-        *buf_int++ = orientation.w();
+        *buf_float++ = orientation.w();
 
         // Put the player's horizontal pitch
         Ogre::Real pitch = mGraphics->cannonNode->getOrientation().getPitch().valueDegrees();
-        *buf_int = pitch;
+        *buf_float = pitch;
     }
 private:
     PlayerInputComponent* mInput;
     PlayerPhysicsComponent* mPhysics;
     PlayerGraphicsComponent* mGraphics;
     PlayerCameraComponent* mCamera;
+    PlayerNetworkComponent* mNetwork;
 
 	PlayerData data;	 
 };
