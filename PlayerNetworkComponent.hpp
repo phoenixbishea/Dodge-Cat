@@ -4,6 +4,7 @@
 #include <OgreSceneManager.h>
 
 #include "PlayerData.hpp"
+#include "ServerPlayerData.hpp"
 
 class PlayerNetworkComponent
 {
@@ -17,12 +18,15 @@ public:
 	}
 	void update(PlayerData& obj, Ogre::SceneNode* cannonNode)
 	{
-		// update player obj.position
-		// update the player obj.orientation
-		// update playerGraphicsComponent->cannonNode from graphics component with proper pitch
+		// Set player position and orientation
+		obj.position = playerData[0].position;
+		obj.orientation = playerData[0].orientation;
+        
+        // Set cannon pitch amount for the graphics module to update
+        float newPitch = playerData[0].cannonPitch;
+        float oldPitch = cannonNode->getOrientation().getPitch();
+        obj.cannonPitch = newPitch - oldPitch;
 	}
-private:
-
 };
 
 #endif
