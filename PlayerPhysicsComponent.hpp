@@ -11,30 +11,31 @@ public:
     PlayerPhysicsComponent(PlayerData& obj, BulletPhysics* physics, const Vector& initialPosition)
     	: mPhysicsEngine(physics)
 	{
-		// Create player shape
-		btBoxShape* playerShape = new btBoxShape(btVector3(50.0, 70.0, 50.0));
+      // Create player shape
+      btBoxShape* playerShape = new btBoxShape(btVector3(50.0, 70.0, 50.0));
 
-		// Init player ghost object
-		ghostObject = new btPairCachingGhostObject();
-		transform = ghostObject->getWorldTransform();
-		transform.setOrigin(initialPosition.toBullet());
-		ghostObject->setWorldTransform(transform);
+      // Init player ghost object
+      ghostObject = new btPairCachingGhostObject();
+      transform = ghostObject->getWorldTransform();
+      transform.setOrigin(initialPosition.toBullet());
 
-		// Set the shape and collision object type
-		ghostObject->setCollisionShape(playerShape);
-		ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
+      ghostObject->setWorldTransform(transform);
 
-		// Setup the character controller and add it to the physics world
-		charController = new btKinematicCharacterController(ghostObject, playerShape, 1.0);
-		physics->getDynamicsWorld()->addCollisionObject(
-				ghostObject,
-                btBroadphaseProxy::CharacterFilter,
-                btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
-		physics->getDynamicsWorld()->addAction(charController);
+      // Set the shape and collision object type
+      ghostObject->setCollisionShape(playerShape);
+      ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
 
-		// Setup the paddle transform
-		btTransform paddleTrans = ghostObject->getWorldTransform();
-		btVector3 paddlePos = paddleTrans.getOrigin() + btVector3(0, PADDLE_HEIGHT / 2, -150);
+      // Setup the character controller and add it to the physics world
+      charController = new btKinematicCharacterController(ghostObject, playerShape, 1.0);
+      physics->getDynamicsWorld()->addCollisionObject(
+          ghostObject,
+          btBroadphaseProxy::CharacterFilter,
+          btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+      physics->getDynamicsWorld()->addAction(charController);
+
+      // Setup the paddle transform
+      btTransform paddleTrans = ghostObject->getWorldTransform();
+      btVector3 paddlePos = paddleTrans.getOrigin() + btVector3(0, PADDLE_HEIGHT / 2, -150);
 	    paddleTrans.setOrigin(paddlePos);
 
 	    btQuaternion paddleRotation;

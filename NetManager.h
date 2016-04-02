@@ -78,7 +78,7 @@ static const std::string STR_TLHIT("TG_TILE_HIT");
 static const std::string STR_PLYRS("DC_NUM_PLYRS");
 static const std::string STR_PDEAD("DC_PLYR_DEAD");
 static const std::string STR_PINFO("PLIN");
-static const std::string STR_PWIN ("DC_PLYR_WIN");
+static const std::string STR_PWIN ("DC_PLAYR_WIN");
 static const std::string STR_TIMST("FG_TIMER_STOP");
 static const std::string STR_ISROG("FG_IS_ROGUE");
 static const std::string STR_RSHRD("FG_RESET_HERD");

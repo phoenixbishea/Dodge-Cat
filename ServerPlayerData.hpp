@@ -4,7 +4,9 @@
 #include "Vector.hpp"
 #include "Quaternion.hpp"
 
-#define PLAYERDATA_LENGTH 40
+#define PLAYERDATA_LENGTH 45
+#define PLAYERLOSE_LENGTH 20
+#define PLAYERWIN_LENGTH  16
 
 struct ServerPlayerData
 {
@@ -16,6 +18,9 @@ struct ServerPlayerData
     float cannonPitch;
 
     char buf[PLAYERDATA_LENGTH];
+    int dataLength;
+    int score;
+    bool dead;
 };
 
 /**
@@ -33,3 +38,4 @@ struct ServerPlayerData
 ServerPlayerData playerData[2];
 
 #endif
+
