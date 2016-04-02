@@ -29,7 +29,7 @@ public:
     Player(Ogre::SceneManager* graphics,
            BulletPhysics* physics,
            Ogre::Camera* camera,
-           const Quaternion& initialOrientation = Quaternion(0.0f, 1.0f, 0.0f, 0.0f),
+           const Quaternion& initialRotation = Quaternion(0.0f, 0.0f, 0.0f, 1.0f),
            const Vector& initialPosition = Vector(0.0f, 0.0f, 0.0f),
            bool networkedPlayer = false)
         : mPhysics(new PlayerPhysicsComponent(data, physics, initialPosition)),
@@ -49,7 +49,7 @@ public:
             mNetwork = new PlayerNetworkComponent();
         }
 
-        data.orientation = initialOrientation;
+        data.orientation *= initialRotation;
     }
 
     ~Player()

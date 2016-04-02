@@ -169,12 +169,12 @@ void GameManager::initScene()
         switch (mPlayerNumber)
         {
         case 1 :
-            mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Quaternion(0, 1, 0, 0.25 * Ogre::Math::PI), Vector(600, 0, 600));
-            mPlayerDummy = new Player(mSceneMgr, mPhysicsEngine, nullptr, Quaternion(0, 1, 0, 1.25 * Ogre::Math::PI), Vector(-600, 0, -600), true);
+            mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Quaternion(0, 0.25 * Ogre::Math::PI, 0, 1), Vector(600, 0, 600));
+            mPlayerDummy = new Player(mSceneMgr, mPhysicsEngine, nullptr, Quaternion(0, 1.25 * Ogre::Math::PI, 0, 1), Vector(-600, 0, -600), true);
             break;
         case 2 :
-            mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Quaternion(0, 1, 0, 1.25 * Ogre::Math::PI), Vector(-600, 0, -600));
-            mPlayerDummy = new Player(mSceneMgr, mPhysicsEngine, nullptr, Quaternion(0, 1, 0, 0.25 * Ogre::Math::PI), Vector(600, 0, 600), true);
+            mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Quaternion(0, 1.25 * Ogre::Math::PI, 0, 1), Vector(-600, 0, -600));
+            mPlayerDummy = new Player(mSceneMgr, mPhysicsEngine, nullptr, Quaternion(0, 0.25 * Ogre::Math::PI, 0, 1), Vector(600, 0, 600), true);
             break;
         }
     }
