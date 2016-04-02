@@ -632,7 +632,6 @@ bool GameManager::setupServer(const CEGUI::EventArgs&)
     std::string temp("Waiting for connection " + serverIP);
     loadingButtons.at(0)->setText(temp);
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(4));
-
 }
 
 bool GameManager::initServer()
@@ -831,7 +830,7 @@ bool GameManager::frameStartedServer(const Ogre::FrameEvent& fe)
 {
     static bool gameStarted = false;
 
-    if(mNetManager.scanForActivity())
+    mNetManager.scanForActivity();
 
     if(!gameStarted)
     {
