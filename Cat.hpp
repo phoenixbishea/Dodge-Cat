@@ -11,6 +11,10 @@
 #include <OgreVector3.h>
 #include <OgreMeshManager.h>
 
+#include <OgreParticleSystem.h>
+
+#include <string>
+
 class Cat
 {
 public:
@@ -22,7 +26,7 @@ public:
 
     void initCatPhysics();
     void setVelocity();
-    void initCatOgre();
+    void initCatOgre(int catNum);
 
 private:
 	BulletPhysics* mPhysicsEngine;
@@ -34,6 +38,8 @@ private:
 	btVector3 mPhysLookDir;
 	btVector3 mVector;
 	btTransform mTransform;
+
+    Ogre::ParticleSystem* mFountainParticle;
 
     const float CAT_SPEED = 1500.0f;
     const float CAT_MASS = 10.0f;
@@ -64,6 +70,7 @@ Cat::~Cat()
 {
     void* userPtr = mBody->getUserPointer();
     Ogre::SceneNode* node = static_cast<Ogre::SceneNode* >(userPtr);
+    mSceneMgr->destroyParticleSystem(mFountainParticle);
     mSceneMgr->destroySceneNode(node);
     mPhysicsEngine->getDynamicsWorld()->removeRigidBody(mBody);
 }
@@ -140,7 +147,7 @@ void Cat::setVelocity()
 }
 
 //---------------------------------------------------------------------------
-void Cat::initCatOgre()
+void Cat::initCatOgre(int catNum)
 {   
     static bool meshCreated = false;
     if (!meshCreated)
@@ -158,6 +165,13 @@ void Cat::initCatOgre()
     Ogre::SceneNode* catNode = node->createChildSceneNode();
     catNode->attachObject(entity);
     mBody->setUserPointer(node);
+
+    std::string name = "CatSpray";
+    name.append(std::to_string(catNum));
+
+    mFountainParticle = mSceneMgr->createParticleSystem(name, "Examples/PurpleFountain");
+    Ogre::SceneNode* fountainNode = node->createChildSceneNode();
+    fountainNode->attachObject(mFountainParticle);
 
     Ogre::Vector3 lookDir = Ogre::Vector3(mPhysLookDir.x(), mPhysLookDir.y(), mPhysLookDir.z());
     Ogre::Vector3 nodePos = Ogre::Vector3(mVector.x(), mVector.y(), mVector.z());
@@ -180,4 +194,6 @@ void Cat::initCatOgre()
     catNode->scale(Ogre::Vector3(catScale, catScale, catScale));
     catNode->yaw(Ogre::Radian(Ogre::Degree(180)));
     catNode->pitch(Ogre::Radian(Ogre::Degree(90)));
+
+    fountainNode->pitch(Ogre::Radian(Ogre::Degree(90)));
 }

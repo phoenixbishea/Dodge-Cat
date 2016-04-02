@@ -474,7 +474,7 @@ void GameManager::spawnCat(Player* player)
 
     mCats[mCatIndex]->initCatPhysics();
     mCats[mCatIndex]->setVelocity();
-    mCats[mCatIndex]->initCatOgre();
+    mCats[mCatIndex]->initCatOgre(mCatIndex);
 
     ++mCatIndex;
 }
@@ -603,8 +603,11 @@ void GameManager::startScene()
 {
     mState = PLAY;
 
-    mSound = new Sound();
-    mSound->initSound();
+    if (!mSound) 
+    {
+        mSound = new Sound();
+        mSound->initSound();
+    }
 
     initScene();
 
@@ -707,10 +710,41 @@ void GameManager::menuChange()
     }
 }
 
-
+/* RestartScene */
 bool GameManager::replay(const CEGUI::EventArgs&)
 {
-    /* RestartScene */
+    // We need to reset the score
+    mScore = 0;
+
+    // Cleanup player and sound objects
+    if (mPlayer) delete mPlayer;
+    if (mPlayerDummy) delete mPlayerDummy;
+
+    // Delete cats in scene
+    for (int i = 0; i < CATS_ON_SCREEN; i++)
+    {
+        if(mCats[i]) delete mCats[i];
+        mCats[i] = nullptr;
+    }
+    // The cat physics world is updated with the zero based
+    // index cat, so this cat must be initialized first
+    // if it is not, a cat with a nullptr will have methods
+    // called on it resulting in a segfault
+    mCatIndex = 0;
+
+    // Delete scene walls
+    for (int i = 0; i < 6; ++i)
+    {
+        delete walls.back();
+        walls.pop_back();
+    }
+
+    // Delete the lights
+    mSceneMgr->destroyAllLights();
+
+    // mSceneMgr->destroyAllParticleSystems();
+
+    startScene();
 }
 
 //---------------------------------------------------------------------------
@@ -878,7 +912,9 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
     else
     {
         if (connected)
+        {
             frameStartedClient(fe);
+        }
 
         mTimeSinceLastPhysicsStep += fe.timeSinceLastFrame;
         if (mTimeSinceLastPhysicsStep > 1.0 / 60.0)

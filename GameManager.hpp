@@ -91,7 +91,6 @@ private:
     bool setupServer(const CEGUI::EventArgs&);
     bool connectServer(const CEGUI::EventArgs&);
     bool back(const CEGUI::EventArgs&);
-    bool replay(const CEGUI::EventArgs&);
 
     void menuChange();
 
@@ -102,6 +101,9 @@ private:
     bool frameStarted(const Ogre::FrameEvent& fe);
     bool frameEnded(const Ogre::FrameEvent& fe);
     void parseMessage(char* buf);
+
+    bool replay(const CEGUI::EventArgs&);
+
 
     Ogre::Root* mRoot;
     Ogre::RenderWindow* mWindow;
