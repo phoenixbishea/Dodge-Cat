@@ -713,8 +713,24 @@ void GameManager::menuChange()
 /* RestartScene */
 bool GameManager::replay(const CEGUI::EventArgs&)
 {
+    if (mConnected)
+    {
+        mState = REPLAY;
+    }
+    else
+    {
+        resetScene();
+    }
+}
+
+void GameManager::resetScene()
+{
     // We need to reset the score
     mScore = 0;
+
+    playerData[0].dead = false;
+    playerData[0].score = 0;
+    playerData[0].replay = false;
 
     // Cleanup player and sound objects
     if (mPlayer) delete mPlayer;
@@ -824,9 +840,10 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                     float pitch;
                     bool isDead;
                     int score;
+                    bool replay;
                     //Player movement update
                     if(!Player::unSerializeData(mNetManager.tcpServerData.output, playerNumber,
-                                                playerPosition, orientation, pitch, isDead, score))
+                                                playerPosition, orientation, pitch, isDead, score, replay))
                     {
                         std::cout << "Message was not populated with player information" << std::endl;
                     }
@@ -851,6 +868,7 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                     playerData[0].cannonPitch = pitch;
                     playerData[0].dead = isDead;
                     playerData[0].score = score;
+                    playerData[0].replay = replay;
                     if (isDead)
                         mState = WON;
                 }
@@ -928,10 +946,15 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(5));
         CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show();
     }
+    else if (mState == REPLAY)
+    {
+        if (playerData[0].replay)
+            resetScene();
+    }
     else
     {
         if (mConnected)
-		{
+        {
             frameStartedClient(fe);
         }
 
@@ -971,14 +994,14 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
 
 bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
 {
-    if ((mState == PLAY || mState == LOST) && mConnected)
+    if ((mState == PLAY || mState == LOST || mState == REPLAY) && mConnected)
     {
         static float timeSinceLastServerUpdate = 0.0f;
 
         if (timeSinceLastServerUpdate >= 1.0f / 60.0f)
         {
             char buf[PLAYERDATA_LENGTH];
-            mPlayer->serializeData(buf, this->mPlayerNumber, mState == LOST ? true : false, mScore);
+            mPlayer->serializeData(buf, this->mPlayerNumber, mState == LOST ? true : false, mScore, mState == REPLAY ? true : false);
             mNetManager.messageServer(PROTOCOL_TCP, buf, PLAYERDATA_LENGTH);
 
             timeSinceLastServerUpdate -= 1.0f / 60.0f;
@@ -1005,16 +1028,16 @@ bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
             }
         }
     }
-    else if (mState == LOST && mConnected)
-    {
-        // Send a message to the server
-        char buf[PLAYERLOSE_LENGTH];
-        memcpy(buf, STR_PDEAD.c_str(), STR_PDEAD.length());
-        int* buf_int = (int*) (buf + 12);
-        *buf_int++ = this->mPlayerNumber;
-        *buf_int = this->mScore;
-        mNetManager.messageServer(PROTOCOL_TCP, buf, PLAYERLOSE_LENGTH);
-    }
+    // else if (mState == LOST && mConnected)
+    // {
+    //     // Send a message to the server
+    //     char buf[PLAYERLOSE_LENGTH];
+    //     memcpy(buf, STR_PDEAD.c_str(), STR_PDEAD.length());
+    //     int* buf_int = (int*) (buf + 12);
+    //     *buf_int++ = this->mPlayerNumber;
+    //     *buf_int = this->mScore;
+    //     mNetManager.messageServer(PROTOCOL_TCP, buf, PLAYERLOSE_LENGTH);
+    // }
 
     return true;
 }
@@ -1027,9 +1050,10 @@ void GameManager::parseMessage(char* buf)
     float pitch;
     bool isDead;
     int score;
+    bool replay;
 
     // Player sent a data update
-    if(Player::unSerializeData(buf, playerNumber, playerPosition, orientation, pitch, isDead, score))
+    if(Player::unSerializeData(buf, playerNumber, playerPosition, orientation, pitch, isDead, score, replay))
     {
         memcpy(playerData[playerNumber-1].buf, buf, PLAYERDATA_LENGTH);
         playerData[playerNumber - 1].dataLength = PLAYERDATA_LENGTH;
@@ -1058,14 +1082,14 @@ void GameManager::parseMessage(char* buf)
         std::cout << "Orientation: " << orientation << std::endl;
         std::cout << "Pitch: " << pitch << std::endl;
     }
-    // Player sent a message saying they died
-    else if (memcmp(buf, STR_PDEAD.c_str(), STR_PDEAD.length() + 1))
-    {
-        int* buf_int = (int*) (buf + 12);
-        playerNumber = *buf_int++;
-        memcpy(playerData[2 - playerNumber].buf, STR_PWIN.c_str(), STR_PWIN.length());
-        memcpy(playerData[2 - playerNumber].buf + STR_PWIN.length(), buf_int, 4);
-    }
+    // // Player sent a message saying they died
+    // else if (memcmp(buf, STR_PDEAD.c_str(), STR_PDEAD.length() + 1))
+    // {
+    //     int* buf_int = (int*) (buf + 12);
+    //     playerNumber = *buf_int++;
+    //     memcpy(playerData[2 - playerNumber].buf, STR_PWIN.c_str(), STR_PWIN.length());
+    //     memcpy(playerData[2 - playerNumber].buf + STR_PWIN.length(), buf_int, 4);
+    // }
 }
 
 //---------------------------------------------------------------------------

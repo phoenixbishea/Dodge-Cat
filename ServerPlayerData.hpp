@@ -21,6 +21,7 @@ struct ServerPlayerData
     int dataLength;
     int score;
     bool dead;
+    bool replay;
 };
 
 /**

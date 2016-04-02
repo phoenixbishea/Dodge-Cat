@@ -95,7 +95,7 @@ public:
         return Vector(mGraphics->cannonNode->_getDerivedOrientation() * Ogre::Vector3(0, 0, -1));
     }
 
-    void serializeData(char* buf, int playerNum, bool died, int score)
+    void serializeData(char* buf, int playerNum, bool died, int score, bool replay)
     {
         // Put DC_PINFO at the start of the string
         memcpy(buf, STR_PINFO.c_str(), STR_PINFO.length());
@@ -123,9 +123,10 @@ public:
         *buf_float++ = pitch;
         *(int*) buf_float++ = score;
         *(bool*) buf_float = died;
+        *(((bool*) buf_float) + 1) = replay;
     }
 
-    static bool unSerializeData(const char* buf, int& playerNum, Vector& playerPosition, Quaternion& orientation, float& pitch, bool& isDead, int& score)
+    static bool unSerializeData(const char* buf, int& playerNum, Vector& playerPosition, Quaternion& orientation, float& pitch, bool& isDead, int& score, bool& replay)
     {
         std::string temp(buf);
         //Check to make sure PLIN is in the message
@@ -150,6 +151,7 @@ public:
         pitch = *buf_float++;
         score = *(int*) buf_float++;
         isDead = *(bool*) buf_float;
+        replay = *(((bool*) buf_float) + 1);
         return true;
     }
 
