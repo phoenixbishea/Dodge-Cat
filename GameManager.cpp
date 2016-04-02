@@ -791,9 +791,11 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                     int playerNumber;
                     Quaternion orientation;
                     float pitch;
+                    bool isDead;
+                    int score;
                     //Player movement update
-                    if(!Player::unSerializeData(mNetManager.tcpServerData.output,
-                                                playerNumber, playerPosition, orientation, pitch))
+                    if(!Player::unSerializeData(mNetManager.tcpServerData.output, playerNumber,
+                                                playerPosition, orientation, pitch, isDead, score))
                     {
                         std::cout << "Message was not populated with player information" << std::endl;
                     }
@@ -806,6 +808,7 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                               << orientation
                               << std::endl;
                     std::cout << "Pitch: " << pitch << std::endl << std::endl;
+                    std::cout << "Is dead?: " << isDead << std::endl;
 
                     memcpy(playerData[0].buf, mNetManager.tcpServerData.output, PLAYERDATA_LENGTH);
                     playerData[0].playerNum = playerNumber;
@@ -815,11 +818,15 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                     playerData[0].position.setZ(playerPosition.z());
                     playerData[0].orientation = orientation;
                     playerData[0].cannonPitch = pitch;
+                    playerData[0].dead = isDead;
+                    playerData[0].score = score;
+                    if (isDead)
+                        mState = WON;
                 }
                 else if (std::string::npos != message.find(STR_PWIN))
                 {
                     // Player won
-                    std::cout << message << std::endl;
+                    std::cout << "Win message: " << message << std::endl;
                     char buf[PLAYERWIN_LENGTH];
                     memcpy(buf, mNetManager.tcpServerData.output, PLAYERWIN_LENGTH);
                     int* buf_int = (int*) (buf + 12);
@@ -884,6 +891,12 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(5));
         CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show();
     }
+    else if (mState == WON)
+    {
+        gameoverButtons.at(0)->setText("YOU WIN!!! You scored: " + Ogre::StringConverter::toString(playerData[0].score));
+        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(5));
+        CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show();
+    }
     else
     {
         if (mConnected)
@@ -904,7 +917,8 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         if (!mPlayer->update(mPhysicsEngine, mKeyboard, mMouse, fe.timeSinceLastFrame))
         {
             mState = LOST;
-            frameStartedClient(fe);
+            if (mConnected)
+                frameStartedClient(fe);
             return true;
         }
         if (mPlayerDummy && !mPlayerDummy->update(mPhysicsEngine, nullptr, nullptr, fe.timeSinceLastFrame))
@@ -924,15 +938,14 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
 
 bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
 {
-    if (mState == PLAY && mConnected)
+    if ((mState == PLAY || mState == LOST) && mConnected)
     {
         static float timeSinceLastServerUpdate = 0.0f;
 
         if (timeSinceLastServerUpdate >= 1.0f / 60.0f)
         {
             char buf[PLAYERDATA_LENGTH];
-            mPlayer->serializeData(buf, this->mPlayerNumber);
-            std::cout << buf << std::endl;
+            mPlayer->serializeData(buf, this->mPlayerNumber, mState == LOST ? true : false, mScore);
             mNetManager.messageServer(PROTOCOL_TCP, buf, PLAYERDATA_LENGTH);
 
             timeSinceLastServerUpdate -= 1.0f / 60.0f;
@@ -964,7 +977,7 @@ bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
         // Send a message to the server
         char buf[PLAYERLOSE_LENGTH];
         memcpy(buf, STR_PDEAD.c_str(), STR_PDEAD.length());
-        int* buf_int = (int*) buf + 12;
+        int* buf_int = (int*) (buf + 12);
         *buf_int++ = this->mPlayerNumber;
         *buf_int = this->mScore;
         mNetManager.messageServer(PROTOCOL_TCP, buf, PLAYERLOSE_LENGTH);
@@ -979,9 +992,11 @@ void GameManager::parseMessage(char* buf)
     int playerNumber;
     Quaternion orientation;
     float pitch;
+    bool isDead;
+    int score;
 
     // Player sent a data update
-    if(Player::unSerializeData(buf, playerNumber, playerPosition, orientation, pitch))
+    if(Player::unSerializeData(buf, playerNumber, playerPosition, orientation, pitch, isDead, score))
     {
         memcpy(playerData[playerNumber-1].buf, buf, PLAYERDATA_LENGTH);
         playerData[playerNumber - 1].dataLength = PLAYERDATA_LENGTH;
@@ -1002,14 +1017,18 @@ void GameManager::parseMessage(char* buf)
         playerData[playerNumber-1].orientation = orientation;
 
         playerData[playerNumber-1].cannonPitch = pitch;
+        playerData[playerNumber - 1].dead = isDead;
+        playerData[playerNumber - 1].score = score;
+
+        std::cout << "Is dead?: " << isDead << std::endl;
 
         std::cout << "Orientation: " << orientation << std::endl;
         std::cout << "Pitch: " << pitch << std::endl;
     }
     // Player sent a message saying they died
-    else if (memcmp(buf, STR_PDEAD.c_str(), STR_PDEAD.length()))
+    else if (memcmp(buf, STR_PDEAD.c_str(), STR_PDEAD.length() + 1))
     {
-        int* buf_int = (int*) buf + 12;
+        int* buf_int = (int*) (buf + 12);
         playerNumber = *buf_int++;
         memcpy(playerData[2 - playerNumber].buf, STR_PWIN.c_str(), STR_PWIN.length());
         memcpy(playerData[2 - playerNumber].buf + STR_PWIN.length(), buf_int, 4);

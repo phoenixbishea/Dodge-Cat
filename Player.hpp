@@ -30,7 +30,7 @@ public:
            BulletPhysics* physics,
            Ogre::Camera* camera,
            const Vector& initialPosition = Vector(0.0f, 0.0f, 0.0f),
-           const Quaternion& initialRotation = Quaternion(0.0f, 0.0f, 0.0f, 0.0f),
+           const Quaternion& initialRotation = Quaternion(0.0f, 1.0f, 0.0f, 0.0f),
            bool networkedPlayer = false)
         : mPhysics(new PlayerPhysicsComponent(data, physics, initialPosition, initialRotation)),
           mGraphics(new PlayerGraphicsComponent(data, graphics, initialPosition, initialRotation)),
@@ -93,7 +93,7 @@ public:
         return Vector(mGraphics->cannonNode->_getDerivedOrientation() * Ogre::Vector3(0, 0, -1));
     }
 
-    void serializeData(char* buf, int playerNum)
+    void serializeData(char* buf, int playerNum, bool died, int score)
     {
         // Put DC_PINFO at the start of the string
         memcpy(buf, STR_PINFO.c_str(), STR_PINFO.length());
@@ -118,10 +118,12 @@ public:
 
         // Put the player's horizontal pitch
         Ogre::Real pitch = mGraphics->cannonNode->getOrientation().getPitch().valueRadians();
-        *buf_float = pitch;
+        *buf_float++ = pitch;
+        *(int*) buf_float++ = score;
+        *(bool*) buf_float = died;
     }
 
-    static bool unSerializeData(const char* buf, int& playerNum, Vector& playerPosition, Quaternion& orientation, float& pitch)
+    static bool unSerializeData(const char* buf, int& playerNum, Vector& playerPosition, Quaternion& orientation, float& pitch, bool& isDead, int& score)
     {
         std::string temp(buf);
         //Check to make sure PLIN is in the message
@@ -143,7 +145,9 @@ public:
         orientation.setW(*buf_float++);
 
         // Put the player's horizontal pitch
-        pitch = *buf_float;
+        pitch = *buf_float++;
+        score = *(int*) buf_float++;
+        isDead = *(bool*) buf_float;
         return true;
     }
 
