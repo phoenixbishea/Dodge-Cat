@@ -8,12 +8,13 @@ class PlayerGraphicsComponent
 public:
     Ogre::SceneNode* cannonNode;
 	
-    PlayerGraphicsComponent(PlayerData& data, Ogre::SceneManager* graphics, const Vector& initialPosition)
+    PlayerGraphicsComponent(PlayerData& data, Ogre::SceneManager* graphics, const Vector& initialPosition, const Quaternion& initialRotation)
     	: mSceneMgr(graphics)
     {
         // Create scene nodes
         playerNode = graphics->getRootSceneNode()->createChildSceneNode();
         playerNode->setPosition(initialPosition.toOgre());
+        playerNode->setOrientation(initialRotation.toOgre());
         sightNode = playerNode->createChildSceneNode(Ogre::Vector3(0, 0, -200));
         cameraNode = playerNode->createChildSceneNode(Ogre::Vector3(0, 300, 500));
 

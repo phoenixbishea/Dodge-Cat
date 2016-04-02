@@ -30,9 +30,10 @@ public:
            BulletPhysics* physics,
            Ogre::Camera* camera,
            const Vector& initialPosition = Vector(0.0f, 0.0f, 0.0f),
+           const Quaternion& initialRotation = Quaternion(0.0f, 0.0f, 0.0f, 0.0f),
            bool networkedPlayer = false)
-        : mPhysics(new PlayerPhysicsComponent(data, physics, initialPosition)),
-          mGraphics(new PlayerGraphicsComponent(data, graphics, initialPosition)),
+        : mPhysics(new PlayerPhysicsComponent(data, physics, initialPosition, initialRotation)),
+          mGraphics(new PlayerGraphicsComponent(data, graphics, initialPosition, initialRotation)),
           mNetworkedPlayer(networkedPlayer)
     {
         if (!networkedPlayer)
