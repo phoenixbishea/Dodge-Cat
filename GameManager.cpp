@@ -175,10 +175,10 @@ void GameManager::initScene()
                                       Vector(-600, 0, -600), Quaternion(0.0f, 1.0f, 0.0f, 0.25 * Ogre::Math::PI), true);
             break;
         case 2 :
-            mPlayer = new Player(mSceneMgr, mPhysicsEngine, nullptr,
+            mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera,
                                  Vector(-600, 0, -600), Quaternion(0.0f, 1.0f, 0.0f, 0.25 * Ogre::Math::PI));
-            mPlayerDummy = new Player(mSceneMgr, mPhysicsEngine, mCamera,
-                                      Vector(600, 0, 600), Quaternion(0.0f, 1.0f, 0.0f, 1.25 * Ogre::Math::PI), false);
+            mPlayerDummy = new Player(mSceneMgr, mPhysicsEngine, nullptr,
+                                      Vector(600, 0, 600), Quaternion(0.0f, 1.0f, 0.0f, 1.25 * Ogre::Math::PI), true);
             break;
         }
     }
@@ -822,7 +822,7 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                     std::cout << message << std::endl;
                     char buf[PLAYERWIN_LENGTH];
                     memcpy(buf, mNetManager.tcpServerData.output, PLAYERWIN_LENGTH);
-                    int* buf_int = (int*) (buf + 11);
+                    int* buf_int = (int*) (buf + 12);
                     this->mScore = *buf_int;
                     mState = WON;
                 }

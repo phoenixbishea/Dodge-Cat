@@ -6,7 +6,7 @@
 
 #define PLAYERDATA_LENGTH 40
 #define PLAYERLOSE_LENGTH 20
-#define PLAYERWIN_LENGTH  15
+#define PLAYERWIN_LENGTH  16
 
 struct ServerPlayerData
 {
