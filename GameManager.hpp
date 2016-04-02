@@ -154,6 +154,7 @@ private:
     NetManager mNetManager;
     bool mConnected;
     int mPlayerNumber;
+    bool lostSent;
 };
 
 #endif

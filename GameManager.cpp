@@ -713,7 +713,7 @@ void GameManager::menuChange()
 /* RestartScene */
 bool GameManager::replay(const CEGUI::EventArgs&)
 {
-    if (mConnected)
+    if (mConnected && mState == LOST)
     {
         std::cout << "In replay state" << std::endl;
         char buf[PLAYERDATA_LENGTH];
@@ -721,7 +721,10 @@ bool GameManager::replay(const CEGUI::EventArgs&)
         mNetManager.messageServer(PROTOCOL_TCP, buf, PLAYERDATA_LENGTH);
     }
 
-    resetScene();
+    if (mState != WON)
+    {
+        resetScene();
+    }
 }
 
 void GameManager::resetScene()
@@ -947,14 +950,16 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         gameoverButtons.at(0)->setText("Game over! Life is ruff. You scored: " + Ogre::StringConverter::toString(mScore));
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(5));
         CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show();
-        frameStartedClient(fe);
+        if (mConnected)
+            frameStartedClient(fe);
     }
     else if (mState == WON)
     {
         gameoverButtons.at(0)->setText("YOU WIN!!! You scored: " + Ogre::StringConverter::toString(playerData[0].score));
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(5));
         CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show();
-        frameStartedClient(fe);
+        if (mConnected)
+            frameStartedClient(fe);
     }
     else
     {
@@ -999,13 +1004,14 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
 
 bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
 {
-    if (playerData[0].replay)
+    if (mState != LOADING && playerData[0].replay)
     {
         resetScene();
         return true;
     }
-    else if (playerData[0].dead)
+    else if (mState != LOADING && playerData[0].dead)
     {
+        playerData[0].dead = false;
         mState = WON;
     }
 
@@ -1091,6 +1097,7 @@ void GameManager::parseMessage(char* buf)
         playerData[playerNumber-1].cannonPitch = pitch;
         playerData[playerNumber - 1].dead = isDead;
         playerData[playerNumber - 1].score = score;
+        playerData[playerNumber - 1].replay = replay;
 
         std::cout << "Is dead?: " << isDead << std::endl;
 
