@@ -909,7 +909,6 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         }
         if (mPlayerDummy && !mPlayerDummy->update(mPhysicsEngine, nullptr, nullptr, fe.timeSinceLastFrame))
         {
-            mState = WON;
             return true;
         }
         // This updates all of the cats in the physics world
@@ -1013,7 +1012,7 @@ void GameManager::parseMessage(char* buf)
         int* buf_int = (int*) buf + 12;
         playerNumber = *buf_int++;
         memcpy(playerData[2 - playerNumber].buf, STR_PWIN.c_str(), STR_PWIN.length());
-        memcpy(playerData[2 - playerNumber].buf, buf_int, 4);
+        memcpy(playerData[2 - playerNumber].buf + STR_PWIN.length(), buf_int, 4);
     }
 }
 
