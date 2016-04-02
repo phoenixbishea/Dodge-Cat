@@ -38,7 +38,7 @@ public:
       btVector3 paddlePos = paddleTrans.getOrigin() + btVector3(0, PADDLE_HEIGHT / 2, -150);
 	    paddleTrans.setOrigin(paddlePos);
 
-	    btQuaternion paddleRotation = obj.orientation.toBullet();
+	    btQuaternion paddleRotation;
 	    paddleTrans.setRotation(paddleRotation);
 
 	    // Create paddle mass and inertia

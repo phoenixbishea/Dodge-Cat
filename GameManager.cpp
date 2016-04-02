@@ -169,12 +169,12 @@ void GameManager::initScene()
         switch (mPlayerNumber)
         {
         case 1 :
-            mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Quaternion(0, 1.50 * Ogre::Math::PI, 0, 1), Vector(600, 0, 600));
+            mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Quaternion(0, 1.50 * Ogre::Math::PI, 0, 1), Vector(600, 0, -600));
             mPlayerDummy = new Player(mSceneMgr, mPhysicsEngine, nullptr, Quaternion(0, 0.2 * Ogre::Math::PI, 0, 1), Vector(-600, 0, -600), true);
             break;
         case 2 :
             mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera, Quaternion(0, 0.2 * Ogre::Math::PI, 0, 1), Vector(-600, 0, -600));
-            mPlayerDummy = new Player(mSceneMgr, mPhysicsEngine, nullptr, Quaternion(0, 1.50 * Ogre::Math::PI, 0, 1), Vector(600, 0, 600), true);
+            mPlayerDummy = new Player(mSceneMgr, mPhysicsEngine, nullptr, Quaternion(0, 1.50 * Ogre::Math::PI, 0, 1), Vector(600, 0, -600), true);
             break;
         }
     }
@@ -609,10 +609,10 @@ void GameManager::startScene()
         mSound->initSound();
     }
 
-    initScene();
-
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(2));
     CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().hide();
+
+    initScene();
 }
 
 //---------------------------------------------------------------------------
@@ -715,12 +715,13 @@ bool GameManager::replay(const CEGUI::EventArgs&)
 {
     if (mConnected)
     {
-        mState = REPLAY;
+        std::cout << "In replay state" << std::endl;
+        char buf[PLAYERDATA_LENGTH];
+        mPlayer->serializeData(buf, this->mPlayerNumber, 0, mScore, 1);
+        mNetManager.messageServer(PROTOCOL_TCP, buf, PLAYERDATA_LENGTH);
     }
-    else
-    {
-        resetScene();
-    }
+
+    resetScene();
 }
 
 void GameManager::resetScene()
@@ -728,9 +729,16 @@ void GameManager::resetScene()
     // We need to reset the score
     mScore = 0;
 
-    playerData[0].dead = false;
-    playerData[0].score = 0;
-    playerData[0].replay = false;
+    if (mConnected)
+    {
+        playerData[0].dead = false;
+        playerData[0].score = 0;
+        playerData[0].replay = false;
+
+        std::cout << "HERE" << std::endl;
+        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(2));
+        CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().hide();
+    }
 
     // Cleanup player and sound objects
     if (mPlayer) delete mPlayer;
@@ -846,6 +854,7 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                                                 playerPosition, orientation, pitch, isDead, score, replay))
                     {
                         std::cout << "Message was not populated with player information" << std::endl;
+                        return true;
                     }
 
                     std::cout << std::endl
@@ -857,6 +866,7 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                               << std::endl;
                     std::cout << "Pitch: " << pitch << std::endl << std::endl;
                     std::cout << "Is dead?: " << isDead << std::endl;
+                    std::cout << "Replay? : " << replay << std::endl;
 
                     memcpy(playerData[0].buf, mNetManager.tcpServerData.output, PLAYERDATA_LENGTH);
                     playerData[0].playerNum = playerNumber;
@@ -869,8 +879,6 @@ bool GameManager::frameStartedClient(const Ogre::FrameEvent& fe)
                     playerData[0].dead = isDead;
                     playerData[0].score = score;
                     playerData[0].replay = replay;
-                    if (isDead)
-                        mState = WON;
                 }
                 else if (std::string::npos != message.find(STR_PWIN))
                 {
@@ -939,17 +947,14 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         gameoverButtons.at(0)->setText("Game over! Life is ruff. You scored: " + Ogre::StringConverter::toString(mScore));
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(5));
         CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show();
+        frameStartedClient(fe);
     }
     else if (mState == WON)
     {
         gameoverButtons.at(0)->setText("YOU WIN!!! You scored: " + Ogre::StringConverter::toString(playerData[0].score));
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(5));
         CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show();
-    }
-    else if (mState == REPLAY)
-    {
-        if (playerData[0].replay)
-            resetScene();
+        frameStartedClient(fe);
     }
     else
     {
@@ -994,14 +999,24 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
 
 bool GameManager::frameEnded(const Ogre::FrameEvent& fe)
 {
-    if ((mState == PLAY || mState == LOST || mState == REPLAY) && mConnected)
+    if (playerData[0].replay)
+    {
+        resetScene();
+        return true;
+    }
+    else if (playerData[0].dead)
+    {
+        mState = WON;
+    }
+
+    if ((mState == PLAY || mState == LOST || mState == WON) && mConnected)
     {
         static float timeSinceLastServerUpdate = 0.0f;
 
         if (timeSinceLastServerUpdate >= 1.0f / 60.0f)
         {
             char buf[PLAYERDATA_LENGTH];
-            mPlayer->serializeData(buf, this->mPlayerNumber, mState == LOST ? true : false, mScore, mState == REPLAY ? true : false);
+            mPlayer->serializeData(buf, this->mPlayerNumber, mState == LOST ? 1 : 0, mScore, 0);
             mNetManager.messageServer(PROTOCOL_TCP, buf, PLAYERDATA_LENGTH);
 
             timeSinceLastServerUpdate -= 1.0f / 60.0f;

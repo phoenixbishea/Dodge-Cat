@@ -49,7 +49,7 @@ public:
             mNetwork = new PlayerNetworkComponent();
         }
 
-        data.orientation *= initialRotation;
+//        data.orientation *= initialRotation;
     }
 
     ~Player()
