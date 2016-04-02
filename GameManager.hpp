@@ -41,7 +41,7 @@
 
 #define CATS_ON_SCREEN 30
 
-enum GameState {MAIN_MENU = 0, PLAY = 1, NETWORK = 2, LOADING = 3, CLIENT = 4, GAME_OVER = 5};
+enum GameState {MAIN_MENU = 0, PLAY = 1, NETWORK = 2, LOADING = 3, CLIENT = 4, LOST = 5, WON = 6};
 
 CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
 
@@ -140,8 +140,8 @@ private:
 
     /*Network */
     NetManager mNetManager;
-    bool connected;
-    int playerNumber;
+    bool mConnected;
+    int mPlayerNumber;
 };
 
 #endif
