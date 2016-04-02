@@ -91,6 +91,7 @@ private:
     bool setupServer(const CEGUI::EventArgs&);
     bool connectServer(const CEGUI::EventArgs&);
     bool back(const CEGUI::EventArgs&);
+    bool replay(const CEGUI::EventArgs&);
 
     void menuChange();
 
@@ -135,6 +136,7 @@ private:
     std::vector<CEGUI::Window*> multiplayerButtons;
     std::vector<CEGUI::Window*> mPlayButtons;
     std::vector<CEGUI::Window*> loadingButtons;
+    std::vector<CEGUI::Window*> gameoverButtons;
 
     /*Network */
     NetManager mNetManager;

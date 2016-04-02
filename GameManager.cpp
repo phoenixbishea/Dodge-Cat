@@ -263,6 +263,7 @@ void GameManager::initGUI()
     CEGUI::Window* playSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/playSheet");
     CEGUI::Window* networkSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/networkSheet");
     CEGUI::Window* loadingSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/loadingSheet");
+    CEGUI::Window* gameoverSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/gameoverSheet");
 
     //Create the main menu
     CEGUI::Window* title = wmgr.createWindow("TaharezLook/Label", "CEGUIDemo/MainTitle");
@@ -280,6 +281,12 @@ void GameManager::initGUI()
 
     /* Creates the loading screen */
     CEGUI::Window* loading = wmgr.createWindow("TaharezLook/Label", "CEGUIDemo/LoadingScreen");   
+
+
+    CEGUI::Window* gameoverText = wmgr.createWindow("TaharezLook/StaticText", "CEGUIDemo/GameOverText");   
+    CEGUI::Window* replay = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/Replay"); 
+    CEGUI::Window* quitGame = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/quitGame"); 
+
 
     start->setText("Singleplayer");
     start->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
@@ -320,6 +327,18 @@ void GameManager::initGUI()
     loading->setSize(CEGUI::USize(CEGUI::UDim(0.5,0), CEGUI::UDim(0.2,0)));
     loading->setPosition(CEGUI::UVector2(CEGUI::UDim(0.25f,0), CEGUI::UDim(0.4f,0)));
 
+    gameoverText->setText("Game over! Life is ruff. You scored: ");
+    gameoverText->setSize(CEGUI::USize(CEGUI::UDim(0.35,0), CEGUI::UDim(0.05,0)));
+    gameoverText->setPosition(CEGUI::UVector2(CEGUI::UDim(0.3f,0), CEGUI::UDim(0.3f,0)));
+
+    replay->setText("Replay");
+    replay->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+    replay->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,0)));
+
+    quitGame->setText("Quit");
+    quitGame->setSize(CEGUI::USize(CEGUI::UDim(0.15,0), CEGUI::UDim(0.05,0)));
+    quitGame->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4f,0),CEGUI::UDim(0.4f,100)));
+
     start->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::start, this));
     multiplayer->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::mpSheet, this));
     quitMain->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::quit, this));
@@ -328,6 +347,9 @@ void GameManager::initGUI()
     connect->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::connectServer, this));
     connectIn->subscribeEvent(CEGUI::Editbox::EventTextAccepted, CEGUI::Event::Subscriber(&GameManager::connectServer, this));
     back->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::back, this));
+
+    replay->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::replay, this));
+    quitGame->subscribeEvent(CEGUI::PushButton::EventClicked, CEGUI::Event::Subscriber(&GameManager::quit, this));
 
     startButtons.push_back(start);
     startButtons.push_back(quitMain);
@@ -342,6 +364,10 @@ void GameManager::initGUI()
     multiplayerButtons.push_back(back);
 
     loadingButtons.push_back(loading);
+
+    gameoverButtons.push_back(gameoverText);
+    gameoverButtons.push_back(replay);
+    gameoverButtons.push_back(quitMain);
 
     mainSheet->addChild(start);
     mainSheet->addChild(multiplayer);
@@ -358,11 +384,16 @@ void GameManager::initGUI()
 
     loadingSheet->addChild(loading);
 
+    gameoverSheet->addChild(gameoverText);
+    gameoverSheet->addChild(replay);
+    gameoverSheet->addChild(quitGame);
+
     sheets.push_back(mainSheet);
     sheets.push_back(quitSheet);
     sheets.push_back(playSheet);
     sheets.push_back(networkSheet);
     sheets.push_back(loadingSheet);
+    sheets.push_back(gameoverSheet);
 }
 
 //---------------------------------------------------------------------------
@@ -677,6 +708,11 @@ void GameManager::menuChange()
 }
 
 
+bool GameManager::replay(const CEGUI::EventArgs&)
+{
+    /* RestartScene */
+}
+
 //---------------------------------------------------------------------------
 bool GameManager::frameRenderingQueued(const Ogre::FrameEvent& fe)
 {
@@ -834,7 +870,11 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
     else if (mState == NETWORK)
         return true;
     else if (mState == GAME_OVER)
-        return true;
+    {
+        gameoverButtons.at(0)->setText("Game over! Life is ruff. You scored: " + Ogre::StringConverter::toString(mScore));
+        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheets.at(5));
+        CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show();
+    }
     else
     {
         if (connected)
@@ -855,12 +895,12 @@ bool GameManager::frameStarted(const Ogre::FrameEvent& fe)
         if (!mPlayer->update(mPhysicsEngine, mKeyboard, mMouse, fe.timeSinceLastFrame))
         {
             mState = GAME_OVER;
-            return false;
+            return true;
         }
         if (mPlayerDummy && !mPlayerDummy->update(mPhysicsEngine, nullptr, nullptr, fe.timeSinceLastFrame))
         {
             mState = GAME_OVER;
-            return false;
+            return true;
         }
         // This updates all of the cats in the physics world
         if (mCats[0])
