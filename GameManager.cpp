@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <ctime>
 
+#include <OgreParticleSystem.h>
+
 std::string serverIP;
 
 //---------------------------------------------------------------------------
@@ -180,6 +182,11 @@ void GameManager::initScene()
     {
         mPlayer = new Player(mSceneMgr, mPhysicsEngine, mCamera);
     }
+
+    // mSceneMgr->setSkyBox( true, "Examples/SpaceSkyBox" );
+    // Ogre::ParticleSystem* sunParticle = mSceneMgr->createParticleSystem("Sun", "Examples/GreenyNimbus");
+    // Ogre::SceneNode* particleNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("Particle");
+    // particleNode->attachObject(sunParticle);
 
     // Add a point light
     Ogre::Light* light = mSceneMgr->createLight("MainLight");
